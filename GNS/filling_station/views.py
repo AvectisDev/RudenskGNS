@@ -1,14 +1,12 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.core import serializers
 from django.core.paginator import Paginator
 from .models import Ballon
 from .admin import BallonResources
 from .forms import Process, GetBallonsAmount
 from datetime import datetime, date, time, timedelta
-import locale
 
-
-# locale.setlocale(locale.LC_TIME, "ru-RU")
 
 def index(request):
     ballons = Ballon.objects.all()
@@ -18,6 +16,23 @@ def index(request):
 def client(request):
     ballons = Ballon.objects.all()
     return render(request, "home.html", {"ballons": ballons})
+
+
+def apiGetBalloonPassport(request):
+    nfc = request.GET.get("nfc", 0)
+    balloons = Ballon.objects.order_by('-id').filter(nfc_tag = nfc)
+    # serialized_queryset = serializers.serialize('json', balloon)
+    return JsonResponse({
+        'nfc_tag':balloons[0].nfc_tag,
+        'serial_number':balloons[0].serial_number,
+        'creation_date':balloons[0].creation_date,
+        'capacity':balloons[0].capacity,
+        'empty_weight':balloons[0].empty_weight,
+        'full_weight':balloons[0].full_weight,
+        'current_examination_date':balloons[0].current_examination_date,
+        'next_examination_date':balloons[0].next_examination_date,
+        'state':balloons[0].state
+        })
 
 
 def reader_info(request, reader = '1'):
