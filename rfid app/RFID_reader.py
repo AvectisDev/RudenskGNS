@@ -64,5 +64,4 @@ def read_nfc_tag(reader: dict, command: dict):
 while True:
     for reader in readers:
         reader['nfc_tag'] = read_nfc_tag(reader, COMMANDS)
-        # print(f'nfc tag is {reader['nfc_tag']}\n')
         time.sleep(0.1)
