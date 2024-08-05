@@ -1,13 +1,13 @@
 from django.contrib import admin
-from .models import Ballon
+from .models import Balloon
 from import_export import resources
 
 
-class BallonResources(resources.ModelResource):
+class BalloonResources(resources.ModelResource):
     class Meta:
-        model = Ballon
+        model = Balloon
         fields = ('id', 'nfc_tag', 'creation_date', 'state')
 
 
 # Register your models here.
-admin.site.register(Ballon)
+admin.site.register(Balloon)

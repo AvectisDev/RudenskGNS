@@ -1,5 +1,5 @@
 from django import forms
-from .models import Ballon
+from .models import Balloon
 
 
 class Process(forms.Form):
@@ -14,7 +14,7 @@ class Process(forms.Form):
         return phone_number_data
 
 
-class GetBallonsAmount(forms.Form):
+class GetBalloonsAmount(forms.Form):
     date = forms.CharField(max_length=10, label="Дата", widget=forms.TextInput(attrs={'placeholder': 'дд.мм.гггг'}))
 
     def clean_data(self):

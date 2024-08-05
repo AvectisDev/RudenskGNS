@@ -15,7 +15,7 @@ def write_nfc_tag(nfc_tag: str, status: str):
 
         with conn.cursor() as cursor:
             data = (nfc_tag, status, datetime.datetime.now())
-            cursor.execute("INSERT INTO filling_station_ballon (nfc_tag, state, creation_date) VALUES (%s, %s, %s)",
+            cursor.execute("INSERT INTO filling_station_balloon (nfc_tag, state, creation_date) VALUES (%s, %s, %s)",
                            data)
             print("Data added")
 

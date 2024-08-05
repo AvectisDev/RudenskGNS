@@ -18,12 +18,12 @@
                 <th>Дата добавления</th>
                 <th>Статус</th>
             </tr>
-            {% for ballon in page_obj.object_list %}
+            {% for balloon in page_obj.object_list %}
             <tr align="center">
-                <td>{{ ballon.id }}</td>
-                <td>{{ ballon.nfc_tag }}</td>
-                <td>{{ ballon.creation_date }}</td>
-                <td>{{ ballon.state }}</td>
+                <td>{{ balloon.id }}</td>
+                <td>{{ balloon.nfc_tag }}</td>
+                <td>{{ balloon.creation_date }}</td>
+                <td>{{ balloon.state }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -48,7 +48,7 @@
     </div>
 
     <div > 
-        <p>Количество баллонов: за текущую смену - {{ ballons_amount }}, за прошлую смену - {{ previous_ballons_amount }}</p>
+        <p>Количество баллонов: за текущую смену - {{ balloons_amount }}, за прошлую смену - {{ previous_balloons_amount }}</p>
         <!-- <p>Количество баллонов за {{ format_required_date }} - {{ required_date_amount }}</p> -->
     </div>
     

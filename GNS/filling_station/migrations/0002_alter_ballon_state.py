@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='ballon',
+            model_name='balloon',
             name='state',
             field=models.CharField(blank=True, max_length=50, verbose_name='Состояние'),
         ),
