@@ -7,11 +7,13 @@ class Balloon(models.Model):
     nfc_tag = models.CharField(blank=False, max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
     creation_date = models.DateField(null=True, blank=True, verbose_name="Дата производства")
-    capacity = models.FloatField(null=True, blank=True, verbose_name="Объём")
+    size = models.FloatField(null=True, blank=True, verbose_name="Объём")
     netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
     brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
     current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
     next_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата следующего освидетельствования")
+    manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
+    wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
     status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
 
     def __str__(self):

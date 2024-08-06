@@ -11,8 +11,8 @@ class BalloonResources(resources.ModelResource):
 
 @admin.register(Balloon)
 class BalloonAdmin(admin.ModelAdmin):
-    list_display = ['id', 'nfc_tag', 'serial_number', 'creation_date', 'capacity', 'netto', 'brutto',
-                    'current_examination_date', 'next_examination_date', 'status']
+    list_display = ['id', 'nfc_tag', 'serial_number', 'creation_date', 'size', 'netto', 'brutto',
+                    'current_examination_date', 'next_examination_date', 'manufacturer', 'wall_thickness', 'status']
 
 
 @admin.register(Truck)
