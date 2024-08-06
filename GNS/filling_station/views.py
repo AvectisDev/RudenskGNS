@@ -1,33 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-from django.core import serializers
 from django.core.paginator import Paginator
 from .models import Balloon
 from .admin import BalloonResources
 from .forms import Process, GetBalloonsAmount
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 
 
 def index(request):
     balloons = Balloon.objects.all()
     return render(request, "home.html", {"balloons": balloons})
-
-
-def apiGetBalloonPassport(request):
-    nfc = request.GET.get("nfc", 0)
-    balloons = Balloon.objects.order_by('-id').filter(nfc_tag=nfc)
-    # serialized_queryset = serializers.serialize('json', balloon)
-    return JsonResponse({
-        'nfc_tag': balloons[0].nfc_tag,
-        'serial_number': balloons[0].serial_number,
-        'creation_date': balloons[0].creation_date,
-        'capacity': balloons[0].capacity,
-        'empty_weight': balloons[0].empty_weight,
-        'full_weight': balloons[0].full_weight,
-        'current_examination_date': balloons[0].current_examination_date,
-        'next_examination_date': balloons[0].next_examination_date,
-        'status': balloons[0].status
-    })
 
 
 def reader_info(request, reader='1'):
@@ -48,7 +30,7 @@ def reader_info(request, reader='1'):
     elif reader == '8':
         status = 'Регистрация пустого баллона на складе (из кассеты)'
 
-    balloons = Balloon.objects.order_by('-id').filter(status=status)
+    balloons = Balloon.objects.filter(status=status)
     paginator = Paginator(balloons, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
