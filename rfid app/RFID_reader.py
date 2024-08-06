@@ -17,6 +17,7 @@ def write_nfc_tag(nfc_tag: str, status: str):
             nfc_data = (nfc_tag, status)
             cursor.execute("INSERT INTO filling_station_balloon (nfc_tag, status) VALUES (%s, %s)",
                            nfc_data)
+
             time_data = date(), time()
             cursor.execute("INSERT INTO filling_station_changeballoonstatus (change_status_date, "
                            "change_status_time) VALUES (%s, %s)", time_data)
