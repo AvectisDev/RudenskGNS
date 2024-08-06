@@ -1,6 +1,6 @@
 import socket
 import psycopg2
-import datetime
+from datetime import date, time
 import binascii
 import time
 from RFID_parameter import readers, COMMANDS
@@ -14,9 +14,12 @@ def write_nfc_tag(nfc_tag: str, status: str):
         conn.autocommit = True
 
         with conn.cursor() as cursor:
-            data = (nfc_tag, status, datetime.datetime.now())
-            cursor.execute("INSERT INTO filling_station_balloon (nfc_tag, state, creation_date) VALUES (%s, %s, %s)",
-                           data)
+            nfc_data = (nfc_tag, status)
+            cursor.execute("INSERT INTO filling_station_balloon (nfc_tag, status) VALUES (%s, %s)",
+                           nfc_data)
+            time_data = date(), time()
+            cursor.execute("INSERT INTO filling_station_changeballoonstatus (change_status_date, "
+                           "change_status_time) VALUES (%s, %s)", time_data)
             print("Data added")
 
         conn.close()
