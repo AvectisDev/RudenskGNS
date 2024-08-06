@@ -12,7 +12,6 @@ class Balloon(models.Model):
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
     current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
     next_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата следующего освидетельствования")
-    state = models.CharField(blank=True, max_length=100, verbose_name="Статус")
     status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
 
     def __str__(self):
