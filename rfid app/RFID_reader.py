@@ -25,6 +25,20 @@ def write_nfc_tag(nfc_tag: str, status: str):
         print('Can`t establish connection to database')
 
 
+def byte_reversal(byte_string: str):
+    """Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
+    второй и предпоследний и т.д."""
+
+    data_list = list(byte_string)
+    k = -1
+    for i in range((len(data_list) - 1) // 2):
+        data_list[i], data_list[k] = data_list[k], data_list[i]
+        k -= 1
+    for i in range(0, len(data_list) - 1, 2):
+        data_list[i], data_list[i + 1] = data_list[i + 1], data_list[i]
+    return ''.join(data_list)
+
+
 def read_nfc_tag(reader: dict, command: dict):
     """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки """
 
@@ -36,8 +50,6 @@ def read_nfc_tag(reader: dict, command: dict):
             s.settimeout(0.2)
             # print(f"Connecting to {reader['ip']}:{reader['port']}")
             s.connect((reader['ip'], reader['port']))
-
-            # send data to FEIG
             s.sendall(binascii.unhexlify(command['buffer_read']))  # команда считывания метки
 
             data = s.recv(2048)
@@ -46,11 +58,11 @@ def read_nfc_tag(reader: dict, command: dict):
             print('Receive complete. Data from reader: ', buffer)
 
             if len(buffer) > 18:
-                nfc_tag = buffer[14:30]  # из буфера получаем новую метку
+                nfc_tag = byte_reversal(buffer[14:30])  # из буфера получаем новую метку
+
                 if nfc_tag != previous_nfc_tag:
                     write_nfc_tag(nfc_tag, reader['status'])
                     s.sendall(binascii.unhexlify(command['read_complete']))  # зажигаем зелёную лампу на считывателе
-                    # print(nfc_tag)
             else:
                 nfc_tag = previous_nfc_tag
 

@@ -26,7 +26,7 @@ def apiGetBalloonPassport(request):
         'full_weight': balloons[0].full_weight,
         'current_examination_date': balloons[0].current_examination_date,
         'next_examination_date': balloons[0].next_examination_date,
-        'state': balloons[0].state
+        'status': balloons[0].status
     })
 
 
