@@ -26,8 +26,8 @@ class Balloon(models.Model):
 
 class ChangeBalloonStatus(models.Model):
     balloon = models.ForeignKey(Balloon, on_delete=models.CASCADE)
-    change_status_date = models.DateField(null=True, blank=True, verbose_name="Дата смены статуса")
-    change_status_time = models.TimeField(null=True, blank=True, verbose_name="Время смены статуса")
+    change_status_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата смены статуса")
+    change_status_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время смены статуса")
     status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
 
 

@@ -1,6 +1,6 @@
 import socket
 import psycopg2
-from datetime import date, time
+from datetime import datetime, date, time
 import binascii
 import time
 from RFID_parameter import readers, COMMANDS
@@ -14,17 +14,30 @@ def write_nfc_tag(nfc_tag: str, status: str):
         conn.autocommit = True
 
         with conn.cursor() as cursor:
-            nfc_data = (nfc_tag, status)
-            cursor.execute("INSERT INTO filling_station_balloon (nfc_tag, status) VALUES (%s, %s)",
-                           nfc_data)
+            
+            cursor.execute(f"SELECT * FROM public.filling_station_balloon "
+                            f"WHERE nfc_tag = '{nfc_tag}'")
+            balloon_id = cursor.fetchall()
+            if len(balloon_id) == 0: # если метки ещё нет в базе
+                cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status) " 
+                                f"VALUES ('{nfc_tag}', '{status}')")
+        
+                cursor.execute(f"SELECT * FROM public.filling_station_balloon "
+                                f"WHERE nfc_tag = '{nfc_tag}'")
+                balloon_id = cursor.fetchall()
+                print("Data added")
+            else:
+                cursor.execute(f"UPDATE public.filling_station_balloon "
+                                f"SET status = '{status}' "
+                                f"WHERE nfc_tag = '{nfc_tag}' and status <> '{status}'")
+                print("Data updated")
 
-            time_data = date(), time()
-            cursor.execute("INSERT INTO filling_station_changeballoonstatus (change_status_date, "
-                           "change_status_time) VALUES (%s, %s)", time_data)
-            print("Data added")
-
+            if balloon_id[0][9] != status:
+                current_date = datetime.now()
+                cursor.execute(f"INSERT INTO filling_station_changeballoonstatus (change_status_date, change_status_time, status, balloon_id) " 
+                                f"VALUES ('{current_date.date()}', '{current_date.time()}', '{status}', '{balloon_id[0][0]}')")
+            
         conn.close()
-
     except:
         print('Can`t establish connection to database')
 
@@ -52,7 +65,6 @@ def read_nfc_tag(reader: dict, command: dict):
 
         try:
             s.settimeout(0.2)
-            # print(f"Connecting to {reader['ip']}:{reader['port']}")
             s.connect((reader['ip'], reader['port']))
             s.sendall(binascii.unhexlify(command['buffer_read']))  # команда считывания метки
 
