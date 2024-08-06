@@ -48,7 +48,7 @@ def reader_info(request, reader='1'):
     elif reader == '8':
         status = 'Регистрация пустого баллона на складе (из кассеты)'
 
-    balloons = Balloon.objects.order_by('-id').filter(state=status)
+    balloons = Balloon.objects.order_by('-id').filter(status=status)
     paginator = Paginator(balloons, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
