@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Balloon(models.Model):
@@ -15,6 +16,8 @@ class Balloon(models.Model):
     manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
     wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
     status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
+    change_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата изменений")
+    change_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время изменений")
 
     def __str__(self):
         return self.nfc_tag
@@ -22,13 +25,6 @@ class Balloon(models.Model):
     class Meta:
         verbose_name = "Баллон"
         verbose_name_plural = "Баллоны"
-
-
-class ChangeBalloonStatus(models.Model):
-    balloon = models.ForeignKey(Balloon, on_delete=models.CASCADE)
-    change_status_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата смены статуса")
-    change_status_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время смены статуса")
-    status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
 
 
 class Truck(models.Model):
