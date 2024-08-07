@@ -18,6 +18,7 @@ class Balloon(models.Model):
     status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
     change_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата изменений")
     change_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время изменений")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь")
 
     def __str__(self):
         return self.nfc_tag
