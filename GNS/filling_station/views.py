@@ -25,7 +25,7 @@ def index(request):
 
 
 def reader_info(request, reader='1'):
-    balloons = Balloon.objects.filter(status=STATUS_LIST[reader])
+    balloons = Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader])
     paginator = Paginator(balloons, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
@@ -35,7 +35,8 @@ def reader_info(request, reader='1'):
         required_date = request.POST.get("date")
         format_required_date = datetime.strptime(required_date, '%d.%m.%Y')
 
-        dataset = BalloonResources().export(Balloon.objects.filter(state=STATUS_LIST[reader], creation_date=format_required_date))
+        dataset = BalloonResources().export(Balloon.objects.order_by('-id').filter(state=STATUS_LIST[reader],
+                                                                                   creation_date=format_required_date))
         response = HttpResponse(dataset.xls, content_type='xls')
         response[
             'Content-Disposition'] = f'attachment; filename="RFID_1_{datetime.strftime(format_required_date, '%Y.%m.%d')}.xls"'
