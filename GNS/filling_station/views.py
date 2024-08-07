@@ -1,10 +1,22 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.core.paginator import Paginator
 from .models import Balloon
 from .admin import BalloonResources
 from .forms import Process, GetBalloonsAmount
 from datetime import datetime, timedelta
+
+
+STATUS_LIST = {
+    '1': 'Регистрация пустого баллона на складе (цех)',
+    '2': 'Наполнение баллона сжиженным газом',
+    '3': 'Регистрация пустого баллона на складе (рампа)',
+    '4': 'Регистрация полного баллона на складе',
+    '5': 'Погрузка полного баллона на трал 2',
+    '6': 'Погрузка полного баллона на трал 1',
+    '7': 'Погрузка полного баллона в кассету',
+    '8': 'Регистрация пустого баллона на складе (из кассеты)',
+}
 
 
 def index(request):
@@ -13,24 +25,7 @@ def index(request):
 
 
 def reader_info(request, reader='1'):
-    if reader == '1':
-        status = 'Регистрация пустого баллона на складе (цех)'
-    elif reader == '2':
-        status = 'Наполнение баллона сжиженным газом'
-    elif reader == '3':
-        status = 'Регистрация пустого баллона на складе (рампа)'
-    elif reader == '4':
-        status = 'Регистрация полного баллона на складе'
-    elif reader == '5':
-        status = 'Погрузка полного баллона на трал 2'
-    elif reader == '6':
-        status = 'Погрузка полного баллона на трал 1'
-    elif reader == '7':
-        status = 'Погрузка полного баллона в кассету'
-    elif reader == '8':
-        status = 'Регистрация пустого баллона на складе (из кассеты)'
-
-    balloons = Balloon.objects.filter(status=status)
+    balloons = Balloon.objects.filter(status=STATUS_LIST[reader])
     paginator = Paginator(balloons, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
@@ -40,7 +35,7 @@ def reader_info(request, reader='1'):
         required_date = request.POST.get("date")
         format_required_date = datetime.strptime(required_date, '%d.%m.%Y')
 
-        dataset = BalloonResources().export(Balloon.objects.filter(state=status, creation_date=format_required_date))
+        dataset = BalloonResources().export(Balloon.objects.filter(state=STATUS_LIST[reader], creation_date=format_required_date))
         response = HttpResponse(dataset.xls, content_type='xls')
         response[
             'Content-Disposition'] = f'attachment; filename="RFID_1_{datetime.strftime(format_required_date, '%Y.%m.%d')}.xls"'
