@@ -7,7 +7,8 @@ from parameters import readers, COMMANDS
 
 
 def write_nfc_tag(nfc_tag: str, status: str):
-    """Функция записывает в базу данных номер метки и дату проведения операции считывания"""
+    """Функция записывает в базу данных номер метки, статус, дату и время проведения операции считывания"""
+    current_date = datetime.now()
     try:
         conn = psycopg2.connect(dbname="PinskGNS",
                                 host="localhost",
@@ -16,29 +17,9 @@ def write_nfc_tag(nfc_tag: str, status: str):
                                 port="5432")
         conn.autocommit = True
         with conn.cursor() as cursor:
-            cursor.execute(f"SELECT * "
-                           f"FROM public.filling_station_balloon "
-                           f"WHERE nfc_tag = '{nfc_tag}'")
-            balloon_id = cursor.fetchall()
-            if len(balloon_id) == 0:  # если метки ещё нет в базе
-                cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status) "
-                               f"VALUES ('{nfc_tag}', '{status}')")
-                cursor.execute(f"SELECT * FROM public.filling_station_balloon "
-                               f"WHERE nfc_tag = '{nfc_tag}'")
-                balloon_id = cursor.fetchall()
-                print("Data added")
-            else:
-                cursor.execute(f"UPDATE public.filling_station_balloon "
-                               f"SET status = '{status}' "
-                               f"WHERE nfc_tag = '{nfc_tag}' AND status <> '{status}'")
-                print("Data updated")
-
-            if balloon_id[0][9] != status:
-                current_date = datetime.now()
-                cursor.execute(
-                    f"INSERT INTO filling_station_changeballoonstatus (change_status_date, change_status_time, status, balloon_id) "
-                    f"VALUES ('{current_date.date()}', '{current_date.time()}', '{status}', '{balloon_id[0][0]}')")
-
+            cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status, change_date, change_time, user) "
+                           f"VALUES ('{nfc_tag}', '{status}', '{current_date.date()}', '{current_date.time()}', '{1}')")
+            print("Data added")
         conn.close()
     except:
         print('Can`t establish connection to database')
