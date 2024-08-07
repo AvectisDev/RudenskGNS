@@ -12,16 +12,13 @@ def write_nfc_tag(nfc_tag: str, status: str):
     try:
         conn = psycopg2.connect(dbname="PinskGNS", host="localhost", user="postgres", password=".avectis1", port="5432")
         conn.autocommit = True
-
         with conn.cursor() as cursor:
-
             cursor.execute(f"SELECT * FROM public.filling_station_balloon "
                            f"WHERE nfc_tag = '{nfc_tag}'")
             balloon_id = cursor.fetchall()
             if len(balloon_id) == 0:  # если метки ещё нет в базе
                 cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status) "
                                f"VALUES ('{nfc_tag}', '{status}')")
-
                 cursor.execute(f"SELECT * FROM public.filling_station_balloon "
                                f"WHERE nfc_tag = '{nfc_tag}'")
                 balloon_id = cursor.fetchall()
@@ -39,6 +36,20 @@ def write_nfc_tag(nfc_tag: str, status: str):
                     f"VALUES ('{current_date.date()}', '{current_date.time()}', '{status}', '{balloon_id[0][0]}')")
 
         conn.close()
+    except:
+        print('Can`t establish connection to database')
+
+
+def write_balloons_amount(reader_number: int, amount: int):
+    """Функция записывает в базу данных количество баллонов, пройденных через каждый считыватель"""
+
+    try:
+        conn = psycopg2.connect(dbname="PinskGNS", host="localhost", user="postgres", password=".avectis1", port="5432")
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            cursor.execute(f"INSERT INTO filling_station_balloonamount (reader_id, amount_of_balloons, change_date) "
+                           f"VALUES ('{reader_number}', '{amount}', '{datetime.now()}')")
+            print("Amount added to database")
     except:
         print('Can`t establish connection to database')
 
@@ -73,7 +84,7 @@ def data_exchange_with_reader(controller: dict, command: str):
 
 
 def read_nfc_tag(reader: dict):
-    """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки """
+    """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки"""
 
     previous_nfc_tag = reader['nfc_tag']  # присваиваем предыдущую метку временной переменной
     data = data_exchange_with_reader(reader, 'buffer_read')
@@ -90,8 +101,24 @@ def read_nfc_tag(reader: dict):
         return previous_nfc_tag     # если считыватель не определил метку
 
 
+def read_input_status(reader: dict):
+    """Функция отправляет запрос на считыватель FEIG и получает в ответ состояние дискретных входов"""
+
+    previous_input_state = reader['input_state']  # присваиваем предыдущее состояние входа временной переменной
+    data = data_exchange_with_reader(reader, 'inputs_read')
+    print("Inputs data is: ", data)
+    first_input_state = int(data[13])   # определяем состояние 1-го входа (13 индекс в ответе)
+    if first_input_state == 1 and previous_input_state == 0:     # текущее состояние "активен", а ранее он был выключен
+        write_balloons_amount(reader['number'], first_input_state)
+        data_exchange_with_reader(reader, 'read_complete')
+        return first_input_state  # возвращаем новое состояние входа
+    else:
+        return previous_input_state
+
+
 # Program
 while True:
     for reader in readers:
         reader['nfc_tag'] = read_nfc_tag(reader)
+        reader['input_state'] = read_input_status(reader)
         time.sleep(0.1)

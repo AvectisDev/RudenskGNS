@@ -49,3 +49,9 @@ class Truck(models.Model):
     class Meta:
         verbose_name = "Грузовик"
         verbose_name_plural = "Грузовики"
+
+
+class BalloonAmount(models.Model):
+    reader_id = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
+    amount_of_balloons = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по датчику")
+    change_date = models.DateTimeField(null=True, blank=True, auto_now_add=True, verbose_name="Дата обновления")
