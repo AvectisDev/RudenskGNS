@@ -1,6 +1,6 @@
 import socket
 import psycopg2
-from datetime import datetime, date, time
+from datetime import datetime
 import binascii
 import time
 from parameters import readers, COMMANDS
@@ -57,40 +57,41 @@ def byte_reversal(byte_string: str):
     return ''.join(data_list)
 
 
-def read_nfc_tag(reader: dict, command: dict):
+def data_exchange_with_reader(controller: dict, command: str):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.settimeout(0.3)
+            s.connect((controller['ip'], controller['port']))
+            s.sendall(binascii.unhexlify(COMMANDS[command]))  # команда считывания метки
+
+            data = s.recv(2048)
+            buffer = binascii.hexlify(data).decode()
+            print('Receive complete. Data from reader: ', buffer)
+            return buffer
+        except:
+            print(f'Can`t establish connection with RFID reader {controller['ip']}:{controller['port']}')
+
+
+def read_nfc_tag(reader: dict):
     """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки """
 
     previous_nfc_tag = reader['nfc_tag']  # присваиваем предыдущую метку временной переменной
+    data = data_exchange_with_reader(reader, 'buffer_read')
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-
-        try:
-            s.settimeout(0.2)
-            s.connect((reader['ip'], reader['port']))
-            s.sendall(binascii.unhexlify(command['buffer_read']))  # команда считывания метки
-
-            data = s.recv(2048)
-            data_bytes = binascii.hexlify(data)
-            buffer = data_bytes.decode()
-            print('Receive complete. Data from reader: ', buffer)
-
-            if len(buffer) > 18:
-                nfc_tag = byte_reversal(buffer[14:30])  # из буфера получаем новую метку
-
-                if nfc_tag != previous_nfc_tag:
-                    write_nfc_tag(nfc_tag, reader['status'])
-                    s.sendall(binascii.unhexlify(command['read_complete']))  # зажигаем зелёную лампу на считывателе
-            else:
-                nfc_tag = previous_nfc_tag
-
-            return nfc_tag  # из функции возвращаем значение считанной метки
-        except:
-            print(f'Can`t establish connection with RFID reader {reader['ip']}:{reader['port']}')
-            return previous_nfc_tag
+    if len(data) > 18:  # если со считывателя пришли данные с меткой
+        nfc_tag = byte_reversal(data[14:30])  # из буфера получаем номер метки
+        if nfc_tag != previous_nfc_tag:     # и метка отличается от предыдущей
+            write_nfc_tag(nfc_tag, reader['status'])
+            data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
+            return nfc_tag  # возвращаем значение новой считанной метки
+        else:
+            return previous_nfc_tag     # если была повторно считана прошлая метка
+    else:
+        return previous_nfc_tag     # если считыватель не определил метку
 
 
 # Program
 while True:
     for reader in readers:
-        reader['nfc_tag'] = read_nfc_tag(reader, COMMANDS)
+        reader['nfc_tag'] = read_nfc_tag(reader)
         time.sleep(0.1)
