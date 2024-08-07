@@ -17,7 +17,7 @@ def write_nfc_tag(nfc_tag: str, status: str):
                                 port="5432")
         conn.autocommit = True
         with conn.cursor() as cursor:
-            cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status, change_date, change_time, user) "
+            cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status, change_date, change_time, user_id) "
                            f"VALUES ('{nfc_tag}', '{status}', '{current_date.date()}', '{current_date.time()}', '{1}')")
             print("Data added")
         conn.close()
