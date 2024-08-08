@@ -43,7 +43,7 @@ def reader_info(request, reader='1'):
         required_date = request.POST.get("date")
         format_required_date = datetime.strptime(required_date, '%d.%m.%Y')
 
-        dataset = BalloonResources().export(Balloon.objects.order_by('-id').filter(state=STATUS_LIST[reader],
+        dataset = BalloonResources().export(Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader],
                                                                                    change_date=format_required_date))
         response = HttpResponse(dataset.xls, content_type='xls')
         response[
