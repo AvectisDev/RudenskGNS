@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.core.paginator import Paginator
-from .models import Balloon
+from .models import Balloon, BalloonAmount
 from .admin import BalloonResources
 from .forms import Process, GetBalloonsAmount
 from datetime import datetime, timedelta
@@ -25,7 +25,12 @@ def index(request):
 
 
 def reader_info(request, reader='1'):
+    current_date = datetime.now().date()
+    previous_date = current_date - timedelta(days=1)
+
     balloons = Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader])
+    current_quantity_by_sensor = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date)
+    previous_quantity_by_sensor = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date)
     paginator = Paginator(balloons, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
@@ -57,4 +62,6 @@ def reader_info(request, reader='1'):
         'previous_balloons_amount': previous_date_amount,
         'required_date_amount': required_date_amount,
         'format_required_date': view_required_data,
+        'current_quantity_by_sensor': current_quantity_by_sensor,
+        'previous_quantity_by_sensor': previous_quantity_by_sensor,
         'form': date_process})
