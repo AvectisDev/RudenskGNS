@@ -4,6 +4,7 @@ from datetime import datetime
 import binascii
 import time
 from parameters import readers, COMMANDS
+from miriada import get_balloon_by_nfc_tag as get_ballon
 
 
 def write_nfc_tag(nfc_tag: str, status: str):
@@ -53,6 +54,25 @@ def write_balloons_amount(reader_number: int):
         print('Can`t establish connection to database')
 
 
+def check_passport(nfc_tag: str,):
+    """Функция проверяет наличие и заполненность паспорта в базе данных"""
+    current_date = datetime.now()
+    try:
+        conn = psycopg2.connect(dbname="PinskGNS",
+                                host="localhost",
+                                user="postgres",
+                                password=".avectis1",
+                                port="5432")
+        conn.autocommit = True
+        with conn.cursor() as cursor:
+            cursor.execute(f"SELECT * "
+                           f"FROM public.filling_station_balloon "
+                           f"WHERE nfc_tag = '{nfc_tag}' ORDER BY id DESC LIMIT 1")
+            balloon_id = cursor.fetchall()
+    except:
+        print('Can`t establish connection to database')
+
+
 def byte_reversal(byte_string: str):
     """Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
     второй и предпоследний и т.д."""
@@ -80,6 +100,7 @@ def data_exchange_with_reader(controller: dict, command: str):
             return buffer
         except:
             print(f'Can`t establish connection with RFID reader {controller['ip']}:{controller['port']}')
+            return []
 
 
 def read_nfc_tag(reader: dict):
@@ -102,16 +123,18 @@ def read_input_status(reader: dict):
     """Функция отправляет запрос на считыватель FEIG и получает в ответ состояние дискретных входов"""
     previous_input_state = reader['input_state']  # присваиваем предыдущее состояние входа временной переменной
     data = data_exchange_with_reader(reader, 'inputs_read')
-    print("Inputs data is: ", data)
-    first_input_state = int(data[13])   # определяем состояние 1-го входа (13 индекс в ответе)
-    if first_input_state == 1 and previous_input_state == 0:     # текущее состояние "активен", а ранее он был выключен
-        write_balloons_amount(reader['number'])
-        return 1  # возвращаем состояние входа "активен"
-    elif first_input_state == 0 and previous_input_state == 1:
-        return 0  # возвращаем состояние входа "неактивен"
+    if len(data) == 18:
+        print("Inputs data is: ", data)
+        first_input_state = int(data[13])   # определяем состояние 1-го входа (13 индекс в ответе)
+        if first_input_state == 1 and previous_input_state == 0:     # текущее состояние "активен", а ранее он был выключен
+            write_balloons_amount(reader['number'])
+            return 1  # возвращаем состояние входа "активен"
+        elif first_input_state == 0 and previous_input_state == 1:
+            return 0  # возвращаем состояние входа "неактивен"
+        else:
+            return previous_input_state
     else:
         return previous_input_state
-
 
 # Program
 if __name__ == "__main__":
