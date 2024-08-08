@@ -59,18 +59,18 @@ def check_passport(nfc_tag: str,):
     current_date = datetime.now()
     try:
         conn = psycopg2.connect(dbname="PinskGNS",
-                            host="localhost",
-                            user="postgres",
-                            password=".avectis1",
-                            port="5432")
+                                host="localhost",
+                                user="postgres",
+                                password=".avectis1",
+                                port="5432")
         conn.autocommit = True
         with conn.cursor() as cursor:
             cursor.execute(f"SELECT * "
-                            f"FROM public.filling_station_balloon "
-                            f"WHERE nfc_tag = '{nfc_tag}' ORDER BY id DESC LIMIT 1")
+                           f"FROM public.filling_station_balloon "
+                           f"WHERE nfc_tag = '{nfc_tag}' ORDER BY id DESC LIMIT 1")
             balloon_id = cursor.fetchall()
-            if balloon_id != []:
-                return False if balloon_id[0][2] == None or balloon_id[0][5] == None or balloon_id[0][6] == None else True
+            if balloon_id:
+                return False if balloon_id[0][2] is None or balloon_id[0][5] is None or balloon_id[0][6] is None else True
             else:
                 return False
     except:
@@ -140,7 +140,7 @@ def read_input_status(reader: dict):
     else:
         return previous_input_state
 
-# Program
+
 if __name__ == "__main__":
     while True:
         for reader in readers:
