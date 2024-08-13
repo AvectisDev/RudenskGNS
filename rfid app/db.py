@@ -55,7 +55,7 @@ def write_balloons_amount(reader_number: int):
                 print("Amount added to database")
             else:
                 cursor.execute(f"UPDATE public.filling_station_balloonamount "
-                               f"SET amount_of_balloons = amount_of_balloons + 1 , change_time = {current_date.time()} "
+                               f"SET amount_of_balloons = amount_of_balloons + 1 , change_time = '{current_date.time()}' "
                                f"WHERE reader_id = '{reader_number}' AND change_date = '{current_date.date()}'")
                 print("Data updated")
     except:
