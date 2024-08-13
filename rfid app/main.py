@@ -59,6 +59,7 @@ def read_nfc_tag(reader: dict):
                 db.write_balloon_passport(passport)
                 data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
             else:
+                passport = passport_template
                 json_data_status, json_data = get_balloon(nfc_tag)  # запрашиваем данные в мириаде
                 if json_data_status:    # если получили данные
                     passport['nfc_tag'] = nfc_tag
