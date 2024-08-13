@@ -1,7 +1,5 @@
 import psycopg2
 from datetime import datetime
-from parameters import readers, COMMANDS, passport_template
-from miriada import get_balloon_by_nfc_tag as get_balloon
 
 DB_CRD = {'name': 'PinskGNS', 'host': 'localhost', 'user': 'postgres', 'password': '.avectis1', 'port': '5432'}
 
@@ -55,7 +53,7 @@ def write_balloons_amount(reader_number: int):
                 print("Amount added to database")
             else:
                 cursor.execute(f"UPDATE public.filling_station_balloonamount "
-                               f"SET amount_of_balloons = amount_of_balloons + 1 , change_time = '{current_date.time()}' "
+                               f"SET amount_of_balloons = amount_of_balloons + 1, change_time = '{current_date.time()}' "
                                f"WHERE reader_id = '{reader_number}' AND change_date = '{current_date.date()}'")
                 print("Data updated")
     except:
