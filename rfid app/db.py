@@ -21,9 +21,9 @@ def write_balloon_passport(passport: dict):
                            f"brutto, current_examination_date, next_examination_date, manufacturer, wall_thickness, "
                            f"status, filling_status, update_passport_required, change_date, change_time, user)"
                            f"VALUES ('{passport['nfc_tag']}', '{passport['serial_number']}', "
-                           f"'{passport["creation_date"]}', '{passport["size"]}', '{passport["netto"]}', "
-                           f"'{passport["brutto"]}', '{passport["current_examination_date"]}', "
-                           f"'{passport["next_examination_date"]}', '{passport["manufacturer"]}', "
+                           f"Null, '{passport["size"]}', '{passport["netto"]}', "
+                           f"'{passport["brutto"]}', Null, "
+                           f"Null, '{passport["manufacturer"]}', "
                            f"'{passport["wall_thickness"]}', '{passport["status"]}', '{passport["filling_status"]}', "
                            f"'{passport["update_passport_required"]}', "
                            f"'{current_date.date()}', '{current_date.time()}', '{1}')")
