@@ -19,7 +19,7 @@ def write_balloon_passport(passport: dict):
         with conn.cursor() as cursor:
             cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, serial_number, creation_date, size, netto, "
                            f"brutto, current_examination_date, next_examination_date, manufacturer, wall_thickness, "
-                           f"status, filling_status, update_passport_required, change_date, change_time, user)"
+                           f"status, filling_status, update_passport_required, change_date, change_time, user_id)"
                            f"VALUES ('{passport['nfc_tag']}', '{passport['serial_number']}', "
                            f"Null, '{passport["size"]}', '{passport["netto"]}', "
                            f"'{passport["brutto"]}', Null, "
