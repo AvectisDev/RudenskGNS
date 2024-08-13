@@ -51,12 +51,12 @@ def update_balloon_passport(request: HttpRequest) -> JsonResponse:
 
         balloon.serial_number = data.get('serial_number')
         balloon.creation_date = data.get('creation_date')
-        balloon.capacity = data.get('capacity')
-        balloon.empty_weight = data.get('empty_weight')
-        balloon.full_weight = data.get('full_weight')
+        balloon.size = data.get('size')
+        balloon.netto = data.get('netto')
+        balloon.brutto = data.get('brutto')
         balloon.current_examination_date = data.get('current_examination_date')
         balloon.next_examination_date = data.get('next_examination_date')
-        balloon.state = data.get('state')
+        balloon.status = data.get('status')
 
         balloon.save()
 
