@@ -103,6 +103,8 @@ def read_input_status(reader: dict):
 
 
 if __name__ == "__main__":
+    for reader in readers:  # при запуске программы очищаем буфер считывателей
+        data_exchange_with_reader(reader, 'clean_buffer')  # очищаем буферную память считывателя
     while True:
         for reader in readers:
             read_nfc_tag(reader)
