@@ -8,7 +8,8 @@ readers[0] = {
     'number': 1,
     'status': 'Регистрация пустого баллона на складе (из кассеты)',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 # Г-образный
@@ -18,7 +19,8 @@ readers[1] = {
     'number': 2,
     'status': 'Погрузка полного баллона в кассету',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 # Считыватели на отгрузке
@@ -28,7 +30,8 @@ readers[2] = {
     'number': 3,
     'status': 'Погрузка полного баллона на трал 1',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 readers[3] = {
@@ -37,7 +40,8 @@ readers[3] = {
     'number': 4,
     'status': 'Погрузка полного баллона на трал 2', # в торце рампы
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 readers[4] = {
@@ -46,7 +50,8 @@ readers[4] = {
     'number': 5,
     'status': 'Регистрация полного баллона на складе',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 readers[5] = {
@@ -55,7 +60,8 @@ readers[5] = {
     'number': 6,
     'status': 'Регистрация пустого баллона на складе (рампа)',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 # Считыватели в цеху
@@ -65,7 +71,8 @@ readers[6] = {
     'number': 7,
     'status': 'Регистрация пустого баллона на складе (цех)',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
 }
 
 readers[7] = {
@@ -74,7 +81,26 @@ readers[7] = {
     'number': 8,
     'status': 'Наполнение баллона сжиженным газом',
     'input_state': 0,
-    'nfc_tag': ''
+    'nfc_tag': '',
+    'previous_nfc_tags': []
+}
+
+passport_template = {
+    'nfc_tag': '',
+    'serial_number': '',
+    'creation_date': '',
+    'size': 0.0,
+    'netto': 0.0,
+    'brutto': 0.0,
+    'current_examination_date': '',
+    'next_examination_date': '',
+    'manufacturer': '',
+    'wall_thickness': 0.0,
+    'status': '',
+    'filling_status': 0,
+    'change_date': '',
+    'change_time': '',
+    'user': 1
 }
 
 # Команды, посылаемые на считыватель
@@ -83,5 +109,9 @@ COMMANDS = {
     'read_complete': '02000DFF72010181010019236B',  # зажигаем зелёную лампу на считывателе на 2.5 сек
     'read_complete_with_error': '',
     'buffer_read': '020009FFB02B005B9D',  # чтение буферной памяти
-    'inputs_read': '020007FF746660'  # чтение состояния входов
+    'inputs_read': '020007FF746660',  # чтение состояния входов
+    'all_buffer_read': '02000AFF2B0000FF89EB',  # чтение всего буфера
+    'read_last_item_from_buffer': '02000AFF2B00FFFF4914',
+    'clean_buffer': '020007FF325447'    # команда очистки буфера
 }
+# 02 00 08 FF B0 84 4F DB   Reader: RF-Warning - если нет данных с ридера

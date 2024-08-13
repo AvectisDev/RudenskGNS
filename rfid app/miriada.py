@@ -5,9 +5,9 @@ def get_balloon_by_nfc_tag(nfc_tag):
     url = f'https://publicapi-vitebsk.cloud.gas.by/getballoonbynfctag?nfctag={nfc_tag}&realm=brestoblgas'
     try:
         response = requests.get(url, timeout=1)
-        return response.json() if response.status_code == 200 else {"Status": "No data"}
+        return (True, response.json()['List']) if response.status_code == 200 else (False, {"status": "no data"})
     except:
-        return {"Status": "No data"}
+        return False, {"status": "no data"}
 
 
 def search_balloon_by_nfc_tag(nfc_tag):
@@ -18,9 +18,6 @@ def search_balloon_by_nfc_tag(nfc_tag):
     }
     try:
         response = requests.get(url, headers=headers, timeout=1)
-        return response.json() if response.status_code == 200 else {"Status": "No data"}
+        return (True, response.json()['List']) if response.status_code == 200 else (False, {"status": "no data"})
     except:
-        return {"Status": "No data"}
-
-
-print(search_balloon_by_nfc_tag("1c48ca0f5c0104e0"))
+        return False, {"status": "no data"}

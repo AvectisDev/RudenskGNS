@@ -1,86 +1,32 @@
 import socket
-import psycopg2
-from datetime import datetime
+import db
 import binascii
 import time
-from parameters import readers, COMMANDS
-from miriada import get_balloon_by_nfc_tag as get_ballon
+from parameters import readers, COMMANDS, passport_template
+from miriada import get_balloon_by_nfc_tag as get_balloon
 
 
-def write_nfc_tag(nfc_tag: str, status: str):
-    """Функция записывает в базу данных номер метки, статус, дату и время проведения операции считывания"""
-    current_date = datetime.now()
-    try:
-        conn = psycopg2.connect(dbname="PinskGNS",
-                                host="localhost",
-                                user="postgres",
-                                password=".avectis1",
-                                port="5432")
-        conn.autocommit = True
-        with conn.cursor() as cursor:
-            cursor.execute(f"INSERT INTO filling_station_balloon (nfc_tag, status, change_date, change_time, user_id) "
-                           f"VALUES ('{nfc_tag}', '{status}', '{current_date.date()}', '{current_date.time()}', '{1}')")
-            print("Data added")
-        conn.close()
-    except:
-        print('Can`t establish connection to database')
+def data_exchange_with_reader(controller: dict, command: str):
+    """Функция выполняет обмен данными со считывателем FEIG. Отправляет запрос и возвращает полный буфер данных со
+    считывателя"""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.settimeout(0.3)
+            s.connect((controller['ip'], controller['port']))
+            s.sendall(binascii.unhexlify(COMMANDS[command]))  # команда считывания метки
 
-
-def write_balloons_amount(reader_number: int):
-    """Функция записывает в базу данных количество баллонов, пройденных через каждый считыватель"""
-    try:
-        conn = psycopg2.connect(dbname="PinskGNS",
-                                host="localhost",
-                                user="postgres",
-                                password=".avectis1",
-                                port="5432")
-        conn.autocommit = True
-        current_date = datetime.now()
-        with conn.cursor() as cursor:
-            cursor.execute(f"SELECT * "
-                           f"FROM public.filling_station_balloonamount "
-                           f"WHERE reader_id = '{reader_number}' AND change_date = '{current_date.date()}'")
-            select_data = cursor.fetchall()
-            if len(select_data) == 0:  # если данных ещё нет в базе
-                cursor.execute(f"INSERT INTO filling_station_balloonamount (reader_id, amount_of_balloons, change_date, change_time) "
-                               f"VALUES ('{reader_number}', '{1}', '{current_date.date()}', '{current_date.time()}')")
-                print("Amount added to database")
-            else:
-                cursor.execute(f"UPDATE public.filling_station_balloonamount "
-                               f"SET amount_of_balloons = amount_of_balloons + 1 "
-                               f"WHERE reader_id = '{reader_number}' AND change_date = '{current_date.date()}'")
-                print("Data updated")
-    except:
-        print('Can`t establish connection to database')
-
-
-def check_passport(nfc_tag: str,):
-    """Функция проверяет наличие и заполненность паспорта в базе данных"""
-    current_date = datetime.now()
-    try:
-        conn = psycopg2.connect(dbname="PinskGNS",
-                                host="localhost",
-                                user="postgres",
-                                password=".avectis1",
-                                port="5432")
-        conn.autocommit = True
-        with conn.cursor() as cursor:
-            cursor.execute(f"SELECT * "
-                           f"FROM public.filling_station_balloon "
-                           f"WHERE nfc_tag = '{nfc_tag}' ORDER BY id DESC LIMIT 1")
-            balloon_id = cursor.fetchall()
-            if balloon_id:
-                return False if balloon_id[0][2] is None or balloon_id[0][5] is None or balloon_id[0][6] is None else True
-            else:
-                return False
-    except:
-        print('Can`t establish connection to database')
+            data = s.recv(2048)
+            buffer = binascii.hexlify(data).decode()
+            print(f'Receive complete. Data from {controller['ip']}:{controller['port']}: {buffer}')
+            return buffer
+        except:
+            print(f'Can`t establish connection with RFID reader {controller['ip']}:{controller['port']}')
+            return []
 
 
 def byte_reversal(byte_string: str):
     """Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
     второй и предпоследний и т.д."""
-
     data_list = list(byte_string)
     k = -1
     for i in range((len(data_list) - 1) // 2):
@@ -91,36 +37,51 @@ def byte_reversal(byte_string: str):
     return ''.join(data_list)
 
 
-def data_exchange_with_reader(controller: dict, command: str):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.settimeout(0.3)
-            s.connect((controller['ip'], controller['port']))
-            s.sendall(binascii.unhexlify(COMMANDS[command]))  # команда считывания метки
-
-            data = s.recv(2048)
-            buffer = binascii.hexlify(data).decode()
-            print('Receive complete. Data from reader: ', buffer)
-            return buffer
-        except:
-            print(f'Can`t establish connection with RFID reader {controller['ip']}:{controller['port']}')
-            return []
+def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
+    if len(nfc_tag_list) > 5:
+        nfc_tag_list.pop(0)
+        nfc_tag_list.append(nfc_tag)
+    else:
+        nfc_tag_list.append(nfc_tag)
 
 
 def read_nfc_tag(reader: dict):
     """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки"""
-    previous_nfc_tag = reader['nfc_tag']  # присваиваем предыдущую метку временной переменной
-    data = data_exchange_with_reader(reader, 'buffer_read')
-    if len(data) > 18:  # если со считывателя пришли данные с меткой
-        nfc_tag = byte_reversal(data[14:30])  # из буфера получаем номер метки
-        if nfc_tag != previous_nfc_tag:     # и метка отличается от предыдущей
-            write_nfc_tag(nfc_tag, reader['status'])
-            data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
-            return nfc_tag  # возвращаем значение новой считанной метки
-        else:
-            return previous_nfc_tag     # если была повторно считана прошлая метка
-    else:
-        return previous_nfc_tag     # если считыватель не определил метку
+    data = data_exchange_with_reader(reader, 'read_last_item_from_buffer')
+    if len(data) > 24:  # если со считывателя пришли данные с меткой
+        nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
+        if nfc_tag not in reader['previous_nfc_tags']:     # и метка отличается от недавно считанных
+
+            status, passport = db.check_passport(nfc_tag)   # проверка наличия паспорта в базе данных
+            if status:     # если данные паспорта есть в базе данных
+                passport['status'] = reader['status']
+                passport['update_passport_required'] = False
+                db.write_balloon_passport(passport)
+                data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
+            else:
+                json_data_status, json_data = get_balloon(nfc_tag)  # запрашиваем данные в мириаде
+                if json_data_status:    # если получили данные
+                    passport['nfc_tag'] = nfc_tag
+                    passport['serial_number'] = json_data['number']
+                    passport['netto'] = float(json_data['netto'])
+                    passport['brutto'] = float(json_data['brutto'])
+                    passport['status'] = reader['status']
+                    passport['filling_status'] = json_data['status']
+                    passport['update_passport_required'] = False
+                    db.write_balloon_passport(passport)
+                    data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
+                else:
+                    passport['nfc_tag'] = nfc_tag
+                    passport['status'] = reader['status']
+                    passport['update_passport_required'] = True
+                    db.write_balloon_passport(passport)
+                    # ****************************************
+                    # вставить команду моргания лампочки
+                    data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
+                    # ****************************************
+        work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])  # сохраняем метку в кэше считанных меток
+        print(reader['ip'], reader['previous_nfc_tags'])
+    data_exchange_with_reader(reader, 'clean_buffer')   # очищаем буферную память считывателя
 
 
 def read_input_status(reader: dict):
@@ -130,8 +91,8 @@ def read_input_status(reader: dict):
     if len(data) == 18:
         print("Inputs data is: ", data)
         first_input_state = int(data[13])   # определяем состояние 1-го входа (13 индекс в ответе)
-        if first_input_state == 1 and previous_input_state == 0:     # текущее состояние "активен", а ранее он был выключен
-            write_balloons_amount(reader['number'])
+        if first_input_state == 1 and previous_input_state == 0:  # текущее состояние "активен", а ранее он был выключен
+            db.write_balloons_amount(reader['number'])
             return 1  # возвращаем состояние входа "активен"
         elif first_input_state == 0 and previous_input_state == 1:
             return 0  # возвращаем состояние входа "неактивен"
@@ -144,6 +105,6 @@ def read_input_status(reader: dict):
 if __name__ == "__main__":
     while True:
         for reader in readers:
-            reader['nfc_tag'] = read_nfc_tag(reader)
+            read_nfc_tag(reader)
             reader['input_state'] = read_input_status(reader)
             time.sleep(0.1)
