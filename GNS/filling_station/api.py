@@ -6,6 +6,19 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 
+USER_STATUS_LIST = [
+    'Принят',
+    'Наполнен',
+    'На наполнении',
+    'На освидетельствовании',
+    'Прошёл освидетельствование',
+    'Отгружен',
+    'Утилизация',
+    'На покраске',
+    'Покрашен',
+]
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_balloon_passport(request):
@@ -54,3 +67,11 @@ def update_balloon_passport(request: HttpRequest) -> JsonResponse:
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_balloon_state_options(request):
+    try:
+        return JsonResponse(USER_STATUS_LIST, status=200)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
