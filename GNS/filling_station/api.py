@@ -22,8 +22,8 @@ USER_STATUS_LIST = [
 ]
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+#@api_view(['GET'])
+#@permission_classes([IsAuthenticated])
 def get_balloon_passport(request):
     nfc = request.GET.get("nfc", 0)
     balloons = Balloon.objects.order_by('-id').filter(nfc_tag=nfc)
@@ -75,6 +75,6 @@ def update_balloon_passport(request: HttpRequest) -> JsonResponse:
 @permission_classes([IsAuthenticated])
 def get_balloon_state_options(request):
     try:
-        return JsonResponse(USER_STATUS_LIST, status=200)
+        return JsonResponse(USER_STATUS_LIST, safe=False, status=200)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid data'}, status=400)
