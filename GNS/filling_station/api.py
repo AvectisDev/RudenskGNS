@@ -5,7 +5,6 @@ import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
     'Наполнение баллона сжиженным газом',
@@ -22,8 +21,8 @@ USER_STATUS_LIST = [
 ]
 
 
-#@api_view(['GET'])
-#@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_balloon_passport(request):
     try:
         nfc = request.GET.get("nfc", 0)
@@ -83,3 +82,24 @@ def get_balloon_state_options(request):
         return JsonResponse(USER_STATUS_LIST, safe=False, status=200)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid data'}, status=400)
+
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def get_station_trucks(request):
+    try:
+        trucks = Truck.objects.filter(is_on_station=True)
+        if not trucks:
+            return JsonResponse({'error': 'Trucks not found'}, status=404)
+        else:
+            trucks_list = []
+            for truck in trucks:
+                trucks_list.append({
+                    'car_brand': truck.car_brand,
+                    'registration_number': truck.registration_number,
+                    'type': truck.type
+                })
+
+            return JsonResponse(trucks_list, safe=False, status=200)
+    except:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)

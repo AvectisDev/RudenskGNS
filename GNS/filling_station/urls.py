@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/GetBalloonPassport', api.get_balloon_passport),
     path('api/UpdateBalloonPassport', api.update_balloon_passport),
     path('api/GetBalloonStateOptions', api.get_balloon_state_options),
+    path('api/GetStationTrucks', api.get_station_trucks),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # path('client/', views.client, name="client"),
