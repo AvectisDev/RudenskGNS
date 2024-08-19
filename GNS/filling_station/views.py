@@ -18,9 +18,18 @@ STATUS_LIST = {
 }
 
 
-def index(request):
-    balloons = Balloon.objects.all()
-    return render(request, "home.html", {"balloons": balloons})
+def balloons(request):
+    balloons = Balloon.objects.order_by('-id').all()
+    paginator = Paginator(balloons, 15)
+    page_num = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_num)
+    return render(request, "balloons_table.html", {"page_obj": page_obj})
+
+
+def balloon_passport(request, nfc_tag):
+    balloon = Balloon.objects.filter(nfc_tag=nfc_tag).last()
+
+    return render(request, "balloon_passport.html", {"balloon": balloon})
 
 
 def reader_info(request, reader='1'):
@@ -55,7 +64,7 @@ def reader_info(request, reader='1'):
     for amount in previous_quantity_by_sensor:
         previous_quantity_by_sensor_item = amount.amount_of_balloons
 
-    return render(request, "balloons_table.html", {
+    return render(request, "rfid_tables.html", {
         "page_obj": page_obj,
         'current_quantity_by_reader': current_quantity_by_reader,
         'previous_quantity_by_reader': previous_quantity_by_reader,

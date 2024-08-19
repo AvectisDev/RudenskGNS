@@ -25,20 +25,25 @@ USER_STATUS_LIST = [
 #@api_view(['GET'])
 #@permission_classes([IsAuthenticated])
 def get_balloon_passport(request):
-    nfc = request.GET.get("nfc", 0)
-    balloons = Balloon.objects.order_by('-id').filter(nfc_tag=nfc)
-    # serialized_queryset = serializers.serialize('json', balloon)
-    return JsonResponse({
-        'nfc_tag': balloons[0].nfc_tag,
-        'serial_number': balloons[0].serial_number,
-        'creation_date': balloons[0].creation_date,
-        'size': balloons[0].size,
-        'netto': balloons[0].netto,
-        'brutto': balloons[0].brutto,
-        'current_examination_date': balloons[0].current_examination_date,
-        'next_examination_date': balloons[0].next_examination_date,
-        'status': balloons[0].status}
-    )
+    try:
+        nfc = request.GET.get("nfc", 0)
+        balloon = Balloon.objects.filter(nfc_tag=nfc).last()
+        if not balloon:
+            return JsonResponse({'error': 'Balloon not found'}, status=404)
+        else:
+            return JsonResponse({
+                'nfc_tag': balloon.nfc_tag,
+                'serial_number': balloon.serial_number,
+                'creation_date': balloon.creation_date,
+                'size': balloon.size,
+                'netto': balloon.netto,
+                'brutto': balloon.brutto,
+                'current_examination_date': balloon.current_examination_date,
+                'next_examination_date': balloon.next_examination_date,
+                'status': balloon.status}
+            )
+    except:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
 
 @api_view(['POST'])

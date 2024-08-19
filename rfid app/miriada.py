@@ -3,11 +3,18 @@ import requests
 
 def get_balloon_by_nfc_tag(nfc_tag):
     url = f'https://publicapi-vitebsk.cloud.gas.by/getballoonbynfctag?nfctag={nfc_tag}&realm=brestoblgas'
-    try:
-        response = requests.get(url, timeout=1)
-        return (True, response.json()['List']) if response.status_code == 200 else (False, {"status": "no data"})
-    except:
-        return False, {"status": "no data"}
+    response = requests.get(url, timeout=1)
+    if response.status_code == 200:
+        try:
+            if response.json()['status'] == "Ok":
+                return True, response.json()['List']
+
+            else:  # ['status'] == "Error"
+                return False, response.json()['error']
+        except KeyError:
+            return False, {"status": "no valid response"}
+    else:
+        return False, {"status": response.status_code}
 
 
 def search_balloon_by_nfc_tag(nfc_tag):
@@ -16,8 +23,15 @@ def search_balloon_by_nfc_tag(nfc_tag):
         'accept': 'application/json',
         'Authorization': 'Basic cGluc2tyZmlkZ25zOlhpbzhCemgzY0JRa0xtNQ=='
     }
-    try:
-        response = requests.get(url, headers=headers, timeout=1)
-        return (True, response.json()['List']) if response.status_code == 200 else (False, {"status": "no data"})
-    except:
-        return False, {"status": "no data"}
+    response = requests.get(url, timeout=1)
+    if response.status_code == 200:
+        try:
+            if response.json()['status'] == "Ok":
+                return True, response.json()['List']
+
+            else:  # ['status'] == "Error"
+                return False, response.json()['error']
+        except KeyError:
+            return False, {"status": "no valid response"}
+    else:
+        return False, {"status": response.status_code}
