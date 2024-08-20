@@ -109,7 +109,7 @@ class TTN(models.Model):
     contract = models.CharField(blank=False, max_length=20, verbose_name="Номер договора")
     name_of_supplier = models.CharField(blank=False, max_length=20, verbose_name="Поставщик")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
-    balloons_amount = models.FloatField(null=True, blank=True, verbose_name="Количество баллонов")
+    balloons_amount = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов")
     date = models.DateField(null=True, blank=True, verbose_name="Дата формирования накладной")
 
     def __str__(self):
@@ -132,7 +132,7 @@ class ShippingBatchBalloons(models.Model):
     amount_of_20_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 20л баллонов")
     amount_of_50_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 50л баллонов")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа")
-    balloons_list = ArrayField(models.CharField(max_length=20), blank=True)
+    balloons_list = ArrayField(models.CharField(max_length=20), blank=True, null=True)
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=0, verbose_name="Пользователь")

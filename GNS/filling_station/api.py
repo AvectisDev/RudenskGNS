@@ -110,20 +110,21 @@ def get_station_trucks(request):
 @permission_classes([IsAuthenticated])
 def start_loading(request):
     #try:
-        truck_registration_number = json.loads(request.body.decode('utf-8'))
-        if not truck_registration_number:
-            return Response({'error': 'Trucks not found'})
-        else:
-            shipping_batch = ShippingBatchBalloons()
-            truck = Truck.objects.filter(registration_number=truck_registration_number)
-            current_date = datetime.now()
-            shipping_batch.begin_date = current_date.date()
-            shipping_batch.begin_time = current_date.time()
-            shipping_batch.truck = truck['id']
-            shipping_batch.is_active = True
+    print(request.body)
+    truck_registration_number = json.loads(request.body.decode())
+    if not truck_registration_number:
+        return Response({'status': 'Trucks not found'})
+    else:
+        shipping_batch = ShippingBatchBalloons()
+        truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
+        current_date = datetime.now()
+        shipping_batch.begin_date = current_date.date()
+        shipping_batch.begin_time = current_date.time()
+        shipping_batch.truck_id = truck['id']
+        shipping_batch.is_active = True
 
-            shipping_batch.save()
+        shipping_batch.save()
 
-            return Response({'error': 'ok'})
+        return Response({'status': 'ok'})
     # except json.JSONDecodeError:
     #     return Response({'error': 'Invalid JSON'})

@@ -9,6 +9,7 @@ app_name = 'filling_station'
 urlpatterns = [
     path('', views.balloons, name="balloons_list"),
     path('reader/<str:reader>', views.reader_info, name="reader"),
+
     path('api/GetBalloonPassport', api.get_balloon_passport),
     path('api/UpdateBalloonPassport', api.update_balloon_passport),
     path('api/GetBalloonStateOptions', api.get_balloon_state_options),
