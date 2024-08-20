@@ -1,9 +1,10 @@
 from django.http import HttpRequest, JsonResponse
-from .models import Balloon, Truck
-from django.views.decorators.csrf import csrf_exempt
+from .models import Balloon, Truck, ShippingBatchBalloons
 import json
+from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from datetime import datetime, timedelta
 
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
@@ -47,14 +48,14 @@ def get_balloon_passport(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def update_balloon_passport(request: HttpRequest) -> JsonResponse:
+def update_balloon_passport(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
         nfc = data.get("nfc_tag")
-        balloon = Balloon.objects.filter(nfc_tag=nfc).first()
+        balloon = Balloon.objects.filter(nfc_tag=nfc).last()
 
         if not balloon:
-            return JsonResponse({'error': 'Balloon not found'}, status=404)
+            return Response({'error': 'Balloon not found'})
 
         balloon.serial_number = data.get('serial_number')
         balloon.creation_date = data.get('creation_date')
@@ -67,30 +68,30 @@ def update_balloon_passport(request: HttpRequest) -> JsonResponse:
 
         balloon.save()
 
-        return JsonResponse({'error': 'OK'}, status=200)
+        return Response({'error': 'OK'})
 
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return Response({'error': 'Invalid JSON'})
 
-    return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+    return Response({'error': 'Invalid HTTP method'})
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_balloon_state_options(request):
     try:
-        return JsonResponse(USER_STATUS_LIST, safe=False, status=200)
+        return Response(USER_STATUS_LIST)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
+        return Response({'error': 'Invalid data'})
 
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_station_trucks(request):
     try:
         trucks = Truck.objects.filter(is_on_station=True)
         if not trucks:
-            return JsonResponse({'error': 'Trucks not found'}, status=404)
+            return Response({'error': 'Trucks not found'})
         else:
             trucks_list = []
             for truck in trucks:
@@ -100,6 +101,29 @@ def get_station_trucks(request):
                     'type': truck.type
                 })
 
-            return JsonResponse(trucks_list, safe=False, status=200)
+            return Response(trucks_list)
     except:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return Response({'error': 'Invalid JSON'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_loading(request):
+    #try:
+        truck_registration_number = json.loads(request.body.decode('utf-8'))
+        if not truck_registration_number:
+            return Response({'error': 'Trucks not found'})
+        else:
+            shipping_batch = ShippingBatchBalloons()
+            truck = Truck.objects.filter(registration_number=truck_registration_number)
+            current_date = datetime.now()
+            shipping_batch.begin_date = current_date.date()
+            shipping_batch.begin_time = current_date.time()
+            shipping_batch.truck = truck['id']
+            shipping_batch.is_active = True
+
+            shipping_batch.save()
+
+            return Response({'error': 'ok'})
+    # except json.JSONDecodeError:
+    #     return Response({'error': 'Invalid JSON'})
