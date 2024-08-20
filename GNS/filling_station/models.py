@@ -60,15 +60,15 @@ class Truck(models.Model):
 class Trailer(models.Model):
     trailer_brand = models.CharField(null=True, blank=False, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(blank=False, max_length=10, verbose_name="Регистрационный знак")
-    type = models.CharField(blank=False, max_length=50, verbose_name="Тип")
+    type = models.CharField(null=True, blank=False, max_length=50, verbose_name="Тип")
     max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.IntegerField(null=True, blank=True,
                                                               verbose_name="Максимальная масса перевозимых баллонов")
     max_mass_of_transported_gas = models.IntegerField(null=True, blank=True,
                                                       verbose_name="Максимальная масса перевозимого газа")
-    empty_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес пустого т/с")
-    full_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес полного т/с")
+    empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
+    full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
 
     def __str__(self):
@@ -81,8 +81,8 @@ class Trailer(models.Model):
 
 class RailwayTanks(models.Model):
     number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
-    empty_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес пустой цистерны")
-    full_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес полной цистерны")
+    empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустой цистерны")
+    full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полной цистерны")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
     entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
     entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
@@ -135,7 +135,7 @@ class ShippingBatchBalloons(models.Model):
     balloons_list = ArrayField(models.CharField(max_length=20), blank=True, null=True)
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=0, verbose_name="Пользователь")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
 
     # def __str__(self):
     #     return self.id
@@ -150,7 +150,7 @@ class ReceivingBatchBalloons(models.Model):
     begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала отгрузки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания отгрузки")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания отгрузки")
-    truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
+    truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, default=0, verbose_name="Автомобиль")
     trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0, verbose_name="Прицеп")
     amount_of_rfid = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по rfid")
     amount_of_5_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 5л баллонов")
@@ -160,7 +160,7 @@ class ReceivingBatchBalloons(models.Model):
     balloons_list = ArrayField(models.CharField(max_length=20), blank=True)
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=0, verbose_name="Пользователь")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
 
     # def __str__(self):
     #     return self.id
