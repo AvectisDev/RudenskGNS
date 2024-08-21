@@ -1,5 +1,5 @@
 from django.http import HttpRequest, JsonResponse
-from .models import Balloon, Truck, LoadingBatchBalloons
+from .models import Balloon, Truck, LoadingBatchBalloons, UnloadingBatchBalloons
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -152,6 +152,55 @@ def stop_loading(request):
     except json.JSONDecodeError:
         return Response({'error': 'Invalid JSON'})
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_unloading(request):
+    try:
+        truck_registration_number = json.loads(request.body.decode())
+        if not truck_registration_number:
+            return Response({'status': 'Trucks not found'})
+        else:
+            unloading_batch = UnloadingBatchBalloons()
+            truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
+            current_date = datetime.now()
+            unloading_batch.begin_date = current_date.date()
+            unloading_batch.begin_time = current_date.time()
+            unloading_batch.truck_id = truck['id']
+            unloading_batch.is_active = True
+
+            unloading_batch.save()
+
+            return Response({'status': 'ok'})
+    except json.JSONDecodeError:
+        return Response({'error': 'Invalid JSON'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stop_unloading(request):
+    try:
+        batch_data = json.loads(request.body.decode())
+        if not batch_data:
+            return Response({'status': 'error'})
+        else:
+            unloading_batch = UnloadingBatchBalloons.objects.last()
+            current_date = datetime.now()
+            unloading_batch.amount_of_5_liters = batch_data['amount_of_5_liters']
+            unloading_batch.amount_of_20_liters = batch_data['amount_of_20_liters']
+            unloading_batch.amount_of_50_liters = batch_data['amount_of_50_liters']
+            unloading_batch.end_date = current_date.date()
+            unloading_batch.end_time = current_date.time()
+            unloading_batch.is_active = False
+
+            unloading_batch.save()
+
+            return Response({'status': 'ok'})
+    except json.JSONDecodeError:
+        return Response({'error': 'Invalid JSON'})
+
+
+#   API для обмена данными с rfid-программой
 @api_view(['GET'])
 def get_loading_batch_balloons(request):
     try:

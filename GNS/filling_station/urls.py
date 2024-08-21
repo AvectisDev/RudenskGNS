@@ -17,8 +17,8 @@ urlpatterns = [
 
     path('api/StartLoading', csrf_exempt(api.start_loading)),
     path('api/StopLoading', api.stop_loading),
-    # path('api/StartUnloading', api.start_unloading),
-    # path('api/StopUnloading', api.stop_unloading),
+    path('api/StartUnloading', api.start_unloading),
+    path('api/StopUnloading', api.stop_unloading),
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
