@@ -1,14 +1,14 @@
 import requests
 
 
-def get_loading_batch_balloons():
-    url = f'http://10.10.12.253:8000/api/rfid/GetShippingBatchBalloons'
-    # url = f'http://127.0.0.1:8000/api/rfid/GetLoadingBatchBalloons'
+def get_batch_balloons(batch_type):
+    # url = f'http://10.10.12.253:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
+    url = f'http://127.0.0.1:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
     try:
         response = requests.get(url, timeout=1)
         if response.status_code == 200:
             if response.json()['status'] == "ok":
-                return True, response.json()['loading_batch_id']
+                return True, response.json()['batch_id']
 
             else:  # ['status'] == "error"
                 return False, response.json()['error']
@@ -20,11 +20,11 @@ def get_loading_batch_balloons():
         return False, {"status": "no valid response"}
 
 
-def update_loading_batch_balloons(reader: dict):
-    url = f'http://10.10.12.253:8000/api/rfid/UpdateShippingBatchBalloons'
-    # url = f'http://127.0.0.1:8000/api/rfid/UpdateLoadingBatchBalloons'
+def update_batch_balloons(batch_type, reader: dict):
+    # url = f'http://10.10.12.253:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
+    url = f'http://127.0.0.1:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
     data = {
-        'loading_batch_id': reader['batch']['loading_batch_id'],
+        'batch_id': reader['batch']['batch_id'],
         'balloons_list': reader['batch']['balloons_list']
     }
     try:
@@ -38,7 +38,7 @@ def update_loading_batch_balloons(reader: dict):
     except:
         return False, {"status": "no valid response"}
 
-#
-# data = {'batch': {'loading_batch_id': '6', 'balloons_list': ['sdg', 'sdg', 'sdg', 'sdg']}}
-# print(get_loading_batch_balloons())
-# print(update_loading_batch_balloons(data))
+
+data = {'batch': {'batch_id': 2, 'balloons_list': ['yr5e6', 'sdg', 'sdg', 'sdg']}}
+print(get_batch_balloons('loading'))
+print(update_batch_balloons('loading', data))

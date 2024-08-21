@@ -24,8 +24,8 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # rfid readers main app
-    path('api/rfid/GetLoadingBatchBalloons', api.get_loading_batch_balloons),
-    path('api/rfid/UpdateLoadingBatchBalloons', api.update_loading_batch_balloons),
+    path('api/rfid/GetBatchBalloons', api.get_batch_balloons),
+    path('api/rfid/UpdateBatchBalloons', api.update_batch_balloons),
     # path('client/loading/', views.loading, name='loading'),
     # path('client/unloading/', views.unloading, name='unloading')
 ]

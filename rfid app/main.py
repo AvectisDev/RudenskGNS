@@ -4,7 +4,7 @@ import binascii
 import time
 from parameters import readers, COMMANDS, passport_template
 from miriada import get_balloon_by_nfc_tag as get_balloon
-from django_api import get_loading_batch_balloons, update_loading_batch_balloons
+from django_api import get_batch_balloons, update_batch_balloons
 
 
 def data_exchange_with_reader(controller: dict, command: str):
@@ -52,14 +52,14 @@ def read_nfc_tag(reader: dict):
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
         if nfc_tag not in reader['previous_nfc_tags']:     # и метка отличается от недавно считанных
-            if reader['function'] == 'loading':
-                batch_status, batch_id = get_loading_batch_balloons()
+            if reader['function'] is not None:
+                batch_status, batch_id = get_batch_balloons(reader['function'])
                 if batch_status:
-                    reader['batch']['loading_batch_id'] = batch_id
+                    reader['batch']['batch_id'] = batch_id
                     reader['batch']['balloons_list'].append(nfc_tag)
-                    update_loading_batch_balloons(reader)
+                    update_batch_balloons(reader['function'], reader)
                 else:
-                    reader['batch']['loading_batch_id'] = 0
+                    reader['batch']['batch_id'] = 0
                     reader['batch']['balloons_list'].clear()
 
             status, passport = db.check_passport(nfc_tag)   # проверка наличия паспорта в базе данных
