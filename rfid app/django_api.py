@@ -2,8 +2,8 @@ import requests
 
 
 def get_batch_balloons(batch_type):
-    # url = f'http://10.10.12.253:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
-    url = f'http://127.0.0.1:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
+    url = f'http://10.10.12.253:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
+    # url = f'http://127.0.0.1:8000/api/rfid/GetBatchBalloons?batch_type={batch_type}'
     try:
         response = requests.get(url, timeout=1)
         if response.status_code == 200:
@@ -21,8 +21,8 @@ def get_batch_balloons(batch_type):
 
 
 def update_batch_balloons(batch_type, reader: dict):
-    # url = f'http://10.10.12.253:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
-    url = f'http://127.0.0.1:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
+    url = f'http://10.10.12.253:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
+    # url = f'http://127.0.0.1:8000/api/rfid/UpdateBatchBalloons?batch_type={batch_type}'
     data = {
         'batch_id': reader['batch']['batch_id'],
         'balloons_list': reader['batch']['balloons_list']
