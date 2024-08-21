@@ -1,5 +1,5 @@
 from django.http import HttpRequest, JsonResponse
-from .models import Balloon, Truck, ShippingBatchBalloons
+from .models import Balloon, Truck, LoadingBatchBalloons
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -114,7 +114,7 @@ def start_loading(request):
         if not truck_registration_number:
             return Response({'status': 'Trucks not found'})
         else:
-            shipping_batch = ShippingBatchBalloons()
+            shipping_batch = LoadingBatchBalloons()
             truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
             current_date = datetime.now()
             shipping_batch.begin_date = current_date.date()
@@ -129,12 +129,33 @@ def start_loading(request):
         return Response({'error': 'Invalid JSON'})
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stop_loading(request):
+    try:
+        batch_data = json.loads(request.body.decode())
+        if not batch_data:
+            return Response({'status': 'error'})
+        else:
+            loading_batch = LoadingBatchBalloons.objects.last()
+            current_date = datetime.now()
+            loading_batch.amount_of_5_liters = batch_data['amount_of_5_liters']
+            loading_batch.amount_of_20_liters = batch_data['amount_of_20_liters']
+            loading_batch.amount_of_50_liters = batch_data['amount_of_50_liters']
+            loading_batch.end_date = current_date.date()
+            loading_batch.end_time = current_date.time()
+            loading_batch.is_active = False
 
+            loading_batch.save()
+
+            return Response({'status': 'ok'})
+    except json.JSONDecodeError:
+        return Response({'error': 'Invalid JSON'})
 
 @api_view(['GET'])
 def get_loading_batch_balloons(request):
     try:
-        loading_batch_balloons = ShippingBatchBalloons.objects.filter(is_active=True).last().__dict__
+        loading_batch_balloons = LoadingBatchBalloons.objects.filter(is_active=True).last().__dict__
         if not loading_batch_balloons:
             return Response({'status': 'error', 'error': 'loading batch not found'})
         else:
@@ -150,7 +171,7 @@ def update_loading_batch_balloons(request):
         if not data:
             return Response({'status': 'error', 'error': 'loading batch not found'})
         else:
-            loading_batch = ShippingBatchBalloons.objects.get(id=data['loading_batch_id'])
+            loading_batch = LoadingBatchBalloons.objects.get(id=data['loading_batch_id'])
             loading_batch.balloons_list = data['balloons_list']
             loading_batch.save()
             return Response({'status': 'ok'})

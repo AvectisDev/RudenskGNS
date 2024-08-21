@@ -16,7 +16,7 @@ urlpatterns = [
     path('api/GetStationTrucks', api.get_station_trucks),
 
     path('api/StartLoading', csrf_exempt(api.start_loading)),
-    # path('api/StopLoading', api.stop_loading),
+    path('api/StopLoading', api.stop_loading),
     # path('api/StartUnloading', api.start_unloading),
     # path('api/StopUnloading', api.stop_unloading),
 

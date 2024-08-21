@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, ShippingBatchBalloons, ReceivingBatchBalloons,
-                     ShippingBatchRailway)
+from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, LoadingBatchBalloons, UnloadingBatchBalloons,
+                     LoadingBatchRailway)
 from import_export import resources
 
 
@@ -42,21 +42,21 @@ class TTNAdmin(admin.ModelAdmin):
     list_display = ['id', 'number', 'contract', 'name_of_supplier', 'gas_amount', 'balloons_amount', 'date']
 
 
-@admin.register(ShippingBatchBalloons)
+@admin.register(LoadingBatchBalloons)
 class ShippingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                     'balloons_list', 'is_active', 'ttn']
 
 
-@admin.register(ReceivingBatchBalloons)
+@admin.register(UnloadingBatchBalloons)
 class ReceivingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                     'balloons_list', 'is_active', 'ttn']
 
 
-@admin.register(ShippingBatchRailway)
+@admin.register(LoadingBatchRailway)
 class ShippingBatchRailwayAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'gas_amount', 'railway_tanks_list',
                     'is_active', 'ttn']

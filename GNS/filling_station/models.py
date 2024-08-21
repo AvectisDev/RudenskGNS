@@ -120,7 +120,7 @@ class TTN(models.Model):
         verbose_name_plural = "Баллоны"
 
 
-class ShippingBatchBalloons(models.Model):
+class LoadingBatchBalloons(models.Model):
     begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала приёмки")
     begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
@@ -145,7 +145,7 @@ class ShippingBatchBalloons(models.Model):
         verbose_name_plural = "Партии приёмки баллонов"
 
 
-class ReceivingBatchBalloons(models.Model):
+class UnloadingBatchBalloons(models.Model):
     begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала отгрузки")
     begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала отгрузки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания отгрузки")
@@ -170,7 +170,7 @@ class ReceivingBatchBalloons(models.Model):
         verbose_name_plural = "Партии отгрузки баллонов"
 
 
-class ShippingBatchRailway(models.Model):
+class LoadingBatchRailway(models.Model):
     begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала приёмки")
     begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
