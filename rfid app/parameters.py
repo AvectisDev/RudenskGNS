@@ -8,7 +8,9 @@ readers[0] = {
     'number': 1,
     'status': 'Регистрация пустого баллона на складе (из кассеты)',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': '',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 # Г-образный
@@ -18,7 +20,9 @@ readers[1] = {
     'number': 2,
     'status': 'Погрузка полного баллона в кассету',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': '',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 # Считыватели на отгрузке
@@ -28,7 +32,9 @@ readers[2] = {
     'number': 3,
     'status': 'Погрузка полного баллона на трал 1',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': 'unloading',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 readers[3] = {
@@ -37,7 +43,9 @@ readers[3] = {
     'number': 4,
     'status': 'Погрузка полного баллона на трал 2',  # в торце рампы
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': 'unloading',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 readers[4] = {
@@ -46,7 +54,9 @@ readers[4] = {
     'number': 5,
     'status': 'Регистрация полного баллона на складе',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': '',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 readers[5] = {
@@ -55,7 +65,9 @@ readers[5] = {
     'number': 6,
     'status': 'Регистрация пустого баллона на складе (рампа)',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': 'loading',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 # Считыватели в цеху
@@ -65,7 +77,9 @@ readers[6] = {
     'number': 7,
     'status': 'Регистрация пустого баллона на складе (цех)',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': '',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 readers[7] = {
@@ -74,7 +88,9 @@ readers[7] = {
     'number': 8,
     'status': 'Наполнение баллона сжиженным газом',
     'input_state': 0,
-    'previous_nfc_tags': []
+    'previous_nfc_tags': [],
+    'function': '',
+    'batch': {'loading_batch_id': 0, 'balloons_list': []}
 }
 
 passport_template = {

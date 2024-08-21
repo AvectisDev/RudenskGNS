@@ -22,7 +22,10 @@ urlpatterns = [
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # path('client/', views.client, name="client"),
+
+    # rfid readers main app
+    path('api/rfid/GetLoadingBatchBalloons', api.get_loading_batch_balloons),
+    path('api/rfid/UpdateLoadingBatchBalloons', api.update_loading_batch_balloons),
     # path('client/loading/', views.loading, name='loading'),
     # path('client/unloading/', views.unloading, name='unloading')
 ]

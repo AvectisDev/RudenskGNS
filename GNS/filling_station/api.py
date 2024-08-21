@@ -127,3 +127,32 @@ def start_loading(request):
             return Response({'status': 'ok'})
     except json.JSONDecodeError:
         return Response({'error': 'Invalid JSON'})
+
+
+
+
+@api_view(['GET'])
+def get_loading_batch_balloons(request):
+    try:
+        loading_batch_balloons = ShippingBatchBalloons.objects.filter(is_active=True).last().__dict__
+        if not loading_batch_balloons:
+            return Response({'status': 'error', 'error': 'loading batch not found'})
+        else:
+            return Response({'status': 'ok', 'loading_batch_id': loading_batch_balloons['id']})
+    except:
+        return Response({'status': 'error', 'error': 'Invalid JSON'})
+
+
+@api_view(['POST'])
+def update_loading_batch_balloons(request):
+    try:
+        data = json.loads(request.body.decode())
+        if not data:
+            return Response({'status': 'error', 'error': 'loading batch not found'})
+        else:
+            loading_batch = ShippingBatchBalloons.objects.get(id=data['loading_batch_id'])
+            loading_batch.balloons_list = data['balloons_list']
+            loading_batch.save()
+            return Response({'status': 'ok'})
+    except:
+        return Response({'status': 'error', 'error': 'Invalid JSON'})
