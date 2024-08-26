@@ -23,13 +23,17 @@
             </tr>
             {% for balloon in page_obj.object_list %}
             <tr align="center">
-                <td>{{ balloon.nfc_tag }}</td>
+                <td>
+                    <a href="{% url 'filling_station:balloon_passport' balloon.nfc_tag %}">
+                    {{ balloon.nfc_tag }}
+                    </a>
+                </td>
                 <td>{{ balloon.serial_number }}</td>
-                <td>{{ balloon.netto }}</td>
-                <td>{{ balloon.brutto }}</td>
-                <td>{{ balloon.status }}</td>
-                <td>{{ balloon.change_date }}</td>
-                <td>{{ balloon.change_time }}</td>
+                <td>{{ balloon.history.last.netto }}</td>
+                <td>{{ balloon.history.last.brutto }}</td>
+                <td>{{ balloon.history.last.status }}</td>
+                <td>{{ balloon.history.last.change_date }}</td>
+                <td>{{ balloon.history.last.change_time }}</td>
             </tr>
             {% endfor %}
         </table>

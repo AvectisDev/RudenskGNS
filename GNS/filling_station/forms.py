@@ -24,23 +24,17 @@ class GetBalloonsAmount(forms.Form):
         return date_data
 
 
-class UpdateBalloonPassport(forms.Form):
-    nfc_tag = forms.CharField()
-    serial_number = forms.CharField()
-    creation_date = forms.DateField()
-    size = forms.FloatField()
-    netto = forms.FloatField()
-    brutto = forms.FloatField()
-    current_examination_date = forms.DateField()
-    next_examination_date = forms.DateField()
-    manufacturer = forms.CharField()
-    wall_thickness = forms.FloatField()
-    status = forms.CharField()
+class BalloonPassportForm(forms.Form):
+    nfc_tag = forms.CharField(max_length=30, label="Метка", widget=forms.TextInput())
+    serial_number = forms.CharField(max_length=30, label="Серийный номер", widget=forms.TextInput())
+    creation_date = forms.DateField(label="Дата производства")
+    size = forms.FloatField(min_value=0.0, max_value=100.0, label="Объём")
+    netto = forms.FloatField(min_value=0.0, max_value=100.0, label="Вес нетто")
+    brutto = forms.FloatField(min_value=0.0, max_value=100.0, label="Вес брутто")
+    current_examination_date = forms.DateField(label="Дата освидетельствования", widget=forms.SelectDateWidget)
+    next_examination_date = forms.DateField(label="Дата следующего освидетельствования", widget=forms.SelectDateWidget)
+    manufacturer = forms.CharField(label="Производитель")
+    wall_thickness = forms.FloatField(label="Толщина стенок")
+    status = forms.ChoiceField(label="Статус", choices=((1, "English"), (2, "German"), (3, "French")))
 
-    #date = forms.CharField(max_length=10, label="Дата", widget=forms.TextInput(attrs={'placeholder': 'дд.мм.гггг'}))
 
-    # def clean_data(self):
-    #     date_data = self.cleaned_data["date"]
-    #     if date_data is None or len(date_data) != 10:
-    #         raise forms.ValidationError("Поле не может быть пустым")
-    #     return date_data

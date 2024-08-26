@@ -4,24 +4,14 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class Balloon(models.Model):
-    STATE = {"r": "Зарегистрирован", "f": "Наполнение", "e": "На рампе", "o": "Отгружен"}
-
     nfc_tag = models.CharField(blank=False, max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
     creation_date = models.DateField(null=True, blank=True, verbose_name="Дата производства")
     size = models.FloatField(null=True, blank=True, verbose_name="Объём")
-    netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
-    brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
-    current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
-    next_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата следующего освидетельствования")
     manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
     wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
-    status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
     filling_status = models.IntegerField(null=True, blank=True, verbose_name="Готов к наполнению")
     update_passport_required = models.BooleanField(null=True, blank=True, verbose_name="Требуется обновление паспорта")
-    change_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата изменений")
-    change_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время изменений")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь")
 
     def __str__(self):
         return self.nfc_tag
@@ -29,12 +19,39 @@ class Balloon(models.Model):
     class Meta:
         verbose_name = "Баллон"
         verbose_name_plural = "Баллоны"
+        ordering = ['-id']
+        indexes = [
+            models.Index(fields=['-nfc_tag', '-serial_number']),
+        ]
+
+
+class BalloonHistory(models.Model):
+    balloon = models.ForeignKey(Balloon, on_delete=models.CASCADE, related_name='history', verbose_name="Метка")
+    netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
+    brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
+    current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
+    next_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата следующего освидетельствования")
+    status = models.CharField(blank=True, max_length=100, verbose_name="Статус")
+    change_date = models.DateField(null=True, blank=True, auto_now=True, verbose_name="Дата изменений")
+    change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время изменений")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь")
+
+    def __str__(self):
+        return self.balloon.nfc_tag
+
+    class Meta:
+        verbose_name = "История баллона"
+        verbose_name_plural = "История баллонов"
+        ordering = ['-change_date']
+        indexes = [
+            models.Index(fields=['-balloon']),
+        ]
 
 
 class Truck(models.Model):
-    car_brand = models.CharField(null=True, blank=False, max_length=20, verbose_name="Марка авто")
+    car_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка авто")
     registration_number = models.CharField(blank=False, max_length=10, verbose_name="Регистрационный знак")
-    type = models.CharField(blank=False, max_length=50, verbose_name="Тип")
+    type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
     max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.IntegerField(null=True, blank=True,
@@ -58,9 +75,9 @@ class Truck(models.Model):
 
 
 class Trailer(models.Model):
-    trailer_brand = models.CharField(null=True, blank=False, max_length=20, verbose_name="Марка прицепа")
+    trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(blank=False, max_length=10, verbose_name="Регистрационный знак")
-    type = models.CharField(null=True, blank=False, max_length=50, verbose_name="Тип")
+    type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
     max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.IntegerField(null=True, blank=True,
@@ -100,8 +117,8 @@ class RailwayTanks(models.Model):
 class BalloonAmount(models.Model):
     reader_id = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
     amount_of_balloons = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по датчику")
-    change_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата обновления")
-    change_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время обновления")
+    change_date = models.DateField(null=True, blank=True, auto_now=True, verbose_name="Дата обновления")
+    change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время обновления")
 
 
 class TTN(models.Model):
@@ -121,8 +138,8 @@ class TTN(models.Model):
 
 
 class LoadingBatchBalloons(models.Model):
-    begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала приёмки")
-    begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала приёмки")
+    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
+    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания приёмки")
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
@@ -137,17 +154,14 @@ class LoadingBatchBalloons(models.Model):
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
 
-    # def __str__(self):
-    #     return self.id
-
     class Meta:
         verbose_name = "Партия приёмки баллонов"
         verbose_name_plural = "Партии приёмки баллонов"
 
 
 class UnloadingBatchBalloons(models.Model):
-    begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала отгрузки")
-    begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала отгрузки")
+    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала отгрузки")
+    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала отгрузки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания отгрузки")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания отгрузки")
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, default=0, verbose_name="Автомобиль")
@@ -162,17 +176,14 @@ class UnloadingBatchBalloons(models.Model):
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
 
-    # def __str__(self):
-    #     return self.id
-
     class Meta:
         verbose_name = "Партия отгрузки баллонов"
         verbose_name_plural = "Партии отгрузки баллонов"
 
 
 class LoadingBatchRailway(models.Model):
-    begin_date = models.DateField(null=True, blank=True, verbose_name="Дата начала приёмки")
-    begin_time = models.TimeField(null=True, blank=True, verbose_name="Время начала приёмки")
+    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
+    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
     end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания приёмки")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа")
@@ -180,9 +191,6 @@ class LoadingBatchRailway(models.Model):
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=0, verbose_name="Пользователь")
-
-    # def __str__(self):
-    #     return self.id
 
     class Meta:
         verbose_name = "Партия приёмки жд цистерн"

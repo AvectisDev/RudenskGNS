@@ -114,16 +114,12 @@ def start_loading(request):
         if not truck_registration_number:
             return Response({'status': 'Trucks not found'})
         else:
-            shipping_batch = LoadingBatchBalloons()
+            loading_batch = LoadingBatchBalloons()
             truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
-            current_date = datetime.now()
-            shipping_batch.begin_date = current_date.date()
-            shipping_batch.begin_time = current_date.time()
-            shipping_batch.truck_id = truck['id']
-            shipping_batch.user_id = 1
-            shipping_batch.is_active = True
+            loading_batch.truck_id = truck['id']
+            loading_batch.is_active = True
 
-            shipping_batch.save()
+            loading_batch.save()
 
             return Response({'status': 'ok'})
     except json.JSONDecodeError:
@@ -164,9 +160,6 @@ def start_unloading(request):
         else:
             unloading_batch = UnloadingBatchBalloons()
             truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
-            current_date = datetime.now()
-            unloading_batch.begin_date = current_date.date()
-            unloading_batch.begin_time = current_date.time()
             unloading_batch.truck_id = truck['id']
             unloading_batch.is_active = True
 

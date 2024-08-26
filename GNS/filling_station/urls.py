@@ -8,6 +8,7 @@ app_name = 'filling_station'
 
 urlpatterns = [
     path('', views.balloons, name="balloons_list"),
+    path('<str:nfc_tag>/', views.balloon_passport, name='balloon_passport'),
     path('reader/<str:reader>', views.reader_info, name="reader"),
 
     path('api/GetBalloonPassport', api.get_balloon_passport),
