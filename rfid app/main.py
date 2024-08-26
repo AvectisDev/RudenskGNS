@@ -54,13 +54,14 @@ def read_nfc_tag(reader: dict):
         if nfc_tag not in reader['previous_nfc_tags']:     # и метка отличается от недавно считанных
             if reader['function'] is not None:
                 batch_status, batch_id = get_batch_balloons(reader['function'])
+                
                 if batch_status:
                     reader['batch']['batch_id'] = batch_id
                     reader['batch']['balloons_list'].append(nfc_tag)
                     update_batch_balloons(reader['function'], reader)
-                else:
-                    reader['batch']['batch_id'] = 0
-                    reader['batch']['balloons_list'].clear()
+                #else:
+                   # reader['batch']['batch_id'] = 0
+                    #reader['batch']['balloons_list'].clear()
 
             status, passport = db.check_passport(nfc_tag)   # проверка наличия паспорта в базе данных
             if status:     # если данные паспорта есть в базе данных

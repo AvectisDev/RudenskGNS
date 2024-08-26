@@ -120,6 +120,7 @@ def start_loading(request):
             shipping_batch.begin_date = current_date.date()
             shipping_batch.begin_time = current_date.time()
             shipping_batch.truck_id = truck['id']
+            shipping_batch.user_id = 1
             shipping_batch.is_active = True
 
             shipping_batch.save()
