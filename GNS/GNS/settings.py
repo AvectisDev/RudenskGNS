@@ -1,3 +1,4 @@
+import os
 """
 Django settings for GNS project.
 
@@ -41,7 +42,16 @@ INSTALLED_APPS = [
     'filling_station.apps.FillingStationConfig',
     'import_export',
     'rest_framework',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
+    'debug_toolbar',
+    'pghistory',
+    'pgtrigger'
+]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    'localhost',
+    '[::1]',
 ]
 
 REST_FRAMEWORK = {
@@ -69,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware"
 ]
 
 ROOT_URLCONF = 'GNS.urls'
@@ -106,6 +117,8 @@ DATABASES = {
     }
 }
 
+# PGHISTORY_CONTEXT_FIELD = None
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -131,10 +144,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # LANGUAGE_CODE = 'en-us'
 LANGUAGE_CODE = 'ru-RU'
 
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Europe/Minsk'
 USE_I18N = True
-
 USE_TZ = True
 
 

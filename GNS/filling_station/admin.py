@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, LoadingBatchBalloons, UnloadingBatchBalloons,
-                     LoadingBatchRailway, BalloonHistory)
+                     LoadingBatchRailway)
 from import_export import resources
 
 
@@ -13,16 +13,9 @@ class BalloonResources(resources.ModelResource):
 
 @admin.register(Balloon)
 class BalloonAdmin(admin.ModelAdmin):
-    list_display = ['id', 'nfc_tag', 'serial_number', 'creation_date', 'size', 'manufacturer', 'wall_thickness',
+    list_display = ['id', 'nfc_tag', 'serial_number', 'creation_date', 'size', 'netto', 'brutto',
+                    'current_examination_date', 'next_examination_date', 'status', 'manufacturer', 'wall_thickness',
                     'filling_status', 'update_passport_required']
-    search_fields = ['nfc_tag', 'serial_number', 'creation_date', 'size', 'manufacturer']
-    ordering = ['-id']
-
-
-@admin.register(BalloonHistory)
-class BalloonHistoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'balloon', 'netto', 'brutto', 'current_examination_date', 'next_examination_date', 'status',
-                    'change_date', 'change_time', 'user']
     search_fields = ['nfc_tag', 'serial_number', 'creation_date', 'size', 'manufacturer']
     ordering = ['-id']
 
@@ -62,7 +55,7 @@ class TTNAdmin(admin.ModelAdmin):
 
 
 @admin.register(LoadingBatchBalloons)
-class ShippingBatchBalloonsAdmin(admin.ModelAdmin):
+class LoadingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                     'balloons_list', 'is_active', 'ttn']
@@ -72,7 +65,7 @@ class ShippingBatchBalloonsAdmin(admin.ModelAdmin):
 
 
 @admin.register(UnloadingBatchBalloons)
-class ReceivingBatchBalloonsAdmin(admin.ModelAdmin):
+class UnloadingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                     'balloons_list', 'is_active', 'ttn']
@@ -82,7 +75,7 @@ class ReceivingBatchBalloonsAdmin(admin.ModelAdmin):
 
 
 @admin.register(LoadingBatchRailway)
-class ShippingBatchRailwayAdmin(admin.ModelAdmin):
+class LoadingBatchRailwayAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'gas_amount', 'railway_tanks_list',
                     'is_active', 'ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']
