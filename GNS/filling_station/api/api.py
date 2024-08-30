@@ -1,10 +1,14 @@
+from ..models import Balloon, Truck, BalloonsLoadingBatch, BalloonsUnloadingBatch
+from django.shortcuts import get_object_or_404
 from django.http import HttpRequest, JsonResponse
-from .models import Balloon, Truck, BalloonsLoadingBatch, BalloonsUnloadingBatch
 import json
+from rest_framework import generics, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
+from .serializers import BalloonSerializer
 
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
@@ -22,28 +26,32 @@ USER_STATUS_LIST = [
 ]
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_balloon_passport(request):
-    try:
-        nfc = request.GET.get("nfc", 0)
-        balloon = Balloon.objects.filter(nfc_tag=nfc).last()
-        if not balloon:
-            return JsonResponse({'error': 'Balloon not found'}, status=404)
+class BalloonView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, nfc_tag: str):
+        balloon = Balloon.objects.filter(nfc_tag=nfc_tag).first()
+
+        if balloon is None:
+            return Response({'error': 'Balloon not found'})
         else:
-            return JsonResponse({
-                'nfc_tag': balloon.nfc_tag,
-                'serial_number': balloon.serial_number,
-                'creation_date': balloon.creation_date,
-                'size': balloon.size,
-                'netto': balloon.netto,
-                'brutto': balloon.brutto,
-                'current_examination_date': balloon.current_examination_date,
-                'next_examination_date': balloon.next_examination_date,
-                'status': balloon.status}
-            )
-    except:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            serializer = BalloonSerializer(balloon)
+            return Response(serializer.data)
+
+    def post(self, request, nfc_tag: str):
+        serializer = BalloonSerializer(data=request.data)
+        balloon = Balloon.objects.filter(nfc_tag=nfc_tag).first()
+
+        if balloon is None:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            serializer = BalloonSerializer(balloon)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -52,7 +60,7 @@ def update_balloon_passport(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
         nfc = data.get("nfc_tag")
-        balloon = Balloon.objects.filter(nfc_tag=nfc).last()
+        balloon = Balloon.objects.filter(nfc_tag=nfc).first()
 
         if not balloon:
             return Response({'error': 'Balloon not found'})

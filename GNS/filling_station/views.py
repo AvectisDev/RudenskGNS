@@ -36,24 +36,24 @@ def balloons(request):
 
 
 def balloon_passport(request, nfc_tag):
-    # try:
-    balloon = Balloon.objects.filter(nfc_tag=nfc_tag).first()
+    try:
+        balloon = Balloon.objects.filter(nfc_tag=nfc_tag).first()
 
-    if request.method == 'POST':
-        form = BalloonPassportForm(request.POST, instance=balloon)
-        if form.is_valid():
-            balloon = form.save()
-            return redirect('filling_station:balloons_list')
-    else:
-        form = BalloonPassportForm(instance=balloon)
-    # except:
-    #     raise Http404("No Balloon found")
+        if request.method == 'POST':
+            form = BalloonPassportForm(request.POST, instance=balloon)
+            if form.is_valid():
+                balloon = form.save()
+                return redirect('filling_station:balloons_list')
+        else:
+            form = BalloonPassportForm(instance=balloon)
 
-    context = {
-        "balloon": balloon,
-        'form': form
-    }
-    return render(request, "balloon_passport.html", context)
+            context = {
+                "balloon": balloon,
+                'form': form
+            }
+            return render(request, "balloon_passport.html", context)
+    except:
+        raise Http404("No Balloon found")
 
 
 def reader_info(request, reader='1'):
