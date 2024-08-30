@@ -1,5 +1,5 @@
 from django.http import HttpRequest, JsonResponse
-from .models import Balloon, Truck, LoadingBatchBalloons, UnloadingBatchBalloons
+from .models import Balloon, Truck, BalloonsLoadingBatch, BalloonsUnloadingBatch
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -114,7 +114,7 @@ def start_loading(request):
         if not truck_registration_number:
             return Response({'status': 'Trucks not found'})
         else:
-            loading_batch = LoadingBatchBalloons()
+            loading_batch = BalloonsLoadingBatch()
             truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
             loading_batch.truck_id = truck['id']
             loading_batch.is_active = True
@@ -134,7 +134,7 @@ def stop_loading(request):
         if not batch_data:
             return Response({'status': 'error'})
         else:
-            loading_batch = LoadingBatchBalloons.objects.last()
+            loading_batch = BalloonsLoadingBatch.objects.last()
             current_date = datetime.now()
             loading_batch.amount_of_5_liters = batch_data['amount_of_5_liters']
             loading_batch.amount_of_20_liters = batch_data['amount_of_20_liters']
@@ -158,7 +158,7 @@ def start_unloading(request):
         if not truck_registration_number:
             return Response({'status': 'Trucks not found'})
         else:
-            unloading_batch = UnloadingBatchBalloons()
+            unloading_batch = BalloonsUnloadingBatch()
             truck = Truck.objects.get(registration_number=truck_registration_number['registration_number']).__dict__
             unloading_batch.truck_id = truck['id']
             unloading_batch.is_active = True
@@ -178,7 +178,7 @@ def stop_unloading(request):
         if not batch_data:
             return Response({'status': 'error'})
         else:
-            unloading_batch = UnloadingBatchBalloons.objects.last()
+            unloading_batch = BalloonsUnloadingBatch.objects.last()
             current_date = datetime.now()
             unloading_batch.amount_of_5_liters = batch_data['amount_of_5_liters']
             unloading_batch.amount_of_20_liters = batch_data['amount_of_20_liters']
@@ -200,9 +200,9 @@ def get_batch_balloons(request):
     batch_type = request.GET.get("batch_type")
     try:
         if batch_type == 'loading':
-            batch_balloons = LoadingBatchBalloons.objects.filter(is_active=True).last()
+            batch_balloons = BalloonsLoadingBatch.objects.filter(is_active=True).last()
         elif batch_type == 'unloading':
-            batch_balloons = UnloadingBatchBalloons.objects.filter(is_active=True).last()
+            batch_balloons = BalloonsUnloadingBatch.objects.filter(is_active=True).last()
         else:
             batch_balloons = ''
 
@@ -216,18 +216,15 @@ def get_batch_balloons(request):
 
 @api_view(['POST'])
 def update_batch_balloons(request):
-    batch_type = request.POST.get("batch_type")
-    print(batch_type)
     try:
         data = json.loads(request.body.decode())
-        print(data['balloons_list'])
         if not data:
             return Response({'status': 'error', 'error': 'no data'})
         else:
-            if batch_type == 'loading':
-                batch_balloons = LoadingBatchBalloons.objects.get(id=data['batch_id'])
-            elif batch_type == 'unloading':
-                batch_balloons = UnloadingBatchBalloons.objects.get(id=data['batch_id'])
+            if data['batch_type'] == 'loading':
+                batch_balloons = BalloonsLoadingBatch.objects.get(id=data['batch_id'])
+            elif data['batch_type'] == 'unloading':
+                batch_balloons = BalloonsUnloadingBatch.objects.get(id=data['batch_id'])
             else:
                 batch_balloons = ''
             batch_balloons.balloons_list = data['balloons_list']

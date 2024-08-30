@@ -1,7 +1,8 @@
 import requests
 
 
-def get_balloon_by_nfc_tag(nfc_tag):
+def get_balloon_by_nfc_tag(nfc_tag: str):
+
     url = f'https://publicapi-vitebsk.cloud.gas.by/getballoonbynfctag?nfctag={nfc_tag}&realm=brestoblgas'
 
     try:

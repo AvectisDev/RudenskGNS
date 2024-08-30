@@ -51,27 +51,35 @@
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
                    aria-expanded="false">Партии</a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Приёмка ж/д цистерн</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:railway_loading_batch' %}">Приёмка ж/д
+                        цистерн</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item" href="/batch/balloons-loading">Приёмка баллонов</a></li>
-                    <li><a class="dropdown-item" href="/batch/balloons-unloading">Отгрузка баллонов</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:balloons_loading_batch' %}">Приёмка
+                        баллонов</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:balloons_unloading_batch' %}">Отгрузка
+                        баллонов</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item" href="#">Приёмка автоцистерн</a></li>
-                    <li><a class="dropdown-item" href="#">Отгрузка автоцистерн</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:auto_gas_loading_batch' %}">Приёмка
+                        автоцистерн</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:auto_gas_unloading_batch' %}">Отгрузка
+                        автоцистерн</a></li>
                 </ul>
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
                    aria-expanded="false">Транспорт</a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="/transport/trucks">Грузовики</a></li>
-                    <li><a class="dropdown-item" href="/transport/trailers">Прицепы</a></li>
-                    <li><a class="dropdown-item" href="/transport/railway">Ж/д цистерны</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:trucks' %}">Грузовики</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:trailers' %}">Прицепы</a></li>
+                    <li><a class="dropdown-item" href="{% url 'filling_station:railway_tanks' %}">Ж/д цистерны</a></li>
                 </ul>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'filling_station:get_ttn' %}">ТТН</a>
             </li>
             <!--  <li class="nav-item">-->
             <!--    <a class="nav-link disabled">Заглушка</a>-->

@@ -1,6 +1,6 @@
 from django import forms
-from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, LoadingBatchBalloons, UnloadingBatchBalloons,
-                     LoadingBatchRailway)
+from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
+                     RailwayLoadingBatch, GasLoadingBatch, GasUnloadingBatch)
 
 
 class Process(forms.Form):
@@ -120,9 +120,9 @@ class TTNForm(forms.ModelForm):
         }
 
 
-class LoadingBatchBalloonsForm(forms.ModelForm):
+class BalloonsLoadingBatchForm(forms.ModelForm):
     class Meta:
-        model = LoadingBatchBalloons
+        model = BalloonsLoadingBatch
         fields = ['end_date', 'end_time', 'truck', 'trailer',
                   'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                   'is_active', 'ttn']
@@ -141,9 +141,9 @@ class LoadingBatchBalloonsForm(forms.ModelForm):
         }
 
 
-class UnloadingBatchBalloonsForm(forms.ModelForm):
+class BalloonsUnloadingBatchForm(forms.ModelForm):
     class Meta:
-        model = UnloadingBatchBalloons
+        model = BalloonsUnloadingBatch
         fields = ['end_date', 'end_time', 'truck', 'trailer',
                   'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                   'is_active', 'ttn']
@@ -162,9 +162,9 @@ class UnloadingBatchBalloonsForm(forms.ModelForm):
         }
 
 
-class LoadingBatchRailwayForm(forms.ModelForm):
+class RailwayLoadingBatchForm(forms.ModelForm):
     class Meta:
-        model = UnloadingBatchBalloons
+        model = BalloonsUnloadingBatch
         fields = ['end_date', 'end_time', 'gas_amount',
                   'is_active', 'ttn']
         widgets = {
@@ -173,5 +173,35 @@ class LoadingBatchRailwayForm(forms.ModelForm):
             'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'ttn': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+class GasLoadingBatchForm(forms.ModelForm):
+    class Meta:
+        model = GasLoadingBatch
+        fields = ['end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'is_active', 'ttn']
+        widgets = {
+            'end_date': forms.SelectDateWidget(attrs={'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'class': 'form-control'}),
+            'truck': forms.Select(attrs={'class': 'form-control'}),
+            'trailer': forms.Select(attrs={'class': 'form-control'}),
+            'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ttn': forms.Select(attrs={'class': 'form-control'})
+        }
+
+
+class GasUnloadingBatchForm(forms.ModelForm):
+    class Meta:
+        model = GasUnloadingBatch
+        fields = ['end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'is_active', 'ttn']
+        widgets = {
+            'end_date': forms.SelectDateWidget(attrs={'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'class': 'form-control'}),
+            'truck': forms.Select(attrs={'class': 'form-control'}),
+            'trailer': forms.Select(attrs={'class': 'form-control'}),
+            'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ttn': forms.Select(attrs={'class': 'form-control'})
         }
 

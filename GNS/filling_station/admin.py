@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, LoadingBatchBalloons, UnloadingBatchBalloons,
-                     LoadingBatchRailway)
+from .models import (Balloon, Truck, Trailer, RailwayTanks, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
+                     RailwayLoadingBatch, GasLoadingBatch, GasUnloadingBatch)
 from import_export import resources
 
 
@@ -54,7 +54,7 @@ class TTNAdmin(admin.ModelAdmin):
     ordering = ['-id']
 
 
-@admin.register(LoadingBatchBalloons)
+@admin.register(BalloonsLoadingBatch)
 class LoadingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
@@ -64,7 +64,7 @@ class LoadingBatchBalloonsAdmin(admin.ModelAdmin):
     ordering = ['-id']
 
 
-@admin.register(UnloadingBatchBalloons)
+@admin.register(BalloonsUnloadingBatch)
 class UnloadingBatchBalloonsAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
@@ -74,10 +74,29 @@ class UnloadingBatchBalloonsAdmin(admin.ModelAdmin):
     ordering = ['-id']
 
 
-@admin.register(LoadingBatchRailway)
+@admin.register(RailwayLoadingBatch)
 class LoadingBatchRailwayAdmin(admin.ModelAdmin):
     list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'gas_amount', 'railway_tanks_list',
                     'is_active', 'ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']
     search_fields = ['begin_date', 'end_date', 'is_active', 'ttn']
     ordering = ['-id']
+
+
+@admin.register(GasLoadingBatch)
+class LoadingBatchGasAdmin(admin.ModelAdmin):
+    list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
+                    'gas_amount', 'is_active', 'ttn']
+    list_filter = ['begin_date', 'end_date', 'is_active']
+    search_fields = ['begin_date', 'end_date', 'truck', 'is_active', 'ttn']
+    ordering = ['-id']
+
+
+@admin.register(GasUnloadingBatch)
+class UnloadingBatchGasAdmin(admin.ModelAdmin):
+    list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
+                    'gas_amount', 'is_active', 'ttn']
+    list_filter = ['begin_date', 'end_date', 'is_active']
+    search_fields = ['begin_date', 'end_date', 'truck', 'is_active', 'ttn']
+    ordering = ['-id']
+

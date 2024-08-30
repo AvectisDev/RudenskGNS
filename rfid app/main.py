@@ -10,6 +10,7 @@ from django_api import get_batch_balloons, update_batch_balloons
 def data_exchange_with_reader(controller: dict, command: str):
     """Функция выполняет обмен данными со считывателем FEIG. Отправляет запрос и возвращает полный буфер данных со
     считывателя"""
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
             s.settimeout(0.3)
@@ -28,6 +29,7 @@ def data_exchange_with_reader(controller: dict, command: str):
 def byte_reversal(byte_string: str):
     """Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
     второй и предпоследний и т.д."""
+
     data_list = list(byte_string)
     k = -1
     for i in range((len(data_list) - 1) // 2):
@@ -39,6 +41,10 @@ def byte_reversal(byte_string: str):
 
 
 def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
+    """Функция кэширует 5 последних считанных меток и определяет, есть ли в этом списке следующая считанная метка.
+    Если метки нет в списке, то добавляет новую метку, если метка есть (повторное считывание), до пропускаем все
+    последующие действия с ней"""
+
     if len(nfc_tag_list) > 5:
         nfc_tag_list.pop(0)
         nfc_tag_list.append(nfc_tag)
@@ -48,10 +54,14 @@ def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
 
 def read_nfc_tag(reader: dict):
     """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки"""
+
     data = data_exchange_with_reader(reader, 'read_last_item_from_buffer')
+
     if len(data) > 24:  # если со считывателя пришли данные с меткой
+
         nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
-        if nfc_tag not in reader['previous_nfc_tags']:     # и метка отличается от недавно считанных
+
+        if nfc_tag not in reader['previous_nfc_tags']:     # метка отличается от недавно считанных
             if reader['function'] is not None:
                 batch_status, batch_id = get_batch_balloons(reader['function'])
                 
@@ -64,6 +74,7 @@ def read_nfc_tag(reader: dict):
                     #reader['batch']['balloons_list'].clear()
 
             status, passport = db.check_passport(nfc_tag)   # проверка наличия паспорта в базе данных
+
             if status:     # если данные паспорта есть в базе данных
                 passport['status'] = reader['status']
                 passport['update_passport_required'] = False
@@ -71,7 +82,9 @@ def read_nfc_tag(reader: dict):
                 data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
             else:
                 passport = passport_template.copy()
+
                 json_data_status, json_data = get_balloon(nfc_tag)  # запрашиваем данные в мириаде
+
                 if json_data_status:    # если получили данные
                     passport['nfc_tag'] = nfc_tag
                     passport['serial_number'] = json_data['number']
@@ -91,6 +104,7 @@ def read_nfc_tag(reader: dict):
                     # вставить команду моргания лампочки
                     data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
                     # ****************************************
+
         work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])  # сохраняем метку в кэше считанных меток
         print(reader['ip'], reader['previous_nfc_tags'])
     data_exchange_with_reader(reader, 'clean_buffer')   # очищаем буферную память считывателя

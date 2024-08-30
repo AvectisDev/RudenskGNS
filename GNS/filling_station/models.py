@@ -128,7 +128,7 @@ class TTN(models.Model):
         ordering = ['-id']
 
 
-class LoadingBatchBalloons(models.Model):
+class BalloonsLoadingBatch(models.Model):
     begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
     begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
@@ -136,6 +136,7 @@ class LoadingBatchBalloons(models.Model):
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
     trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
                                 verbose_name="Прицеп")
+    reader_number = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
     amount_of_rfid = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по rfid")
     amount_of_5_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 5л баллонов")
     amount_of_20_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 20л баллонов")
@@ -152,7 +153,7 @@ class LoadingBatchBalloons(models.Model):
         ordering = ['-id']
 
 
-class UnloadingBatchBalloons(models.Model):
+class BalloonsUnloadingBatch(models.Model):
     begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала отгрузки")
     begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала отгрузки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания отгрузки")
@@ -160,6 +161,7 @@ class UnloadingBatchBalloons(models.Model):
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
     trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
                                 verbose_name="Прицеп")
+    reader_number = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
     amount_of_rfid = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по rfid")
     amount_of_5_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 5л баллонов")
     amount_of_20_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 20л баллонов")
@@ -176,7 +178,7 @@ class UnloadingBatchBalloons(models.Model):
         ordering = ['-id']
 
 
-class LoadingBatchRailway(models.Model):
+class RailwayLoadingBatch(models.Model):
     begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
     begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
     end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
@@ -190,4 +192,42 @@ class LoadingBatchRailway(models.Model):
     class Meta:
         verbose_name = "Партия приёмки жд цистерн"
         verbose_name_plural = "Партии приёмки жд цистерн"
+        ordering = ['-id']
+
+
+class GasLoadingBatch(models.Model):
+    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
+    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
+    end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
+    end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания приёмки")
+    truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
+    trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
+                                verbose_name="Прицеп")
+    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа")
+    is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
+    ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
+
+    class Meta:
+        verbose_name = "Партия приёмки автоцистерн"
+        verbose_name_plural = "Партии приёмки автоцистерн"
+        ordering = ['-id']
+
+
+class GasUnloadingBatch(models.Model):
+    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала отгрузки")
+    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала отгрузки")
+    end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания отгрузки")
+    end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания отгрузки")
+    truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль")
+    trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
+                                verbose_name="Прицеп")
+    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество отгруженного газа")
+    is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
+    ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
+
+    class Meta:
+        verbose_name = "Партия отгрузки автоцистерн"
+        verbose_name_plural = "Партии отгрузки автоцистерн"
         ordering = ['-id']

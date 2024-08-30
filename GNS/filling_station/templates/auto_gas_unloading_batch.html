@@ -3,7 +3,7 @@
 
 {% block data %}
 
-<h5>Партии отгрузки баллонов</h5>
+<h5>Партии отгрузки газа</h5>
 
 <table class="table table-striped table-hover vertical-align: middle">
     <tr align="center" width=100%>
@@ -14,10 +14,7 @@
         <th>Время окончания</th>
         <th>Автомобиль</th>
         <th>Прицеп</th>
-        <th>Баллонов с RFID</th>
-        <th>Баллонов 5л</th>
-        <th>Баллонов 20л</th>
-        <th>Баллонов 50л</th>
+        <th>Принято газа</th>
         <th>В работе</th>
         <th>ТТН</th>
     </tr>
@@ -32,10 +29,7 @@
         <td>{{ batch.end_time }}</td>
         <td>{{ batch.truck }}</td>
         <td>{{ batch.trailer }}</td>
-        <td>{{ batch.amount_of_rfid }}</td>
-        <td>{{ batch.amount_of_5_liters }}</td>
-        <td>{{ batch.amount_of_20_liters }}</td>
-        <td>{{ batch.amount_of_50_liters }}</td>
+        <td>{{ batch.gas_amount }}</td>
         <td>{{ batch.is_active }}</td>
         <td>{{ batch.ttn }}</td>
     </tr>
