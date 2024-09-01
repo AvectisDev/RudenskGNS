@@ -26,7 +26,7 @@ class TruckAdmin(admin.ModelAdmin):
                     'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'empty_weight',
                     'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
     search_fields = ['car_brand', 'registration_number', 'type', 'is_on_station', 'entry_date', 'departure_date']
-    ordering = ['-id']
+    ordering = ['id']
 
 
 @admin.register(Trailer)
@@ -35,7 +35,7 @@ class TrailerAdmin(admin.ModelAdmin):
                     'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'empty_weight',
                     'full_weight', 'is_on_station']
     search_fields = ['trailer_brand', 'registration_number', 'type', 'is_on_station']
-    ordering = ['-id']
+    ordering = ['id']
 
 
 @admin.register(RailwayTanks)
@@ -56,7 +56,7 @@ class TTNAdmin(admin.ModelAdmin):
 
 @admin.register(BalloonsLoadingBatch)
 class LoadingBatchBalloonsAdmin(admin.ModelAdmin):
-    list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer',
+    list_display = ['id', 'begin_date', 'begin_time', 'end_date', 'end_time', 'truck', 'trailer', 'reader_number',
                     'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                     'balloons_list', 'is_active', 'ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']

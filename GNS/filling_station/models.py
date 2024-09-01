@@ -63,6 +63,7 @@ class Truck(models.Model):
 
 
 class Trailer(models.Model):
+    truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль", related_name='trailer')
     trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
     type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")

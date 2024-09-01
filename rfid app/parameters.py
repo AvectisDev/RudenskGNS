@@ -93,24 +93,6 @@ readers[7] = {
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 
-passport_template = {
-    'nfc_tag': '',
-    'serial_number': '',
-    'creation_date': '',
-    'size': 0.0,
-    'netto': 0.0,
-    'brutto': 0.0,
-    'current_examination_date': '',
-    'next_examination_date': '',
-    'manufacturer': '',
-    'wall_thickness': 0.0,
-    'status': '',
-    'filling_status': 0,
-    'change_date': '',
-    'change_time': '',
-    'user': 1
-}
-
 # Команды, посылаемые на считыватель
 COMMANDS = {
     'host_read': '020009ffb001001843',
