@@ -1,9 +1,12 @@
 import requests
+import schedule
 from datetime import datetime, timedelta
+import to_django
 
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
+START_TIME = 12  # данные запрашиваются начиная с времени = текущее время - указанное количество часов
 
 
 def get_number(data):
@@ -39,7 +42,7 @@ def convert_string_to_time(time_string: str = '') -> datetime:
     return converted_time
 
 
-def get_checkpoint_numbers(server_id, delta_hour):
+def get_checkpoint_numbers(server_id, delta_hour) -> list:
     """
     Запрос в базе данных "Интеллект" распознанных номеров на КПП.
     Возвращает номер и дату прибывших/убывших машин и прицепов в виде списка словарей.
@@ -91,11 +94,46 @@ def get_checkpoint_numbers(server_id, delta_hour):
     return out_list
 
 
+def truck_processing():
+    video_server_list = ["4", "5"]
+    for server in video_server_list:
+
+        truck_list = get_checkpoint_numbers(server, START_TIME)
+        for truck in truck_list:
+            registration_number = truck['registration_number']
+            entry_date = truck['entry_date']
+            entry_time = truck['entry_time']
+            departure_date = truck['departure_date']
+            departure_time = truck['departure_time']
+
+            truck_found, current_truck_data = to_django.get_truck(registration_number)
+            if truck_found:
+                current_truck_data = {
+                    'entry_date': entry_date,
+                    'entry_time': entry_time,
+                    'departure_date': departure_date,
+                    'departure_time': departure_time
+                }
+                to_django.update_truck(current_truck_data)
+            else:
+                new_truck_data = {
+                    'registration_number': registration_number,
+                    'entry_date': entry_date,
+                    'entry_time': entry_time,
+                    'departure_date': departure_date,
+                    'departure_time': departure_time
+                }
+                to_django.create_truck(new_truck_data)
+
+
+# schedule.every(1).minutes.do(truck_processing)
+schedule.every(10).seconds.do(truck_processing)
+
 if __name__ == "__main__":
-    print(get_checkpoint_numbers('5', 10))
+    while True:
+        schedule.run_pending()
 
-example = {
-    'number': 'AP75311', 'detectors_name': 'Распознавание номеров КПП Въезд',
-    'country': 'BLR', 'date': '02.09.2024 12:42:26', 'direction': '1', 'validity': '100', 'camera': 'Камера 28'
-}
-
+# example = {
+#     'number': 'AP75311', 'detectors_name': 'Распознавание номеров КПП Въезд',
+#     'country': 'BLR', 'date': '02.09.2024 12:42:26', 'direction': '1', 'validity': '100', 'camera': 'Камера 28'
+# }

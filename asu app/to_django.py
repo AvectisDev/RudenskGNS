@@ -26,7 +26,7 @@ def create_truck(data):
         return False, e.response.status_code if e.response else None
 
 
-def update_truck(number, data):
+def update_truck(data):
     try:
         response = requests.patch(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
         response.raise_for_status()
@@ -35,6 +35,3 @@ def update_truck(number, data):
     except requests.RequestException as e:
         return False, e.response.status_code if e.response else None
 
-# data = {'batch_type': 'loading', 'batch': {'batch_id': 1, 'balloons_list': ['yr5e6', '1sd', '2sd', '3sd']}}
-# print(get_batch_balloons('unloading'))
-# print(update_batch_balloons('loading', data))
