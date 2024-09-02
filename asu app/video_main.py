@@ -28,7 +28,7 @@ def get_number(data):
         return False, e.response.status_code if e.response else None
 
 
-def convert_time_to_string(delta_hours: int) -> str:
+def get_time_from(delta_hours: int) -> str:
     start_date = datetime.now() - timedelta(hours=delta_hours)
     start_date_string = f'{start_date.strftime("%Y-%m-%dT%H:%M:%S")}.000'
     return start_date_string
@@ -40,6 +40,12 @@ def convert_string_to_time(time_string: str = '') -> datetime:
     except ValueError as e:
         raise ValueError(f"Invalid date format: {str(e)}")
     return converted_time
+
+
+def convert_time_to_string(data_object) -> tuple:
+    string_date = data_object.strftime("%Y-%m-%d")
+    string_time = data_object.strftime("%H:%M")
+    return string_date, string_time
 
 
 def get_checkpoint_numbers(server_id, delta_hour) -> list:
@@ -57,7 +63,7 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
 
     data_for_request = {
         "id": server_id,
-        "time_from": convert_time_to_string(delta_hour),
+        "time_from": get_time_from(delta_hour),
         "numbers_operation": "OR"
     }
     get_status, data = get_number(data_for_request)
@@ -66,29 +72,23 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
     if get_status and data:
         for item in data['Protocols']:
             registration_number = item['number']
-            date_time = convert_string_to_time(item['date'])
+            date_time = item['date']
 
-            entry_date = entry_time = departure_date = departure_time = None
+            entry_date = departure_date = None
 
             if server_id == '4' and item['direction'] == '1':
-                entry_date = date_time.date()
-                entry_time = date_time.time()
+                entry_date = date_time
             if server_id == '4' and item['direction'] == '2':
-                departure_date = date_time.date()
-                departure_time = date_time.time()
+                departure_date = date_time
             if server_id == '5' and item['direction'] == '2':
                 entry_date = date_time.date()
-                entry_time = date_time.time()
             if server_id == '5' and item['direction'] == '1':
-                departure_date = date_time.date()
-                departure_time = date_time.time()
+                departure_date = date_time
 
             out_list.append({
                 'registration_number': registration_number,
                 'entry_date': entry_date,
-                'entry_time': entry_time,
                 'departure_date': departure_date,
-                'departure_time': departure_time
             })
 
     return out_list
@@ -101,10 +101,8 @@ def truck_processing():
         truck_list = get_checkpoint_numbers(server, START_TIME)
         for truck in truck_list:
             registration_number = truck['registration_number']
-            entry_date = truck['entry_date']
-            entry_time = truck['entry_time']
-            departure_date = truck['departure_date']
-            departure_time = truck['departure_time']
+            entry_date, entry_time = convert_time_to_string(truck['entry_date'])
+            departure_date, departure_time = convert_time_to_string(truck['departure_date'])
 
             truck_found, current_truck_data = to_django.get_truck(registration_number)
             if truck_found:
@@ -127,13 +125,11 @@ def truck_processing():
 
 
 # schedule.every(1).minutes.do(truck_processing)
-schedule.every(10).seconds.do(truck_processing)
+schedule.every(5).seconds.do(truck_processing)
 
 if __name__ == "__main__":
     while True:
         schedule.run_pending()
 
-# example = {
-#     'number': 'AP75311', 'detectors_name': 'Распознавание номеров КПП Въезд',
-#     'country': 'BLR', 'date': '02.09.2024 12:42:26', 'direction': '1', 'validity': '100', 'camera': 'Камера 28'
-# }
+# ('{"entry_date":["Неправильный формат date. ''Используйте один из этих форматов: YYYY-MM-DD."],'
+#  '"entry_time":["Неправильный формат времени. Используйте один из этих форматов: hh:mm[:ss[.uuuuuu]]."]}')

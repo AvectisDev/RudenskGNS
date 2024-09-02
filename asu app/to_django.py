@@ -1,7 +1,7 @@
 import requests
 
-BASE_URL = "http://127.0.0.1:8000/api"  # local address for test
-# BASE_URL = "http://10.10.12.253:8000/api"  # server address
+# BASE_URL = "http://127.0.0.1:8000/api"  # local address for test
+BASE_URL = "http://10.10.12.253:8000/api"  # server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 
