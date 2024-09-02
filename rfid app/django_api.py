@@ -1,13 +1,13 @@
 import requests
 
-BASE_URL = "http://127.0.0.1:8000/api"  # local address for test
-# BASE_URL = "http://10.10.12.253:8000/api"  # server address
+# BASE_URL = "http://127.0.0.1:8000/api"  # local address for test
+BASE_URL = "http://10.10.12.253:8000/api"  # server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 
 
 def get_balloon(nfc_tag):
-    response = requests.get(f"{BASE_URL}/BalloonPassport?nfc_tag={nfc_tag}", auth=(USERNAME, PASSWORD))
+    response = requests.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", auth=(USERNAME, PASSWORD))
 
     if response.status_code == 200:
         return True, response.json()
@@ -16,7 +16,7 @@ def get_balloon(nfc_tag):
 
 
 def create_balloon(data):
-    response = requests.post(f"{BASE_URL}/BalloonPassport", json=data, auth=(USERNAME, PASSWORD))
+    response = requests.post(f"{BASE_URL}/balloon-passport", json=data, auth=(USERNAME, PASSWORD))
 
     if response.status_code == 201:
         return True, response.json()
@@ -25,7 +25,7 @@ def create_balloon(data):
 
 
 def update_balloon(nfc_tag, data):
-    response = requests.patch(f"{BASE_URL}/BalloonPassport?nfc_tag={nfc_tag}", json=data, auth=(USERNAME, PASSWORD))
+    response = requests.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, auth=(USERNAME, PASSWORD))
 
     if response.status_code == 200:
         return True, response.json()
@@ -41,13 +41,13 @@ def get_batch_balloons(batch_type: str):
         batch_type (str): Тип партии для запроса.
 
     Returns:
-        tuple: (bool, str or dict) - статус наличия партии и номер партии или сообщение об ошибке.
+        tuple: (bool, str or dict) - статус наличия партии и данные партии или сообщение об ошибке.
     """
 
     if batch_type == 'loading':
-        url = f'{BASE_URL}/BalloonsLoading'
+        url = f'{BASE_URL}/balloons-loading'
     elif batch_type == 'unloading':
-        url = f'{BASE_URL}/BalloonsUnloading'
+        url = f'{BASE_URL}/balloons-unloading'
     else:
         url = f' '
 
@@ -60,19 +60,24 @@ def get_batch_balloons(batch_type: str):
     try:
         data = response.json()
         if response.status_code == 200:
-            print(data)
             return True, data
 
-        return False, data.get('error', "Unknown error")
+        return False, {'error', "Unknown error"}
     except (ValueError, KeyError):  # Обработка ошибок кода JSON и ключей
         return False, {"status": "invalid response"}
 
 
 def update_batch_balloons(batch_type, reader: dict):
-    url = f'{BASE_URL}/UpdateBatchBalloons'
+    if batch_type == 'loading':
+        url = f'{BASE_URL}/balloons-loading'
+    elif batch_type == 'unloading':
+        url = f'{BASE_URL}/balloons-unloading'
+    else:
+        url = f' '
+
     data = {
-        'batch_type': batch_type,
-        'batch_id': reader['batch']['batch_id'],
+        'id': reader['batch']['batch_id'],
+        'amount_of_rfid': len(reader['batch']['balloons_list']),
         'balloons_list': reader['batch']['balloons_list']
     }
 
@@ -87,5 +92,5 @@ def update_batch_balloons(batch_type, reader: dict):
 
 
 # data = {'batch_type': 'loading', 'batch': {'batch_id': 1, 'balloons_list': ['yr5e6', '1sd', '2sd', '3sd']}}
-print(get_batch_balloons('unloading'))
+# print(get_batch_balloons('unloading'))
 # print(update_batch_balloons('loading', data))

@@ -32,7 +32,7 @@ urlpatterns = [
     path('transport/trucks/<int:number>', views.get_trucks_details, name="trucks_details"),
     path('transport/trailers', views.get_trailers, name="trailers"),
     path('transport/trailers/<int:number>', views.get_trailers_details, name="trailers_details"),
-    path('transport/railway', views.get_railway_tanks, name="railway_tanks"),
-    path('transport/railway/<int:number>', views.get_railway_tanks_details, name="railway_tanks_details"),
+    path('transport/railway_tanks', views.get_railway_tanks, name="railway_tanks"),
+    path('transport/railway-tanks/<int:number>', views.get_railway_tanks_details, name="railway_tanks_details"),
 
 ]

@@ -1,11 +1,9 @@
 from ..models import (Balloon, Truck, Trailer, RailwayTanks, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                       RailwayLoadingBatch, GasLoadingBatch, GasUnloadingBatch)
-from django.shortcuts import get_object_or_404
-import json
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from .serializers import (BalloonSerializer, TruckSerializer, TrailerSerializer, RailwayTanksSerializer, TTNSerializer,
@@ -66,19 +64,16 @@ class BalloonView(APIView):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_balloon_state_options(request):
+def get_balloon_status_options(request):
     return Response(USER_STATUS_LIST)
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def get_loading_balloon_reader_list(request):
     return Response(BALLOONS_LOADING_READER_LIST)
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def get_unloading_balloon_reader_list(request):
     return Response(BALLOONS_UNLOADING_READER_LIST)
 
@@ -157,6 +152,43 @@ class TrailerView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class RailwayTanksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.GET.get('on_station') == "True":
+            railway_tanks = RailwayTanks.objects.filter(is_on_station=True)
+        else:
+            number = request.GET.get('number')
+            railway_tanks = RailwayTanks.objects.filter(number=number)
+
+        if not railway_tanks:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = RailwayTanksSerializer(railway_tanks, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = RailwayTanksSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        railway_tank_id = request.data['id']
+        railway_tank = RailwayTanks.objects.get(id=railway_tank_id)
+
+        if railway_tank is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = RailwayTanksSerializer(railway_tank, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class BalloonsLoadingBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -225,6 +257,117 @@ class BalloonsUnloadingBatchView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             serializer = BalloonsUnloadingBatchSerializer(unloading_batch, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RailwayLoadingBatchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        batches = RailwayLoadingBatch.objects.filter(is_active=True).first()
+
+        if not batches:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = RailwayLoadingBatchSerializer(batches)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = RailwayLoadingBatchSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        batch = RailwayLoadingBatch.objects.filter(is_active=True).first()
+
+        if not request.data['is_active']:
+            current_date = datetime.now()
+            request.data['end_date'] = current_date.date()
+            request.data['end_time'] = current_date.time()
+
+        if not batch:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = RailwayLoadingBatchSerializer(batch, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GasLoadingBatchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        loading_batches = GasLoadingBatch.objects.filter(is_active=True).first()
+
+        if not loading_batches:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GasLoadingBatchSerializer(loading_batches)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = GasLoadingBatchSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        loading_batches = GasLoadingBatch.objects.filter(is_active=True).first()
+
+        if not request.data['is_active']:
+            current_date = datetime.now()
+            request.data['end_date'] = current_date.date()
+            request.data['end_time'] = current_date.time()
+
+        if not loading_batches:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = GasLoadingBatchSerializer(loading_batches, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GasUnloadingBatchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        unloading_batches = GasUnloadingBatch.objects.filter(is_active=True).first()
+
+        if not unloading_batches:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GasUnloadingBatchSerializer(unloading_batches)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = GasUnloadingBatchSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        unloading_batches = GasUnloadingBatch.objects.filter(is_active=True).first()
+
+        if not request.data['is_active']:
+            current_date = datetime.now()
+            request.data['end_date'] = current_date.date()
+            request.data['end_time'] = current_date.time()
+
+        if not unloading_batches:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = GasUnloadingBatchSerializer(unloading_batches, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
