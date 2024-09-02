@@ -8,8 +8,10 @@ import django_api
 
 
 def data_exchange_with_reader(controller: dict, command: str):
-    """Функция выполняет обмен данными со считывателем FEIG. Отправляет запрос и возвращает полный буфер данных со
-    считывателя"""
+    """
+    Функция выполняет обмен данными со считывателем FEIG. Отправляет запрос и возвращает полный буфер данных со
+    считывателя
+    """
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
@@ -27,8 +29,10 @@ def data_exchange_with_reader(controller: dict, command: str):
 
 
 def byte_reversal(byte_string: str):
-    """Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
-    второй и предпоследний и т.д."""
+    """
+    Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
+    второй и предпоследний и т.д.
+    """
 
     data_list = list(byte_string)
     k = -1
@@ -41,9 +45,11 @@ def byte_reversal(byte_string: str):
 
 
 def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
-    """Функция кэширует 5 последних считанных меток и определяет, есть ли в этом списке следующая считанная метка.
+    """
+    Функция кэширует 5 последних считанных меток и определяет, есть ли в этом списке следующая считанная метка.
     Если метки нет в списке, то добавляет новую метку, если метка есть (повторное считывание), до пропускаем все
-    последующие действия с ней"""
+    последующие действия с ней
+    """
 
     if len(nfc_tag_list) > 5:
         nfc_tag_list.pop(0)
@@ -53,7 +59,9 @@ def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
 
 
 def balloon_passport_processing(nfc_tag: str, status: str):
-    """Функция проверяет наличие и заполненность паспорта в базе данных"""
+    """
+    Функция проверяет наличие и заполненность паспорта в базе данных
+    """
 
     passport_ok_flag = False
     passport_found, passport = django_api.get_balloon(nfc_tag)  # проверка наличия паспорта в базе данных
@@ -90,7 +98,9 @@ def balloon_passport_processing(nfc_tag: str, status: str):
 
 
 def read_nfc_tag(reader: dict):
-    """Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки"""
+    """
+    Функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки
+    """
 
     data = data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
@@ -127,7 +137,9 @@ def read_nfc_tag(reader: dict):
 
 
 def read_input_status(reader: dict):
-    """Функция отправляет запрос на считыватель FEIG и получает в ответ состояние дискретных входов"""
+    """
+    Функция отправляет запрос на считыватель FEIG и получает в ответ состояние дискретных входов
+    """
 
     previous_input_state = reader['input_state']  # присваиваем предыдущее состояние входа временной переменной
     data = data_exchange_with_reader(reader, 'inputs_read')
