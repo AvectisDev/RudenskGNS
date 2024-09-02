@@ -7,30 +7,33 @@ PASSWORD = "rfid-device"
 
 
 def get_truck(number):
-    response = requests.get(f"{BASE_URL}/trucks?registration_number={number}", auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 200:
+    try:
+        response = requests.get(f"{BASE_URL}/trucks?registration_number={number}", auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 
 def create_truck(data):
-    response = requests.post(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 201:
+    try:
+        response = requests.post(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 
 def update_truck(number, data):
-    response = requests.patch(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 200:
+    try:
+        response = requests.patch(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 # data = {'batch_type': 'loading', 'batch': {'batch_id': 1, 'balloons_list': ['yr5e6', '1sd', '2sd', '3sd']}}
 # print(get_batch_balloons('unloading'))
