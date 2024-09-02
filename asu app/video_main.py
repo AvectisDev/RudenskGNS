@@ -49,9 +49,10 @@ def get_checkpoint_numbers(server_id, delta_hour):
     get_status, data = get_number(data_for_request)
 
     out_list = []
-    if get_status:
-        temp_dict = {}
+    if get_status and len(data) > 0:
+        
         for item in data['Protocols']:
+            temp_dict = {}
             temp_dict['registration_number'] = item['number']
             date_from_camera = convert_string_to_time(item['date'])
 
@@ -74,7 +75,7 @@ def get_checkpoint_numbers(server_id, delta_hour):
 
 
 if __name__ == "__main__":
-    get_checkpoint_numbers('5', 8)
+    print(get_checkpoint_numbers('5', 8))
 
 example = {
     'number': 'AP75311', 'detectors_name': 'Распознавание номеров КПП Въезд',
