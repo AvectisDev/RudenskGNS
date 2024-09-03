@@ -87,8 +87,8 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
 
             out_list.append({
                 'registration_number': registration_number,
-                'entry_date': convert_string_to_time(entry_date),
-                'departure_date': convert_string_to_time(departure_date),
+                'entry_date': convert_string_to_time(entry_date) if entry_date is not None else None,
+                'departure_date': convert_string_to_time(departure_date) if departure_date is not None else None,
             })
 
     return out_list
@@ -102,25 +102,25 @@ def truck_processing():
         for truck in truck_list:
             registration_number = truck['registration_number']
 
-            entry_date, entry_time = convert_time_to_string(truck['entry_date'])
-            departure_date, departure_time = convert_time_to_string(truck['departure_date'])
+            entry_date, entry_time = convert_time_to_string(truck['entry_date']) if truck['entry_date'] is not None else None
+            departure_date, departure_time = convert_time_to_string(truck['departure_date']) if truck['departure_date'] is not None else None
 
             truck_found, current_truck_data = to_django.get_truck(registration_number)
             if truck_found:
                 current_truck_data = {
                     'entry_date': entry_date,
-                    # 'entry_time': entry_time,
+                    'entry_time': entry_time,
                     'departure_date': departure_date,
-                    # 'departure_time': departure_time
+                    'departure_time': departure_time
                 }
                 to_django.update_truck(current_truck_data)
             else:
                 new_truck_data = {
                     'registration_number': registration_number,
                     'entry_date': entry_date,
-                    # 'entry_time': entry_time,
+                    'entry_time': entry_time,
                     'departure_date': departure_date,
-                    # 'departure_time': departure_time
+                    'departure_time': departure_time
                 }
                 to_django.create_truck(new_truck_data)
 
