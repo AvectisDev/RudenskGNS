@@ -30,7 +30,7 @@
         <td>{{ batch.truck|default_if_none:"-" }}</td>
         <td>{{ batch.trailer|default_if_none:"-" }}</td>
         <td>{{ batch.gas_amount|default_if_none:"-" }}</td>
-        <td>{{ batch.is_active|default_if_none:"-" }}</td>
+        <td>{% if batch.is_active %}Активна{% else %}Завершена{% endif %}</td>
         <td>{{ batch.ttn|default_if_none:"-" }}</td>
     </tr>
     {% endfor %}

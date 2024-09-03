@@ -6,7 +6,7 @@ app_name = 'filling_station'
 
 urlpatterns = [
     path('', views.balloons, name="balloons_list"),
-    path('<str:nfc_tag>/', views.balloon_passport, name='balloon_passport'),
+    path('balloon/<str:nfc_tag>/', views.balloon_passport, name='balloon_passport'),
     path('reader/<str:reader>', views.reader_info, name="reader"),
 
     path('batch/balloons-loading', views.balloons_loading_batch, name="balloons_loading_batch"),
@@ -31,7 +31,7 @@ urlpatterns = [
     path('transport/trucks', views.get_trucks, name="trucks"),
     path('transport/trucks/<str:number>', views.get_trucks_details, name="trucks_details"),
     path('transport/trailers', views.get_trailers, name="trailers"),
-    path('transport/trailers/<int:number>', views.get_trailers_details, name="trailers_details"),
+    path('transport/trailers/<str:number>', views.get_trailers_details, name="trailers_details"),
     path('transport/railway_tanks', views.get_railway_tanks, name="railway_tanks"),
     path('transport/railway-tanks/<int:number>', views.get_railway_tanks_details, name="railway_tanks_details"),
 

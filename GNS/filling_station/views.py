@@ -21,16 +21,20 @@ STATUS_LIST = {
     '8': 'Наполнение баллона сжиженным газом',
 }
 
-
 def balloons(request):
-    balloons_list = Balloon.objects.all()
+    nfc_tag_filter = request.GET.get('nfc_tag', '')
+    if nfc_tag_filter:
+        balloons_list = Balloon.objects.filter(nfc_tag=nfc_tag_filter)
+    else:
+        balloons_list = Balloon.objects.all()
     #
     paginator = Paginator(balloons_list, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
 
     context = {
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "nfc_tag_filter": nfc_tag_filter
     }
     return render(request, "balloons_table.html", context)
 
@@ -328,10 +332,10 @@ def get_trailers(request):
     return render(request, "trailers_table.html", context)
 
 
-def get_trailers_details(request, number: int):
+def get_trailers_details(request, number: str):
     try:
 
-        trailer = get_object_or_404(Trailer, id=number)
+        trailer = get_object_or_404(Trailer, registration_number=number)
 
         if request.method == 'POST':
             form = TrailerForm(request.POST, instance=trailer)

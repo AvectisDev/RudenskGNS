@@ -6,7 +6,7 @@ import to_django
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-START_TIME = 10  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
+START_TIME = 9  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
 
 
 def get_number(data):
@@ -116,6 +116,7 @@ def truck_processing():
         for t in transport_list:
 
             registration_number = t['registration_number']
+            is_on_station = t['is_on_station']
 
             # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
             if not registration_number[0].isdigit():
@@ -143,6 +144,7 @@ def truck_processing():
                         item['entry_time'] = entry_time
                         item['departure_date'] = departure_date
                         item['departure_time'] = departure_time
+                        item['is_on_station'] = is_on_station
                         to_django.update_transport(item, transport_type)
                         print(f'{transport_type} with number {t['registration_number']} update')
                 else:
@@ -151,7 +153,8 @@ def truck_processing():
                         'entry_date': entry_date,
                         'entry_time': entry_time,
                         'departure_date': departure_date,
-                        'departure_time': departure_time
+                        'departure_time': departure_time,
+                        'is_on_station': is_on_station
                     }
                     to_django.create_transport(new_transport_data, transport_type)
                     print(f'{transport_type} with number {t['registration_number']} create')
