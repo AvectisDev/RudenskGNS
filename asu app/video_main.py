@@ -108,15 +108,13 @@ def truck_processing():
             if truck['departure_date'] is not None:
                 departure_date, departure_time = convert_time_to_string(truck['departure_date'])
 
-            trucks_found, *trucks_data = to_django.get_truck(registration_number)
+            trucks_found, trucks_data = to_django.get_truck(registration_number)
             if trucks_found:
 
-                trucks_data = {
-                    'entry_date': entry_date,
-                    'entry_time': entry_time,
-                    'departure_date': departure_date,
-                    'departure_time': departure_time
-                }
+                trucks_data['entry_date'] = entry_date
+                trucks_data['entry_time'] = entry_time
+                trucks_data['departure_date'] = departure_date
+                trucks_data['departure_time'] = departure_time
                 print(trucks_data, *trucks_data)
                 to_django.update_truck(trucks_data)
 
