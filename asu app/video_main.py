@@ -69,7 +69,7 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
     get_status, data = get_number(data_for_request)
 
     out_list = []
-    if get_status and data:
+    if get_status and len(data) > 0:
         for item in data['Protocols']:
             registration_number = item['number']
             date_time = item['date']
