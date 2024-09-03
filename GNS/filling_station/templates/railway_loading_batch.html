@@ -21,13 +21,13 @@
         <td>
             <a href="{% url 'filling_station:railway_loading_batch_details' batch.id %}"> {{ batch.id }} </a>
         </td>
-        <td>{{ batch.begin_date }}</td>
-        <td>{{ batch.begin_time }}</td>
-        <td>{{ batch.end_date }}</td>
-        <td>{{ batch.end_time }}</td>
-        <td>{{ batch.gas_amount }}</td>
-        <td>{{ batch.is_active }}</td>
-        <td>{{ batch.ttn }}</td>
+        <td>{{ batch.begin_date|default_if_none:"-" }}</td>
+        <td>{{ batch.begin_time|default_if_none:"-" }}</td>
+        <td>{{ batch.end_date|default_if_none:"-" }}</td>
+        <td>{{ batch.end_time|default_if_none:"-" }}</td>
+        <td>{{ batch.gas_amount|default_if_none:"-" }}</td>
+        <td>{{ batch.is_active|default_if_none:"-" }}</td>
+        <td>{{ batch.ttn|default_if_none:"-" }}</td>
     </tr>
     {% endfor %}
 </table>

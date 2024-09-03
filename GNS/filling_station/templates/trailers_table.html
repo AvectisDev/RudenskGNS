@@ -23,15 +23,15 @@
         <td>
             <a href="{% url 'filling_station:trailers_details' trailer.id %}"> {{ trailer.id }} </a>
         </td>
-        <td>{{ trailer.trailer_brand }}</td>
+        <td>{{ trailer.trailer_brand|default_if_none:"-" }}</td>
         <td>{{ trailer.registration_number }}</td>
-        <td>{{ trailer.type }}</td>
-        <td>{{ trailer.max_capacity_cylinders_by_type }}</td>
-        <td>{{ trailer.max_weight_of_transported_cylinders }}</td>
-        <td>{{ trailer.max_mass_of_transported_gas }}</td>
-        <td>{{ trailer.empty_weight }}</td>
-        <td>{{ trailer.full_weight }}</td>
-        <td>{{ trailer.is_on_station }}</td>
+        <td>{{ trailer.type|default_if_none:"-" }}</td>
+        <td>{{ trailer.max_capacity_cylinders_by_type|default_if_none:"-" }}</td>
+        <td>{{ trailer.max_weight_of_transported_cylinders|default_if_none:"-" }}</td>
+        <td>{{ trailer.max_mass_of_transported_gas|default_if_none:"-" }}</td>
+        <td>{{ trailer.empty_weight|default_if_none:"-" }}</td>
+        <td>{{ trailer.full_weight|default_if_none:"-" }}</td>
+        <td>{{ trailer.is_on_station|default_if_none:"-" }}</td>
     </tr>
     {% endfor %}
 </table>

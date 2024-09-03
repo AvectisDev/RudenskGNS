@@ -23,9 +23,9 @@
         <td>{{ ttn.number }}</td>
         <td>{{ ttn.contract }}</td>
         <td>{{ ttn.name_of_supplier }}</td>
-        <td>{{ ttn.gas_amount }}</td>
-        <td>{{ ttn.balloons_amount }}</td>
-        <td>{{ ttn.date }}</td>
+        <td>{{ ttn.gas_amount|default_if_none:"-" }}</td>
+        <td>{{ ttn.balloons_amount|default_if_none:"-" }}</td>
+        <td>{{ ttn.date|default_if_none:"-" }}</td>
     </tr>
     {% endfor %}
 </table>

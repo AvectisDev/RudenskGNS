@@ -20,12 +20,12 @@
                 <td>
                     <a href="{% url 'filling_station:balloon_passport' balloon.nfc_tag %}"> {{ balloon.nfc_tag }} </a>
                 </td>
-                <td>{{ balloon.serial_number }}</td>
-                <td>{{ balloon.netto }}</td>
-                <td>{{ balloon.brutto }}</td>
-                <td>{{ balloon.status }}</td>
-                <td>{{ balloon.change_date }}</td>
-                <td>{{ balloon.change_time }}</td>
+                <td>{{ balloon.serial_number|default_if_none:"-" }}</td>
+                <td>{{ balloon.netto|default_if_none:"-" }}</td>
+                <td>{{ balloon.brutto|default_if_none:"-" }}</td>
+                <td>{{ balloon.status|default_if_none:"-" }}</td>
+                <td>{{ balloon.change_date|default_if_none:"-" }}</td>
+                <td>{{ balloon.change_time|default_if_none:"-" }}</td>
             </tr>
             {% endfor %}
         </table>
