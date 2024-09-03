@@ -36,7 +36,6 @@ def get_opc_value(addrstr):
 if __name__ == "__main__":
     client = Client("opc.tcp://127.0.0.1:4841")
 
-# Example:
-# connect()
-# get_opc_value("ns=4;s=Address Space.PLC_SU3.Tanks._01.R1004_percent_filling_tank") #Адрес переменной в опс (можно посмотреть в Editor simplescada)
-# disconnect()
+    connect()
+    get_opc_value("ns=4;s=Address Space.PLC_SU3.Tanks._01.R1004_percent_filling_tank")
+    disconnect()
