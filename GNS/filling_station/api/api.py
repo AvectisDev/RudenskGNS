@@ -108,7 +108,7 @@ class TruckView(APIView):
         if truck is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
         else:
-            serializer = BalloonSerializer(truck, data=request.data, partial=True)
+            serializer = TruckSerializer(truck, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)

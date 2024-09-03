@@ -29,7 +29,7 @@ urlpatterns = [
     path('ttn/<int:number>', views.get_ttn_details, name="get_ttn_details"),
 
     path('transport/trucks', views.get_trucks, name="trucks"),
-    path('transport/trucks/<int:number>', views.get_trucks_details, name="trucks_details"),
+    path('transport/trucks/<str:number>', views.get_trucks_details, name="trucks_details"),
     path('transport/trailers', views.get_trailers, name="trailers"),
     path('transport/trailers/<int:number>', views.get_trailers_details, name="trailers_details"),
     path('transport/railway_tanks', views.get_railway_tanks, name="railway_tanks"),

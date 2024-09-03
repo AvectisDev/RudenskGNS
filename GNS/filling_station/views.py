@@ -292,10 +292,10 @@ def get_trucks(request):
     return render(request, "trucks_table.html", context)
 
 
-def get_trucks_details(request, number: int):
+def get_trucks_details(request, number: str):
     try:
 
-        truck = get_object_or_404(Truck, id=number)
+        truck = get_object_or_404(Truck, registration_number=number)
 
         if request.method == 'POST':
             form = TruckForm(request.POST, instance=truck)

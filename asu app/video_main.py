@@ -6,7 +6,7 @@ import to_django
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-START_TIME = 12  # данные запрашиваются начиная с времени = текущее время - указанное количество часов
+START_TIME = 1  # данные запрашиваются начиная с времени = текущее время - указанное количество часов
 
 
 def get_number(data):
@@ -74,67 +74,76 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
             registration_number = item['number']
             date_time = item['date']
 
-            entry_date = departure_date = None
+            entry_date = departure_date = is_on_station = None
 
             if server_id == '4' and item['direction'] == '1':
                 entry_date = date_time
+                is_on_station = True
             if server_id == '4' and item['direction'] == '2':
                 departure_date = date_time
+                is_on_station = False
             if server_id == '5' and item['direction'] == '2':
-                entry_date = date_time.date()
+                entry_date = date_time
+                is_on_station = True
             if server_id == '5' and item['direction'] == '1':
                 departure_date = date_time
+                is_on_station = False
 
             out_list.append({
                 'registration_number': registration_number,
                 'entry_date': convert_string_to_time(entry_date) if entry_date is not None else None,
                 'departure_date': convert_string_to_time(departure_date) if departure_date is not None else None,
+                'is_on_station': is_on_station
             })
 
     return out_list
 
 
 def truck_processing():
+    print('start truck_processing')
     video_server_list = ["4", "5"]
     for server in video_server_list:
+        print(f'server -  {server}')
 
-        truck_list = get_checkpoint_numbers(server, START_TIME)
+        truck_list = get_checkpoint_numbers(server, START_TIME) # получаем от "Интеллекта" список номеров с данными фотофиксации
         for truck in truck_list:
+
             registration_number = truck['registration_number']
-            entry_date = entry_time = departure_date = departure_time = None
 
-            if truck['entry_date'] is not None:
-                entry_date, entry_time = convert_time_to_string(truck['entry_date'])
-            if truck['departure_date'] is not None:
-                departure_date, departure_time = convert_time_to_string(truck['departure_date'])
+            if not registration_number[0].isdigit(): # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
+                entry_date = entry_time = departure_date = departure_time = None
+                print(f'registration_number is {registration_number} - ok')
 
-            trucks_found, trucks_data = to_django.get_truck(registration_number)
-            if trucks_found:
+                if truck['entry_date'] is not None:
+                    entry_date, entry_time = convert_time_to_string(truck['entry_date'])
+                if truck['departure_date'] is not None:
+                    departure_date, departure_time = convert_time_to_string(truck['departure_date'])
 
-                trucks_data['entry_date'] = entry_date
-                trucks_data['entry_time'] = entry_time
-                trucks_data['departure_date'] = departure_date
-                trucks_data['departure_time'] = departure_time
-                print(trucks_data, *trucks_data)
-                to_django.update_truck(trucks_data)
+                trucks_found, trucks_data = to_django.get_truck(registration_number)    # проверяем наличие в базе машины с данным номером
+                if trucks_found:
+                    print('truck found')
+                    for item in trucks_data:
+                        item['entry_date'] = entry_date
+                        item['entry_time'] = entry_time
+                        item['departure_date'] = departure_date
+                        item['departure_time'] = departure_time
+                        to_django.update_truck(item)
+                        print('update_truck', truck['registration_number'])
+                else:
+                    new_truck_data = {
+                        'registration_number': registration_number,
+                        'entry_date': entry_date,
+                        'entry_time': entry_time,
+                        'departure_date': departure_date,
+                        'departure_time': departure_time
+                    }
+                    to_django.create_truck(new_truck_data)
+                    print('create_truck', truck['registration_number'])
 
-            else:
-                new_truck_data = {
-                    'registration_number': registration_number,
-                    'entry_date': entry_date,
-                    'entry_time': entry_time,
-                    'departure_date': departure_date,
-                    'departure_time': departure_time
-                }
-                to_django.create_truck(new_truck_data)
 
-
-# schedule.every(1).minutes.do(truck_processing)
-schedule.every(5).seconds.do(truck_processing)
+schedule.every(5).minutes.do(truck_processing)
+#schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
     while True:
         schedule.run_pending()
-
-# ('{"entry_date":["Неправильный формат date. ''Используйте один из этих форматов: YYYY-MM-DD."],'
-#  '"entry_time":["Неправильный формат времени. Используйте один из этих форматов: hh:mm[:ss[.uuuuuu]]."]}')

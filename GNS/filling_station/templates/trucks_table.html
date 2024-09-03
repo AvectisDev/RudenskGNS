@@ -7,7 +7,6 @@
 
 <table class="table table-striped table-hover vertical-align: middle">
     <tr align="center" width=100%>
-        <th>№ п/п</th>
         <th>Марка авто</th>
         <th>Гос.номер</th>
         <th>Тип</th>
@@ -24,11 +23,10 @@
     </tr>
     {% for truck in page_obj.object_list %}
     <tr align="center">
-        <td>
-            <a href="{% url 'filling_station:trucks_details' truck.id %}"> {{ truck.id }} </a>
-        </td>
         <td>{{ truck.car_brand }}</td>
-        <td>{{ truck.registration_number }}</td>
+        <td>
+            <a href="{% url 'filling_station:trucks_details' truck.registration_number %}"> {{ truck.registration_number }} </a>
+        </td>
         <td>{{ truck.type }}</td>
         <td>{{ truck.max_capacity_cylinders_by_type }}</td>
         <td>{{ truck.max_weight_of_transported_cylinders }}</td>
