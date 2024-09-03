@@ -117,7 +117,9 @@ def truck_processing():
                     'departure_date': departure_date,
                     'departure_time': departure_time
                 }
+                print(trucks_data, *trucks_data)
                 to_django.update_truck(trucks_data)
+
             else:
                 new_truck_data = {
                     'registration_number': registration_number,
