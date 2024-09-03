@@ -101,9 +101,12 @@ def truck_processing():
         truck_list = get_checkpoint_numbers(server, START_TIME)
         for truck in truck_list:
             registration_number = truck['registration_number']
+            entry_date = entry_time = departure_date = departure_time = None
 
-            entry_date, entry_time = convert_time_to_string(truck['entry_date']) if truck['entry_date'] is not None else None
-            departure_date, departure_time = convert_time_to_string(truck['departure_date']) if truck['departure_date'] is not None else None
+            if truck['entry_date'] is not None:
+                entry_date, entry_time = convert_time_to_string(truck['entry_date'])
+            if truck['departure_date'] is not None:
+                departure_date, departure_time = convert_time_to_string(truck['departure_date'])
 
             truck_found, current_truck_data = to_django.get_truck(registration_number)
             if truck_found:
