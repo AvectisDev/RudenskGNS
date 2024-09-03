@@ -77,6 +77,10 @@ class Trailer(models.Model):
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
+    entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
+    entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
+    departure_date = models.DateField(null=True, blank=True, verbose_name="Дата выезда")
+    departure_time = models.TimeField(null=True, blank=True, verbose_name="Время выезда")
 
     def __str__(self):
         return self.registration_number

@@ -33,7 +33,7 @@
         <td>{{ truck.max_mass_of_transported_gas|default_if_none:"-" }}</td>
         <td>{{ truck.empty_weight|default_if_none:"-" }}</td>
         <td>{{ truck.full_weight|default_if_none:"-" }}</td>
-        <td>{{ truck.is_on_station|default_if_none:"-" }}</td>
+        <td>{{ truck.is_on_station|default:"Нет" }}</td>
         <td>{{ truck.entry_date|default_if_none:"-" }}</td>
         <td>{{ truck.entry_time|default_if_none:"-" }}</td>
         <td>{{ truck.departure_date|default_if_none:"-" }}</td>

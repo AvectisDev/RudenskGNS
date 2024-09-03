@@ -33,7 +33,8 @@ class TruckSerializer(serializers.ModelSerializer):
 class TrailerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trailer
-        fields = ['id', 'trailer_brand', 'registration_number', 'type', 'truck', 'is_on_station']
+        fields = ['id', 'trailer_brand', 'registration_number', 'type', 'truck', 'is_on_station', 'entry_date',
+                  'entry_time', 'departure_date', 'departure_time']
 
 
 class RailwayTanksSerializer(serializers.ModelSerializer):

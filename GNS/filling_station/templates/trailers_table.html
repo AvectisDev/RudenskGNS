@@ -17,6 +17,10 @@
         <th>Вес пустого т/с</th>
         <th>Вес полного т/с</th>
         <th>Находится на станции</th>
+        <th>Дата въезда</th>
+        <th>Время въезда</th>
+        <th>Дата выезда</th>
+        <th>Время выезда</th>
     </tr>
     {% for trailer in page_obj.object_list %}
     <tr align="center">
@@ -31,7 +35,11 @@
         <td>{{ trailer.max_mass_of_transported_gas|default_if_none:"-" }}</td>
         <td>{{ trailer.empty_weight|default_if_none:"-" }}</td>
         <td>{{ trailer.full_weight|default_if_none:"-" }}</td>
-        <td>{{ trailer.is_on_station|default_if_none:"-" }}</td>
+        <td>{{ trailer.is_on_station|default:"Нет" }}</td>
+        <td>{{ trailer.entry_date|default_if_none:"-" }}</td>
+        <td>{{ trailer.entry_time|default_if_none:"-" }}</td>
+        <td>{{ trailer.departure_date|default_if_none:"-" }}</td>
+        <td>{{ trailer.departure_time|default_if_none:"-" }}</td>
     </tr>
     {% endfor %}
 </table>

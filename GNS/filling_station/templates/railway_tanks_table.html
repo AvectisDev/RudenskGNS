@@ -25,7 +25,7 @@
         <td>{{ railway.number }}</td>
         <td>{{ railway.empty_weight|default_if_none:"-" }}</td>
         <td>{{ railway.full_weight|default_if_none:"-" }}</td>
-        <td>{{ railway.is_on_station|default_if_none:"-" }}</td>
+        <td>{{ railway.is_on_station|default:"Нет" }}</td>
         <td>{{ railway.entry_date|default_if_none:"-" }}</td>
         <td>{{ railway.entry_time|default_if_none:"-" }}</td>
         <td>{{ railway.departure_date|default_if_none:"-" }}</td>

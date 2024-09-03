@@ -203,7 +203,7 @@ def gas_loading_batch_details(request, number: int):
         }
         return render(request, "auto_gas_batch_details.html", context)
 
-    except BalloonsLoadingBatch.DoesNotExist:
+    except GasLoadingBatch.DoesNotExist:
         raise Http404("Партия не найдена")
 
 
@@ -239,7 +239,7 @@ def gas_unloading_batch_details(request, number: int):
         }
         return render(request, "auto_gas_batch_details.html", context)
 
-    except BalloonsLoadingBatch.DoesNotExist:
+    except GasUnloadingBatch.DoesNotExist:
         raise Http404("Партия не найдена")
 
 
@@ -275,7 +275,7 @@ def railway_loading_batch_details(request, number: int):
         }
         return render(request, "railway_loading_batch_details.html", context)
 
-    except BalloonsLoadingBatch.DoesNotExist:
+    except RailwayLoadingBatch.DoesNotExist:
         raise Http404("Партия не найдена")
 
 
@@ -347,7 +347,7 @@ def get_trailers_details(request, number: int):
         }
         return render(request, "transport_details.html", context)
 
-    except Truck.DoesNotExist:
+    except Trailer.DoesNotExist:
         raise Http404("Прицеп не найден")
 
 
@@ -383,7 +383,7 @@ def get_railway_tanks_details(request, number: int):
         }
         return render(request, "transport_details.html", context)
 
-    except Truck.DoesNotExist:
+    except RailwayTanks.DoesNotExist:
         raise Http404("Цистерна не найдена")
 
 
@@ -419,5 +419,5 @@ def get_ttn_details(request, number: int):
         }
         return render(request, "ttn_details.html", context)
 
-    except Truck.DoesNotExist:
+    except TTN.DoesNotExist:
         raise Http404("ТТН не найдена")
