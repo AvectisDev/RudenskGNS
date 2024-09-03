@@ -1,14 +1,19 @@
 import requests
 
-# BASE_URL = "http://127.0.0.1:8000/api"  # local address for test
-BASE_URL = "http://10.10.12.253:8000/api"  # server address
+TRUCKS_URL = "http://10.10.12.253:8000/api/trucks"
+TRAILERS_URL = "http://10.10.12.253:8000/api/trailers"
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 
 
-def get_truck(number):
+def get_transport(number, transport_type):
+    if transport_type == 'truck':
+        BASE_URL = TRUCKS_URL
+    elif transport_type == 'trailer':
+        BASE_URL = TRAILERS_URL
+
     try:
-        response = requests.get(f"{BASE_URL}/trucks?registration_number={number}", auth=(USERNAME, PASSWORD))
+        response = requests.get(f"{BASE_URL}?registration_number={number}", auth=(USERNAME, PASSWORD))
         response.raise_for_status()
         return True, response.json()
 
@@ -16,9 +21,14 @@ def get_truck(number):
         return False, e.response.status_code if e.response else None
 
 
-def create_truck(data):
+def create_transport(data, transport_type):
+    if transport_type == 'truck':
+        BASE_URL = TRUCKS_URL
+    elif transport_type == 'trailer':
+        BASE_URL = TRAILERS_URL
+
     try:
-        response = requests.post(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
+        response = requests.post(BASE_URL, json=data, auth=(USERNAME, PASSWORD))
         response.raise_for_status()
         return True, response.json()
 
@@ -26,9 +36,14 @@ def create_truck(data):
         return False, e.response.status_code if e.response else None
 
 
-def update_truck(data):
+def update_transport(data, transport_type):
+    if transport_type == 'truck':
+        BASE_URL = TRUCKS_URL
+    elif transport_type == 'trailer':
+        BASE_URL = TRAILERS_URL
+
     try:
-        response = requests.patch(f"{BASE_URL}/trucks", json=data, auth=(USERNAME, PASSWORD))
+        response = requests.patch(BASE_URL, json=data, auth=(USERNAME, PASSWORD))
         response.raise_for_status()
         return True, response.json()
 

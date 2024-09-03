@@ -6,7 +6,7 @@ import to_django
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-START_TIME = 1  # данные запрашиваются начиная с времени = текущее время - указанное количество часов
+START_TIME = 10  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
 
 
 def get_number(data):
@@ -43,6 +43,12 @@ def convert_string_to_time(time_string: str = '') -> datetime:
 
 
 def convert_time_to_string(data_object) -> tuple:
+    """
+    Функция преобразует объект python datatime в кортеж строк (дата, время) для передачи в формате JSON
+    data: объект python datatime
+    return: кортеж из строк - (дата, время)
+    """
+
     string_date = data_object.strftime("%Y-%m-%d")
     string_time = data_object.strftime("%H:%M")
     return string_date, string_time
@@ -105,44 +111,54 @@ def truck_processing():
     for server in video_server_list:
         print(f'server -  {server}')
 
-        truck_list = get_checkpoint_numbers(server, START_TIME) # получаем от "Интеллекта" список номеров с данными фотофиксации
-        for truck in truck_list:
+        # получаем от "Интеллекта" список номеров с данными фотофиксации
+        transport_list = get_checkpoint_numbers(server, START_TIME)
+        for t in transport_list:
 
-            registration_number = truck['registration_number']
+            registration_number = t['registration_number']
 
-            if not registration_number[0].isdigit(): # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
+            # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
+            if not registration_number[0].isdigit():
+                # если номер начинается с 2-х букв, значит это грузовик, иначе - прицеп
+                if registration_number[0:2].isalfa():
+                    transport_type = 'truck'
+                else:
+                    transport_type = 'trailer'
+
                 entry_date = entry_time = departure_date = departure_time = None
                 print(f'registration_number is {registration_number} - ok')
 
-                if truck['entry_date'] is not None:
-                    entry_date, entry_time = convert_time_to_string(truck['entry_date'])
-                if truck['departure_date'] is not None:
-                    departure_date, departure_time = convert_time_to_string(truck['departure_date'])
+                if t['entry_date'] is not None:
+                    entry_date, entry_time = convert_time_to_string(t['entry_date'])
+                if t['departure_date'] is not None:
+                    departure_date, departure_time = convert_time_to_string(t['departure_date'])
 
-                trucks_found, trucks_data = to_django.get_truck(registration_number)    # проверяем наличие в базе машины с данным номером
-                if trucks_found:
-                    print('truck found')
-                    for item in trucks_data:
+                # проверяем наличие в базе данных транспорт с данным номером
+                transport_found, transport_data = to_django.get_transport(registration_number, transport_type)
+
+                if transport_found:
+                    print(f'{transport_type} found')
+                    for item in transport_data:
                         item['entry_date'] = entry_date
                         item['entry_time'] = entry_time
                         item['departure_date'] = departure_date
                         item['departure_time'] = departure_time
-                        to_django.update_truck(item)
-                        print('update_truck', truck['registration_number'])
+                        to_django.update_transport(item, transport_type)
+                        print(f'{transport_type} with number {t['registration_number']} update')
                 else:
-                    new_truck_data = {
+                    new_transport_data = {
                         'registration_number': registration_number,
                         'entry_date': entry_date,
                         'entry_time': entry_time,
                         'departure_date': departure_date,
                         'departure_time': departure_time
                     }
-                    to_django.create_truck(new_truck_data)
-                    print('create_truck', truck['registration_number'])
+                    to_django.create_transport(new_transport_data, transport_type)
+                    print(f'{transport_type} with number {t['registration_number']} create')
 
 
-schedule.every(5).minutes.do(truck_processing)
-#schedule.every(10).seconds.do(truck_processing)
+# schedule.every(5).minutes.do(truck_processing)
+schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
     while True:

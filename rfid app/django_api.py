@@ -7,30 +7,33 @@ PASSWORD = "rfid-device"
 
 
 def get_balloon(nfc_tag):
-    response = requests.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 200:
+    try:
+        response = requests.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 
 def create_balloon(data):
-    response = requests.post(f"{BASE_URL}/balloon-passport", json=data, auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 201:
+    try:
+        response = requests.post(f"{BASE_URL}/balloon-passport", json=data, auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 
 def update_balloon(nfc_tag, data):
-    response = requests.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, auth=(USERNAME, PASSWORD))
-
-    if response.status_code == 200:
+    try:
+        response = requests.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, auth=(USERNAME, PASSWORD))
+        response.raise_for_status()
         return True, response.json()
-    else:
-        return False, response.status_code
+
+    except requests.RequestException as e:
+        return False, e.response.status_code if e.response else None
 
 
 def get_batch_balloons(batch_type: str):
