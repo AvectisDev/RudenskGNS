@@ -6,7 +6,7 @@ import to_django
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-START_TIME = 9  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
+START_TIME = 1  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
 
 
 def get_number(data):
@@ -160,8 +160,8 @@ def truck_processing():
                     print(f'{transport_type} with number {t['registration_number']} create')
 
 
-# schedule.every(5).minutes.do(truck_processing)
-schedule.every(10).seconds.do(truck_processing)
+schedule.every(5).minutes.do(truck_processing)
+# schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
     while True:
