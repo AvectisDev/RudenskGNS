@@ -160,7 +160,7 @@ def truck_processing():
                     print(f'{transport_type} with number {t['registration_number']} create')
 
 
-schedule.every(5).minutes.do(truck_processing)
+schedule.every(10).minutes.do(truck_processing)
 # schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
