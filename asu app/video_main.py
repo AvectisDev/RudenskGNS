@@ -120,7 +120,7 @@ def truck_processing():
             # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
             if not registration_number[0].isdigit():
                 # если номер начинается с 2-х букв, значит это грузовик, иначе - прицеп
-                if registration_number[0:2].isalfa():
+                if registration_number[0:2].isalpha():
                     transport_type = 'truck'
                 else:
                     transport_type = 'trailer'
