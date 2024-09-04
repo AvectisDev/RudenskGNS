@@ -2,11 +2,12 @@ import requests
 import schedule
 from datetime import datetime, timedelta
 import to_django
+from opcua_client import RAILWAY, AUTO
 
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-START_TIME = 1  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
+START_TIME = 600  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
 
 
 def get_number(data):
@@ -28,8 +29,8 @@ def get_number(data):
         return False, e.response.status_code if e.response else None
 
 
-def get_time_from(delta_hours: int) -> str:
-    start_date = datetime.now() - timedelta(hours=delta_hours)
+def get_time_from(delta_minutes: int) -> str:
+    start_date = datetime.now() - timedelta(minutes=delta_minutes)
     start_date_string = f'{start_date.strftime("%Y-%m-%dT%H:%M:%S")}.000'
     return start_date_string
 
@@ -54,7 +55,7 @@ def convert_time_to_string(data_object) -> tuple:
     return string_date, string_time
 
 
-def get_checkpoint_numbers(server_id, delta_hour) -> list:
+def get_checkpoint_numbers(server_id, delta_minutes) -> list:
     """
     Запрос в базе данных "Интеллект" распознанных номеров на КПП.
     Возвращает номер и дату прибывших/убывших машин и прицепов в виде списка словарей.
@@ -69,7 +70,7 @@ def get_checkpoint_numbers(server_id, delta_hour) -> list:
 
     data_for_request = {
         "id": server_id,
-        "time_from": get_time_from(delta_hour),
+        "time_from": get_time_from(delta_minutes),
         "numbers_operation": "OR"
     }
     get_status, data = get_number(data_for_request)
@@ -160,9 +161,74 @@ def truck_processing():
                     print(f'{transport_type} with number {t['registration_number']} create')
 
 
+def get_autoweight_numbers() -> dict:
+    """
+    Запрос в базе данных "Интеллект" распознанных номеров на КПП.
+    Возвращает номер и дату прибывших/убывших машин и прицепов в виде списка словарей.
+    Используйте следующие идентификаторы камер:
+    - Камера 25 (Весовая автотранспорта 1) -> "id": "2"
+    - Камера 26 (Весовая автотранспорта 2) -> "id": "3"
+    """
+
+    data_for_request = {
+        "id": "2,3",
+        "time_from": get_time_from(1440),
+        "numbers_operation": "OR"
+    }
+    get_status, data = get_number(data_for_request)
+
+    out_dict = {}
+    if get_status and len(data) > 0:
+        for item in data['Protocols']:
+            registration_number = item['number']
+            weighing_time = item['date']
+
+            out_dict = {
+                'registration_number': registration_number,
+                'entry_date': convert_string_to_time(weighing_time) if weighing_time is not None else None
+            }
+            break
+
+    return out_dict
+
+
+def gas_loading_processing():
+    if AUTO['weight_is_stable']:
+        print('Начало партии отгрузки автоцистерн')
+
+        # проверяем, есть ли активные партии в базе, если есть - получаем её данные
+        batch_found, batch_data = to_django.get_batch_gas()
+        if batch_found:
+            batch_data['gas_amount'] = AUTO['mass_total']
+
+        # если активных партий нет - создаём новую партию
+        else:
+            transport_list = get_autoweight_numbers()
+            truck_id = 1
+            for t in transport_list:
+                registration_number = t['registration_number']
+                transport_found, transport_data = to_django.get_transport(registration_number, 'truck')
+
+                if transport_found:
+                    print(f'auto weight truck found')
+                    for item in transport_data:
+                        truck_id = item['id']
+                        item['empty_weight'] = AUTO['weight']
+                        to_django.update_transport(item, 'truck')
+                        print(f'truck with number {t['registration_number']} - weight added')
+                        break
+            batch_data = {
+                'truck': truck_id,
+                'trailer': 0,
+                'is_active': True
+            }
+            to_django.create_batch_gas(batch_data)  # начинаем партию отгрузки газа
+
+
 schedule.every(10).minutes.do(truck_processing)
 # schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
     while True:
         schedule.run_pending()
+        gas_loading_processing()

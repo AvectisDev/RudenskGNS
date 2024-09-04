@@ -28,7 +28,8 @@ def create_balloon(data):
 
 def update_balloon(nfc_tag, data):
     try:
-        response = requests.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, auth=(USERNAME, PASSWORD))
+        response = requests.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data,
+                                  auth=(USERNAME, PASSWORD))
         response.raise_for_status()
         return True, response.json()
 
@@ -85,7 +86,7 @@ def update_batch_balloons(batch_type, reader: dict):
     }
 
     try:
-        response = requests.post(url, json=data, timeout=1)
+        response = requests.patch(url, json=data, timeout=1, auth=(USERNAME, PASSWORD))
         response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
         return True, {"status": "ok"}
     except KeyError:
