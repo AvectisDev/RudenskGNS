@@ -47,9 +47,10 @@ def periodic_data():
         print('no connection to OPC server')
 
 
-schedule.every(5).seconds.do(periodic_data)
+#schedule.every(5).seconds.do(periodic_data)
 
 if __name__ == "__main__":
     client = Client("opc.tcp://127.0.0.1:4841")
     while True:
-        schedule.run_pending()
+        periodic_data()
+        #schedule.run_pending()
