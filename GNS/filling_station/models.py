@@ -173,7 +173,7 @@ class BalloonsUnloadingBatch(models.Model):
     amount_of_20_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 20л баллонов")
     amount_of_50_liters = models.IntegerField(null=True, blank=True, default=0, verbose_name="Количество 50л баллонов")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество отгруженного газа")
-    balloons_list = ArrayField(models.CharField(max_length=20), blank=True)
+    balloons_list = ArrayField(models.CharField(max_length=20), blank=True, null=True)
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
