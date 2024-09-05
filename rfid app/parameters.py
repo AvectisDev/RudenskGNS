@@ -55,7 +55,7 @@ readers[4] = {
     'status': 'Регистрация полного баллона на складе',
     'input_state': 0,
     'previous_nfc_tags': [],
-    'function': None,
+    'function': 'unloading',
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 

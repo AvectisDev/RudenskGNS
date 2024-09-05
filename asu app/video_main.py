@@ -2,12 +2,56 @@ import requests
 import schedule
 from datetime import datetime, timedelta
 import to_django
-from opcua_client import RAILWAY, AUTO
+import sys
+from opcua import Client
 
 BASE_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 START_TIME = 600  # данные запрашиваются начиная с времени = текущее время - указанное количество минут
+sys.path.insert(0, "..")
+RAILWAY = {
+    'tank_weight': 0.0,
+    'weight_is_stable': False,
+}
+AUTO = {
+    'weight': 0.0,
+    'weight_is_stable': False,
+    'mass_total': 0.0,
+    'volume_total': 0.0
+}
+
+def get_opc_value(addrstr):
+    """
+    Get value from OPC UA server by address:
+    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
+    """
+
+    var = client.get_node(addrstr)
+    return var.get_value()
+
+
+def periodic_data():
+    global RAILWAY, AUTO
+
+    try:
+        client.connect()
+        print('Connect to OPC server successful')
+
+        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
+        RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
+
+        AUTO['weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.auto_weight")
+        AUTO['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.weight_is_stable")
+        AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_total")
+        AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_total")
+
+        print(RAILWAY, AUTO)
+        client.disconnect()
+        print('Disconnect from OPC server')
+
+    except:
+        print('no connection to OPC server')
 
 
 def get_number(data):
@@ -205,8 +249,9 @@ def gas_loading_processing():
         else:
             transport_list = get_autoweight_numbers()
             truck_id = 1
-            for t in transport_list:
-                registration_number = t['registration_number']
+            
+            if transport_list:
+                registration_number = transport_list['registration_number']
                 transport_found, transport_data = to_django.get_transport(registration_number, 'truck')
 
                 if transport_found:
@@ -215,20 +260,28 @@ def gas_loading_processing():
                         truck_id = item['id']
                         item['empty_weight'] = AUTO['weight']
                         to_django.update_transport(item, 'truck')
-                        print(f'truck with number {t['registration_number']} - weight added')
+                        print(f'truck with number {registration_number} - weight added')
                         break
-            batch_data = {
-                'truck': truck_id,
-                'trailer': 0,
-                'is_active': True
-            }
-            to_django.create_batch_gas(batch_data)  # начинаем партию отгрузки газа
+
+                batch_data = {
+                    'truck': truck_id,
+                    'trailer': 0,
+                    'is_active': True
+                }
+                to_django.create_batch_gas(batch_data)  # начинаем партию отгрузки газа
+            else:
+                print('no truck on camera')
 
 
-schedule.every(10).minutes.do(truck_processing)
-# schedule.every(10).seconds.do(truck_processing)
+schedule.every(1).minutes.do(truck_processing)
+#schedule.every(10).seconds.do(truck_processing)
+schedule.every(5).seconds.do(periodic_data)
 
 if __name__ == "__main__":
     while True:
         schedule.run_pending()
         gas_loading_processing()
+        #opc
+        client = Client("opc.tcp://127.0.0.1:4841")
+        #periodic_data()
+        

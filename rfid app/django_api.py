@@ -82,7 +82,8 @@ def update_batch_balloons(batch_type, reader: dict):
     data = {
         'id': reader['batch']['batch_id'],
         'amount_of_rfid': len(reader['batch']['balloons_list']),
-        'balloons_list': reader['batch']['balloons_list']
+        'balloons_list': reader['batch']['balloons_list'],
+        'is_active': True
     }
 
     try:
