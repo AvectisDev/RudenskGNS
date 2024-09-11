@@ -275,7 +275,7 @@ def gas_loading_processing():
 
 schedule.every(1).minutes.do(truck_processing)
 #schedule.every(10).seconds.do(truck_processing)
-schedule.every(5).seconds.do(periodic_data)
+# schedule.every(5).seconds.do(periodic_data)
 
 if __name__ == "__main__":
     while True:

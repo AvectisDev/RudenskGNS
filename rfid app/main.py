@@ -1,7 +1,6 @@
 import socket
 import db
 import binascii
-import time
 from parameters import readers, COMMANDS
 from miriada import get_balloon_by_nfc_tag as get_balloon
 import django_api

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import (Balloon, Truck, Trailer, RailwayTanks, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
+from ..models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                       RailwayLoadingBatch, GasLoadingBatch, GasUnloadingBatch)
 
 
@@ -39,7 +39,7 @@ class TrailerSerializer(serializers.ModelSerializer):
 
 class RailwayTanksSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RailwayTanks
+        model = RailwayTank
         fields = ['number', 'empty_weight', 'full_weight', 'is_on_station', 'entry_date', 'entry_time',
                   'departure_date', 'departure_time']
 
