@@ -172,14 +172,18 @@ async def main():
         except Exception as e:
             print(f"Error while reading NFC tags: {e}")
 
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.2)
 
         try:
             # Задачи для считывания состояния входов
             tasks = [asyncio.create_task(read_input_status(reader)) for reader in readers]
-            await asyncio.gather(*tasks)
+            results = await asyncio.gather(*tasks)  # Ожидаем выполнения всех задач и получаем результаты
+            for i in range(len(readers)):
+                readers[i]['input_state'] = results[i]
         except Exception as e:
             print(f"Error while reading input status: {e}")
+
+        await asyncio.sleep(0.2)
 
 
 if __name__ == "__main__":

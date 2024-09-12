@@ -12,7 +12,8 @@ async def get_balloon(nfc_tag):
         try:
             async with session.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}",
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # вызывает исключение для кодов ошибок HTTP
+
+                response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return True, await response.json()
 
         except aiohttp.ClientError as e:
@@ -24,7 +25,7 @@ async def create_balloon(data):
         try:
             async with session.post(f"{BASE_URL}/balloon-passport", json=data,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # вызывает исключение для кодов ошибок HTTP
+                response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return True, await response.json()
 
         except aiohttp.ClientError as e:

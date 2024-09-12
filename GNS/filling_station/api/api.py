@@ -25,7 +25,7 @@ USER_STATUS_LIST = [
     'Опорожнение(слив) баллона',
     'Контрольное взвешивание'
 ]
-BALLOONS_LOADING_READER_LIST = [5]
+BALLOONS_LOADING_READER_LIST = [6]
 BALLOONS_UNLOADING_READER_LIST = [3, 4]
 
 
