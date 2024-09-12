@@ -137,16 +137,49 @@ async def read_nfc_tag(reader: dict):
     await data_exchange_with_reader(reader, 'clean_buffer')  # очищаем буферную память считывателя
 
 
+async def read_input_status(reader: dict):
+    """
+    Функция отправляет запрос на считыватель FEIG и получает в ответ состояние дискретных входов
+    """
+
+    previous_input_state = reader['input_state']  # присваиваем предыдущее состояние входа временной переменной
+    data = await data_exchange_with_reader(reader, 'inputs_read')  # предполагаем, что это асинхронная функция
+
+    if len(data) == 18:
+        print("Inputs data is: ", data)
+        first_input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
+        if first_input_state == 1 and previous_input_state == 0:  # текущее состояние "активен", а ранее он был выключен
+            await db.write_balloons_amount(reader['number'])  # вызываем асинхронную версию этой функции
+            return 1  # возвращаем состояние входа "активен"
+        elif first_input_state == 0 and previous_input_state == 1:
+            return 0  # возвращаем состояние входа "неактивен"
+        else:
+            return previous_input_state
+    else:
+        return previous_input_state
+
+
 async def main():
     # При запуске программы очищаем буфер считывателей
     tasks = [asyncio.create_task(data_exchange_with_reader(reader, 'clean_buffer')) for reader in readers]
     await asyncio.gather(*tasks)
 
     while True:
-        tasks = [asyncio.create_task(read_nfc_tag(reader)) for reader in readers]
-        await asyncio.gather(*tasks)
-        # Добавить задержку, для снижения нагрузки на процессор
-        await asyncio.sleep(0.5)
+        try:
+            # Задачи для считывания NFC тегов
+            tasks = [asyncio.create_task(read_nfc_tag(reader)) for reader in readers]
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            print(f"Error while reading NFC tags: {e}")
+
+        await asyncio.sleep(0.1)
+
+        try:
+            # Задачи для считывания состояния входов
+            tasks = [asyncio.create_task(read_input_status(reader)) for reader in readers]
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            print(f"Error while reading input status: {e}")
 
 
 if __name__ == "__main__":
