@@ -216,7 +216,7 @@ async def gas_loading_processing(server):
     batch_type = 'loading'
 
     if GAS_LOADING_BATCH['command_start'] and not GAS_LOADING_BATCH['start_flag']:
-        GAS_LOADING_BATCH['command_start'] = 1
+        GAS_LOADING_BATCH['process_step'] = 1
         print('Начало партии приёмки автоцистерн')
         GAS_LOADING_BATCH['start_flag'] = True
 
@@ -306,7 +306,7 @@ async def gas_unloading_processing(server: dict):
     batch_type = 'unloading'
 
     if GAS_UNLOADING_BATCH['command_start'] and not GAS_UNLOADING_BATCH['start_flag']:
-        GAS_UNLOADING_BATCH['command_start'] = 1
+        GAS_UNLOADING_BATCH['process_step'] = 1
         print('Начало партии отгрузки автоцистерн')
         GAS_UNLOADING_BATCH['start_flag'] = True
 
