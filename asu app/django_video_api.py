@@ -18,7 +18,7 @@ async def get_transport(number, transport_type):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{URL}?registration_number={number}", timeout=1,
+            async with session.get(f"{URL}?registration_number={number}", timeout=5,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return True, await response.json()
@@ -37,7 +37,7 @@ async def create_transport(data, transport_type):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(URL, json=data, timeout=1, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+            async with session.post(URL, json=data, timeout=5, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # HTTPError для ответа с кодами состояния 4xx/5xx
                 return True, await response.json()
 
@@ -55,7 +55,7 @@ async def update_transport(data, transport_type):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(URL, json=data, timeout=1, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+            async with session.patch(URL, json=data, timeout=5, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # HTTPError для ответов с кодами состояния 4xx/5xx
                 return True, await response.json()
 
@@ -72,7 +72,7 @@ async def get_batch_gas():
     """
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}/auto-gas-loading", timeout=1,
+            async with session.get(f"{BASE_URL}/auto-gas-loading", timeout=5,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 data = await response.json()
@@ -96,7 +96,7 @@ async def create_batch_gas(data):
     """
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/auto-gas-loading", json=data, timeout=1,
+            async with session.post(f"{BASE_URL}/auto-gas-loading", json=data, timeout=5,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return True, await response.json()
@@ -120,7 +120,7 @@ async def update_batch_gas(data):
     """
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/auto-gas-loading", json=data, timeout=1,
+            async with session.patch(f"{BASE_URL}/auto-gas-loading", json=data, timeout=5,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return True, {"status": "ok"}
