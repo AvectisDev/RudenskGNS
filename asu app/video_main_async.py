@@ -214,14 +214,14 @@ async def gas_loading_processing(server):
 
     """
     if GAS_LOADING_BATCH['command_start'] and not GAS_LOADING_BATCH['start_flag']:
-        loading_step = 1
+        GAS_LOADING_BATCH['command_start'] = 1
         print('Начало партии приёмки автоцистерн')
         GAS_LOADING_BATCH['start_flag'] = True
 
     if not GAS_LOADING_BATCH['start_flag']:
         return
 
-    match loading_step:
+    match GAS_LOADING_BATCH['command_start']:
         case 1:  # Поиск машины в базе. Создание партии
             transport_list = await get_registration_number_list(server)
 
@@ -241,7 +241,6 @@ async def gas_loading_processing(server):
 
                     if transport_found:
                         GAS_LOADING_BATCH['truck_id'] = transport_data[0]['id']
-                        loading_step = 2
 
                         batch_data = {
                             'truck': GAS_LOADING_BATCH['truck_id'],
@@ -249,6 +248,7 @@ async def gas_loading_processing(server):
                             'is_active': True
                         }
                         await django_video_api.create_batch_gas(batch_data)  # начинаем партию приёмки газа
+                        GAS_LOADING_BATCH['command_start'] = 2
 
                     # Если был обработан грузовик, то завершаем цикл
                     break
@@ -267,7 +267,7 @@ async def gas_loading_processing(server):
 
                 print(
                     f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
-                loading_step = 3
+                GAS_LOADING_BATCH['command_start'] = 3
 
         case 3:
             if AUTO['weight_is_stable'] and GAS_LOADING_BATCH['initial_mass_meter'] != AUTO['mass_total']:
@@ -290,7 +290,7 @@ async def gas_loading_processing(server):
                     await django_video_api.update_batch_gas(batch_data)  # завершаем партию приёмки газа
 
                 print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
-                loading_step = 0
+                GAS_LOADING_BATCH['command_start'] = 0
 
 
 async def periodic_kpp_processing():
