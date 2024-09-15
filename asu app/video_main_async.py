@@ -223,7 +223,7 @@ async def gas_loading_processing(server):
     if not GAS_LOADING_BATCH['start_flag']:
         return
 
-    match GAS_LOADING_BATCH['command_start']:
+    match GAS_LOADING_BATCH['process_step']:
         case 1:  # Поиск машины в базе. Создание партии
             transport_list = await get_registration_number_list(server)
 
@@ -250,7 +250,7 @@ async def gas_loading_processing(server):
                             'is_active': True
                         }
                         await django_video_api.create_batch_gas(batch_data, batch_type)  # начинаем партию приёмки газа
-                        GAS_LOADING_BATCH['command_start'] = 2
+                        GAS_LOADING_BATCH['process_step'] = 2
 
                     # Если был обработан грузовик, то завершаем цикл
                     break
@@ -271,7 +271,7 @@ async def gas_loading_processing(server):
 
                 print(
                     f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
-                GAS_LOADING_BATCH['command_start'] = 3
+                GAS_LOADING_BATCH['process_step'] = 3
 
         case 3:
             print('Шаг 3')
@@ -295,7 +295,7 @@ async def gas_loading_processing(server):
                     await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
 
                 print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
-                GAS_LOADING_BATCH['command_start'] = 0
+                GAS_LOADING_BATCH['process_step'] = 0
                 GAS_LOADING_BATCH['start_flag'] = False
 
 
@@ -313,7 +313,7 @@ async def gas_unloading_processing(server: dict):
     if not GAS_UNLOADING_BATCH['start_flag']:
         return
 
-    match GAS_UNLOADING_BATCH['command_start']:
+    match GAS_UNLOADING_BATCH['process_step']:
         case 1:  # Поиск машины в базе. Создание партии
             transport_list = await get_registration_number_list(server)
 
@@ -340,7 +340,7 @@ async def gas_unloading_processing(server: dict):
                             'is_active': True
                         }
                         await django_video_api.create_batch_gas(batch_data, batch_type)  # начинаем партию отгрузки газа
-                        GAS_UNLOADING_BATCH['command_start'] = 2
+                        GAS_UNLOADING_BATCH['process_step'] = 2
 
                     # Если был обработан грузовик, то завершаем цикл
                     break
@@ -361,7 +361,7 @@ async def gas_unloading_processing(server: dict):
 
                 print(
                     f'Вес пустой машины = {GAS_UNLOADING_BATCH['truck_empty_weight']}. Начальные показания массомера {GAS_UNLOADING_BATCH['initial_mass_meter']}')
-                GAS_UNLOADING_BATCH['command_start'] = 3
+                GAS_UNLOADING_BATCH['process_step'] = 3
 
         case 3:
             print('Шаг 3')
@@ -385,7 +385,7 @@ async def gas_unloading_processing(server: dict):
                     await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
 
                 print(f'Вес полной машины = {GAS_UNLOADING_BATCH['truck_full_weight']}. Последние показания массомера {GAS_UNLOADING_BATCH['final_mass_meter']}')
-                GAS_UNLOADING_BATCH['command_start'] = 0
+                GAS_UNLOADING_BATCH['process_step'] = 0
                 GAS_UNLOADING_BATCH['start_flag'] = False
 
 
