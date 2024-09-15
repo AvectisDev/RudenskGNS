@@ -54,12 +54,12 @@ async def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
     Если метки нет в списке, то добавляет новую метку, если метка есть (повторное считывание), до пропускаем все
     последующие действия с ней
     """
-
-    if len(nfc_tag_list) > 5:
-        nfc_tag_list.pop(0)
-        nfc_tag_list.append(nfc_tag)
-    else:
-        nfc_tag_list.append(nfc_tag)
+    if nfc_tag not in nfc_tag_list:
+        if len(nfc_tag_list) > 5:
+            nfc_tag_list.pop(0)
+            nfc_tag_list.append(nfc_tag)
+        else:
+            nfc_tag_list.append(nfc_tag)
 
 
 async def balloon_passport_processing(nfc_tag: str, status: str):
