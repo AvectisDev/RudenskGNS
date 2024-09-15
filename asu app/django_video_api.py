@@ -78,7 +78,7 @@ async def get_batch_gas():
                 data = await response.json()
                 return True, data
 
-        except aiohttp.ClientError as e:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             return False, {"status": str(e)}  # Возвращаем сообщение об ошибке запроса
 
         except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам

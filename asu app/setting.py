@@ -17,12 +17,8 @@ INTELLECT_SERVER_LIST = [
         'delta_minutes': 10
     },
     {
-        'id': '4',
-        'delta_minutes': 3500
-    },
-    {
-        'id': '5',
-        'delta_minutes': 3500
+        'id': '4,5',
+        'delta_minutes': 3000
     }
 ]
 

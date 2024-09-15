@@ -71,8 +71,8 @@ async def get_intellect_data(data):
 
                 return True, await response.json()
 
-        except aiohttp.ClientError as e:
-            return False, e
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            return False, error
 
 
 async def get_start_time(delta_minutes: int) -> str:
@@ -293,8 +293,7 @@ async def main():
     while True:
         # schedule.run_pending()
         # Задачи обработки номеров на КПП. Сервера 4 и 5
-        tasks = [asyncio.create_task(kpp_processing(server)) for server in reversed(INTELLECT_SERVER_LIST[-2:])]
-        await asyncio.gather(*tasks)
+        await kpp_processing(INTELLECT_SERVER_LIST[2])
 
         await asyncio.sleep(5)
 
