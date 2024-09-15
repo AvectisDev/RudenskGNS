@@ -23,7 +23,7 @@ INTELLECT_SERVER_LIST = [
 ]
 
 GAS_LOADING_BATCH = {
-    'command_start': True,
+    'command_start': False,
     'start_flag': False,
     'process_step': 0,
     'is_active': False,

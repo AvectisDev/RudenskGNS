@@ -211,8 +211,10 @@ async def kpp_processing(server: dict):
 
 async def gas_loading_processing(server):
     """
-
+    Формирование и обработка партий приёмки газа в автоцистернах
     """
+    batch_type = 'loading'
+
     if GAS_LOADING_BATCH['command_start'] and not GAS_LOADING_BATCH['start_flag']:
         GAS_LOADING_BATCH['command_start'] = 1
         print('Начало партии приёмки автоцистерн')
@@ -247,7 +249,7 @@ async def gas_loading_processing(server):
                             'trailer': 0,
                             'is_active': True
                         }
-                        await django_video_api.create_batch_gas(batch_data)  # начинаем партию приёмки газа
+                        await django_video_api.create_batch_gas(batch_data, batch_type)  # начинаем партию приёмки газа
                         GAS_LOADING_BATCH['command_start'] = 2
 
                     # Если был обработан грузовик, то завершаем цикл
@@ -284,16 +286,107 @@ async def gas_loading_processing(server):
 
                 await django_video_api.update_transport(truck_data, 'truck')
 
-                batch_found, batch_data = await django_video_api.get_batch_gas()
+                batch_found, batch_data = await django_video_api.get_batch_gas(batch_type)
                 if batch_found:
                     batch_data['gas_amount'] = GAS_LOADING_BATCH['final_mass_meter'] - GAS_LOADING_BATCH['initial_mass_meter']
                     batch_data['weight_gas_amount'] = GAS_LOADING_BATCH['truck_full_weight'] - GAS_LOADING_BATCH['truck_empty_weight']
                     batch_data['is_active'] = False
 
-                    await django_video_api.update_batch_gas(batch_data)  # завершаем партию приёмки газа
+                    await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
 
                 print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
                 GAS_LOADING_BATCH['command_start'] = 0
+                GAS_LOADING_BATCH['start_flag'] = False
+
+
+async def gas_unloading_processing(server: dict):
+    """
+    Формирование и обработка партий отгрузки газа в автоцистернах
+    """
+    batch_type = 'unloading'
+
+    if GAS_UNLOADING_BATCH['command_start'] and not GAS_UNLOADING_BATCH['start_flag']:
+        GAS_UNLOADING_BATCH['command_start'] = 1
+        print('Начало партии отгрузки автоцистерн')
+        GAS_UNLOADING_BATCH['start_flag'] = True
+
+    if not GAS_UNLOADING_BATCH['start_flag']:
+        return
+
+    match GAS_UNLOADING_BATCH['command_start']:
+        case 1:  # Поиск машины в базе. Создание партии
+            transport_list = await get_registration_number_list(server)
+
+            if not transport_list:
+                print('Машина не определена')
+                return
+
+            for transport in reversed(transport_list):  # начинаем с последней определённой машины
+                registration_number = transport['registration_number']
+                transport_type = await get_transport_type(registration_number)
+
+                if transport_type == 'truck':
+                    print(f'Машина на весах. Номер - {registration_number}')
+
+                    # запрос данных по текущему номеру машины
+                    transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
+
+                    if transport_found:
+                        GAS_UNLOADING_BATCH['truck_id'] = transport_data[0]['id']
+
+                        batch_data = {
+                            'truck': GAS_UNLOADING_BATCH['truck_id'],
+                            'trailer': 0,
+                            'is_active': True
+                        }
+                        await django_video_api.create_batch_gas(batch_data, batch_type)  # начинаем партию отгрузки газа
+                        GAS_UNLOADING_BATCH['command_start'] = 2
+
+                    # Если был обработан грузовик, то завершаем цикл
+                    break
+
+        case 2:  # Взвешивание машины/сохранение начального веса и показания массомера
+            print('Шаг 2')
+            if AUTO['weight_is_stable']:
+                GAS_UNLOADING_BATCH['truck_empty_weight'] = AUTO['weight']
+                GAS_UNLOADING_BATCH['initial_mass_meter'] = AUTO['volume_total']
+
+                truck_data = {
+                    'id': GAS_UNLOADING_BATCH['truck_id'],
+                    'empty_weight': GAS_UNLOADING_BATCH['truck_empty_weight']
+                }
+
+                result = await django_video_api.update_transport(truck_data, 'truck')
+                print(result)
+
+                print(
+                    f'Вес пустой машины = {GAS_UNLOADING_BATCH['truck_empty_weight']}. Начальные показания массомера {GAS_UNLOADING_BATCH['initial_mass_meter']}')
+                GAS_UNLOADING_BATCH['command_start'] = 3
+
+        case 3:
+            print('Шаг 3')
+            if AUTO['weight_is_stable'] and GAS_UNLOADING_BATCH['initial_mass_meter'] != AUTO['volume_total']:
+                GAS_UNLOADING_BATCH['truck_full_weight'] = AUTO['weight']
+                GAS_UNLOADING_BATCH['final_mass_meter'] = AUTO['volume_total']
+
+                truck_data = {
+                    'id': GAS_UNLOADING_BATCH['truck_id'],
+                    'full_weight': GAS_UNLOADING_BATCH['truck_full_weight']
+                }
+
+                await django_video_api.update_transport(truck_data, 'truck')
+
+                batch_found, batch_data = await django_video_api.get_batch_gas(batch_type)
+                if batch_found:
+                    batch_data['gas_amount'] = GAS_UNLOADING_BATCH['final_mass_meter'] - GAS_UNLOADING_BATCH['initial_mass_meter']
+                    batch_data['weight_gas_amount'] = GAS_UNLOADING_BATCH['truck_full_weight'] - GAS_UNLOADING_BATCH['truck_empty_weight']
+                    batch_data['is_active'] = False
+
+                    await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
+
+                print(f'Вес полной машины = {GAS_UNLOADING_BATCH['truck_full_weight']}. Последние показания массомера {GAS_UNLOADING_BATCH['final_mass_meter']}')
+                GAS_UNLOADING_BATCH['command_start'] = 0
+                GAS_UNLOADING_BATCH['start_flag'] = False
 
 
 async def periodic_kpp_processing():
@@ -310,8 +403,9 @@ async def main():
         # Обработка данных OPC сервера
         get_opc_data()
 
-        # Обработка процесса приёмки газа в автоцистернах
+        # Обработка процессов приёмки/отгрузки газа в автоцистернах
         await gas_loading_processing(INTELLECT_SERVER_LIST[1])
+        await gas_unloading_processing(INTELLECT_SERVER_LIST[1])
 
         await asyncio.sleep(2)
 
