@@ -67,15 +67,15 @@ urlpatterns = [
          name="gas_loading_batch_delete"),
 
     path('batch/auto-gas-unloading', views.GasUnloadingBatchListView.as_view(),
-         name="auto_gas_unloading_batch_list"),
+         name="gas_unloading_batch_list"),
     path('batch/auto-gas-unloading/<pk>/', views.GasUnloadingBatchDetailView.as_view(),
-         name="auto_gas_unloading_batch_detail"),
+         name="gas_unloading_batch_detail"),
     path('batch/auto-gas-unloading/<pk>/update/', views.GasUnloadingBatchUpdateView.as_view(extra_context={
         "title": "Редактирование партии отгрузки газа в авто-цистернах"
     }),
-         name="auto_gas_unloading_batch_update"),
+         name="gas_unloading_batch_update"),
     path('batch/auto-gas-unloading/<pk>/delete/', views.GasUnloadingBatchDeleteView.as_view(),
-         name="auto_gas_unloading_batch_delete"),
+         name="gas_unloading_batch_delete"),
 
     path('ttn', views.TTNView.as_view(), name="ttn_list"),
     path('ttn/<pk>', views.TTNDetailView.as_view(), name="ttn_detail"),
