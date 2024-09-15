@@ -23,8 +23,8 @@ INTELLECT_SERVER_LIST = [
 ]
 
 GAS_LOADING_BATCH = {
-    'command_start': True,
-    'start_flag': True,
+    'command_start': False,
+    'start_flag': False,
     'is_active': False,
     'truck_id': None,
     'trailer_id': None,
@@ -37,8 +37,8 @@ GAS_LOADING_BATCH = {
 }
 
 GAS_UNLOADING_BATCH = {
-    'command_start': True,
-    'start_flag': True,
+    'command_start': False,
+    'start_flag': False,
     'is_active': False,
     'truck_id': None,
     'trailer_id': None,
