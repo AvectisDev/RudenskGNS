@@ -257,7 +257,7 @@ async def gas_loading_processing(server):
             print('Шаг 2')
             if AUTO['weight_is_stable']:
                 GAS_LOADING_BATCH['truck_full_weight'] = AUTO['weight']
-                GAS_LOADING_BATCH['initial_mass_meter'] = AUTO['mass_total']
+                GAS_LOADING_BATCH['initial_mass_meter'] = AUTO['volume_total']
 
                 truck_data = {
                     'id': GAS_LOADING_BATCH['truck_id'],
@@ -273,9 +273,9 @@ async def gas_loading_processing(server):
 
         case 3:
             print('Шаг 3')
-            if AUTO['weight_is_stable'] and GAS_LOADING_BATCH['initial_mass_meter'] != AUTO['mass_total']:
+            if AUTO['weight_is_stable'] and GAS_LOADING_BATCH['initial_mass_meter'] != AUTO['volume_total']:
                 GAS_LOADING_BATCH['truck_empty_weight'] = AUTO['weight']
-                GAS_LOADING_BATCH['final_mass_meter'] = AUTO['mass_total']
+                GAS_LOADING_BATCH['final_mass_meter'] = AUTO['volume_total']
 
                 truck_data = {
                     'id': GAS_LOADING_BATCH['truck_id'],
