@@ -264,7 +264,8 @@ async def gas_loading_processing(server):
                     'full_weight': GAS_LOADING_BATCH['truck_full_weight']
                 }
 
-                await django_video_api.update_transport(truck_data, 'truck')
+                result = await django_video_api.update_transport(truck_data, 'truck')
+                print(result)
 
                 print(
                     f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')

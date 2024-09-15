@@ -49,14 +49,14 @@ class Truck(models.Model):
     car_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка авто")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
     type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
-    max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
+    max_capacity_cylinders_by_type = models.FloatField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
-    max_weight_of_transported_cylinders = models.IntegerField(null=True, blank=True,
+    max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                               verbose_name="Максимальная масса перевозимых баллонов")
-    max_mass_of_transported_gas = models.IntegerField(null=True, blank=True,
+    max_mass_of_transported_gas = models.FloatField(null=True, blank=True,
                                                       verbose_name="Максимальная масса перевозимого газа")
-    empty_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес пустого т/с")
-    full_weight = models.IntegerField(null=True, blank=True, verbose_name="Вес полного т/с")
+    empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
+    full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
     entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
     entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
@@ -84,11 +84,11 @@ class Trailer(models.Model):
     trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
     type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
-    max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
+    max_capacity_cylinders_by_type = models.FloatField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
-    max_weight_of_transported_cylinders = models.IntegerField(null=True, blank=True,
+    max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                               verbose_name="Максимальная масса перевозимых баллонов")
-    max_mass_of_transported_gas = models.IntegerField(null=True, blank=True,
+    max_mass_of_transported_gas = models.FloatField(null=True, blank=True,
                                                       verbose_name="Максимальная масса перевозимого газа")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
@@ -117,6 +117,7 @@ class RailwayTank(models.Model):
     number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустой цистерны")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полной цистерны")
+    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
     entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
     entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
@@ -140,7 +141,9 @@ class RailwayTank(models.Model):
 
 class BalloonAmount(models.Model):
     reader_id = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
+    reader_status = models.CharField(null=True, blank=True, max_length=50, verbose_name="Статус")
     amount_of_balloons = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по датчику")
+    amount_of_rfid = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов по считывателю")
     change_date = models.DateField(null=True, blank=True, auto_now=True, verbose_name="Дата обновления")
     change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время обновления")
 
@@ -157,8 +160,8 @@ class TTN(models.Model):
         return self.number
 
     class Meta:
-        verbose_name = "Баллон"
-        verbose_name_plural = "Баллоны"
+        verbose_name = "ТТН"
+        verbose_name_plural = "ТТН"
         ordering = ['-id']
 
     def get_absolute_url(self):
