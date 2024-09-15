@@ -30,8 +30,8 @@ GAS_LOADING_BATCH = {
     'command_start': True,
     'start_flag': True,
     'is_active': False,
-    'truck': None,
-    'trailer': None,
+    'truck_id': None,
+    'trailer_id': None,
     'initial_mass_meter': 0,
     'final_mass_meter': 0,
     'gas_amount': 0,
@@ -41,11 +41,15 @@ GAS_LOADING_BATCH = {
 }
 
 GAS_UNLOADING_BATCH = {
+    'command_start': True,
+    'start_flag': True,
     'is_active': False,
-    'truck': None,
-    'trailer': None,
+    'truck_id': None,
+    'trailer_id': None,
+    'initial_mass_meter': 0,
+    'final_mass_meter': 0,
     'gas_amount': 0,
-    'weight_gas_amount': 0,
     'truck_full_weight': 0,
     'truck_empty_weight': 0,
+    'weight_gas_amount': 0
 }

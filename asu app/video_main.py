@@ -116,7 +116,7 @@ async def get_registration_number_list(server: dict) -> list:
     }
     status, intellect_data = await get_intellect_data(data_for_request)
 
-    item_list = intellect_data['Protocols']
+    item_list = intellect_data['Protocols'] if 'Protocols' in intellect_data else []
     out_list = []
     if status and len(item_list) > 0:
 
@@ -147,6 +147,22 @@ async def check_on_station(server: dict, direction) -> bool:
         return False
 
 
+async def get_transport_type(registration_number: str) -> str:
+    """
+    Функция по номеру транспорта определяет его вид:
+    - если номер начинается с цифры, значит это легковая машина - пропускаем обработку
+    - если номер начинается с 2-х букв, значит это грузовик, иначе - прицеп
+    """
+
+    if registration_number[0].isdigit():
+        return ''
+
+    if registration_number[0:2].isalpha():
+        return 'truck'
+    else:
+        return 'trailer'
+
+
 async def kpp_processing(server: dict):
     print('start truck_processing')
 
@@ -158,14 +174,9 @@ async def kpp_processing(server: dict):
         date, time = await separation_string_date(transport['date'])
         is_on_station = await check_on_station(server, transport['direction'])
 
-        # если номер начинается с цифры, значит это легковая машина - пропускаем обработку
-        if not registration_number[0].isdigit():
-            # если номер начинается с 2-х букв, значит это грузовик, иначе - прицеп
-            if registration_number[0:2].isalpha():
-                transport_type = 'truck'
-            else:
-                transport_type = 'trailer'
+        transport_type = await get_transport_type(registration_number)
 
+        if transport_type:
             # проверяем наличие в базе данных транспорт с данным номером
             transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
 
@@ -209,49 +220,73 @@ async def gas_loading_processing(server):
     match loading_step:
         case 1:  # Поиск машины в базе. Создание партии
             transport_list = await get_registration_number_list(server)
-            if transport_list:
-                for transport in transport_list:
-                    registration_number = transport['registration_number']
-                    transport_found, transport_data = django_video_api.get_transport(registration_number, 'truck')
+
+            if not transport_list:
+                print('Машина не определена')
+                return
+
+            for transport in reversed(transport_list):  # начинаем с последней определённой машины
+                registration_number = transport['registration_number']
+                transport_type = await get_transport_type(registration_number)
+
+                if transport_type == 'truck':
+                    print(f'Машина на весах. Номер - {registration_number}')
+
+                    # запрос данных по текущему номеру машины
+                    transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
 
                     if transport_found:
-                        print(f'auto weight truck found')
-                        for item in transport_data:
-                            truck_id = item['id']
-                            item['empty_weight'] = AUTO['weight']
-                            await django_video_api.update_transport(item, 'truck')
-                            print(f'truck with number {registration_number} - weight added')
-                            break
-            print('no truck on camera')
-            loading_step = 2
+                        GAS_LOADING_BATCH['truck_id'] = transport_data[0]['id']
+                        loading_step = 2
+
+                        batch_data = {
+                            'truck': GAS_LOADING_BATCH['truck_id'],
+                            'trailer': 0,
+                            'is_active': True
+                        }
+                        await django_video_api.create_batch_gas(batch_data)  # начинаем партию приёмки газа
+
+                    # Если был обработан грузовик, то завершаем цикл
+                    break
 
         case 2:  # Взвешивание машины/сохранение начального веса и показания массомера
             if AUTO['weight_is_stable']:
                 GAS_LOADING_BATCH['truck_full_weight'] = AUTO['weight']
                 GAS_LOADING_BATCH['initial_mass_meter'] = AUTO['mass_total']
+
+                truck_data = {
+                    'id': GAS_LOADING_BATCH['truck_id'],
+                    'full_weight': GAS_LOADING_BATCH['truck_full_weight']
+                }
+
+                await django_video_api.update_transport(truck_data, 'truck')
+
                 print(
                     f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
                 loading_step = 3
 
         case 3:
-            GAS_LOADING_BATCH['truck_empty_weight'] = AUTO['weight']
-            print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}')
+            if AUTO['weight_is_stable'] and GAS_LOADING_BATCH['initial_mass_meter'] != AUTO['mass_total']:
+                GAS_LOADING_BATCH['truck_empty_weight'] = AUTO['weight']
+                GAS_LOADING_BATCH['final_mass_meter'] = AUTO['mass_total']
 
-        case 4:
-
-            # проверяем, есть ли активные партии в базе, если есть - получаем её данные
-            batch_found, batch_data = django_video_api.get_batch_gas()
-            if batch_found:
-                batch_data['gas_amount'] = AUTO['mass_total']
-
-                # если активных партий нет - создаём новую партию
-
-                batch_data = {
-                    'truck': truck_id,
-                    'trailer': 0,
-                    'is_active': True
+                truck_data = {
+                    'id': GAS_LOADING_BATCH['truck_id'],
+                    'empty_weight': GAS_LOADING_BATCH['truck_empty_weight']
                 }
-                django_video_api.create_batch_gas(batch_data)  # начинаем партию отгрузки газа
+
+                await django_video_api.update_transport(truck_data, 'truck')
+
+                batch_found, batch_data = await django_video_api.get_batch_gas()
+                if batch_found:
+                    batch_data['gas_amount'] = GAS_LOADING_BATCH['final_mass_meter'] - GAS_LOADING_BATCH['initial_mass_meter']
+                    batch_data['weight_gas_amount'] = GAS_LOADING_BATCH['truck_full_weight'] - GAS_LOADING_BATCH['truck_empty_weight']
+                    batch_data['is_active'] = False
+
+                    await django_video_api.update_batch_gas(batch_data)  # завершаем партию приёмки газа
+
+                print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
+                loading_step = 0
 
 
 async def main():
