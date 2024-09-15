@@ -59,7 +59,7 @@ urlpatterns = [
          name="gas_loading_batch_list"),
     path('batch/auto-gas-loading/<pk>/', views.GasLoadingBatchDetailView.as_view(),
          name="gas_loading_batch_detail"),
-    path('batch/auto-gas-loading/<pk>/update/', views.GasUnloadingBatchUpdateView.as_view(extra_context={
+    path('batch/auto-gas-loading/<pk>/update/', views.GasLoadingBatchUpdateView.as_view(extra_context={
         "title": "Редактирование партии приёмки газа в авто-цистернах"
     }),
          name="gas_loading_batch_update"),
