@@ -254,6 +254,7 @@ async def gas_loading_processing(server):
                     break
 
         case 2:  # Взвешивание машины/сохранение начального веса и показания массомера
+            print('Шаг 2')
             if AUTO['weight_is_stable']:
                 GAS_LOADING_BATCH['truck_full_weight'] = AUTO['weight']
                 GAS_LOADING_BATCH['initial_mass_meter'] = AUTO['mass_total']
@@ -270,6 +271,7 @@ async def gas_loading_processing(server):
                 GAS_LOADING_BATCH['command_start'] = 3
 
         case 3:
+            print('Шаг 3')
             if AUTO['weight_is_stable'] and GAS_LOADING_BATCH['initial_mass_meter'] != AUTO['mass_total']:
                 GAS_LOADING_BATCH['truck_empty_weight'] = AUTO['weight']
                 GAS_LOADING_BATCH['final_mass_meter'] = AUTO['mass_total']
