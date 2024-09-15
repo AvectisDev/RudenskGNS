@@ -38,7 +38,7 @@ GAS_LOADING_BATCH = {
 }
 
 GAS_UNLOADING_BATCH = {
-    'command_start': True,
+    'command_start': False,
     'start_flag': False,
     'process_step': 0,
     'is_active': False,
