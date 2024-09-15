@@ -28,7 +28,7 @@ async def get_transport(number, transport_type):
     Returns:
         tuple: (bool, str or dict) - статус наличия транспорта в базе и его данные или сообщение об ошибке.
     """
-    path = get_transport_path(transport_type)
+    path = await get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -45,7 +45,7 @@ async def get_transport(number, transport_type):
 
 
 async def create_transport(data, transport_type):
-    path = get_transport_path(transport_type)
+    path = await get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -62,7 +62,7 @@ async def create_transport(data, transport_type):
 
 
 async def update_transport(data, transport_type):
-    path = get_transport_path(transport_type)
+    path = await get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -97,7 +97,7 @@ async def get_batch_gas(batch_type: str):
     Returns:
         tuple: (bool, str or dict) - статус наличия партии и данные партии или сообщение об ошибке.
     """
-    path = get_batch_path(batch_type)
+    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -124,7 +124,7 @@ async def create_batch_gas(data, batch_type: str):
     Returns:
         tuple: (bool, str or dict) - статус операции и данные созданной партии или сообщение об ошибке.
     """
-    path = get_batch_path(batch_type)
+    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -151,7 +151,7 @@ async def update_batch_gas(data, batch_type: str):
     Returns:
         tuple: (bool, dict) - статус операции и сообщение о результатах обновления.
     """
-    path = get_batch_path(batch_type)
+    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
