@@ -296,17 +296,16 @@ async def main():
         tasks = [asyncio.create_task(kpp_processing(server)) for server in reversed(INTELLECT_SERVER_LIST[-2:])]
         await asyncio.gather(*tasks)
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(5)
 
         # Обработка данных OPC сервера
 
-        get_opc_data()
+        # get_opc_data()
         await gas_loading_processing(INTELLECT_SERVER_LIST[1])
 
 
 # schedule.every(1).minutes.do(kpp_processing)
 # schedule.every(10).seconds.do(truck_processing)
-# schedule.every(5).seconds.do(periodic_data)
 
 if __name__ == "__main__":
     asyncio.run(main())
