@@ -297,7 +297,7 @@ async def periodic_kpp_processing():
     while True:
         # Задачи обработки номеров на КПП. Сервера 4 и 5
         await kpp_processing(INTELLECT_SERVER_LIST[2])
-        await asyncio.sleep(10)  # 300 секунд = 5 минут
+        await asyncio.sleep(60)  # 60 секунд = 1 минута
 
 
 async def main():
@@ -307,11 +307,10 @@ async def main():
         # Обработка данных OPC сервера
         get_opc_data()
 
-        # Обработка газовой загрузки
+        # Обработка процесса приёмки газа в автоцистернах
         await gas_loading_processing(INTELLECT_SERVER_LIST[1])
 
-        # Пауза между выполнения задач, если необходимо
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
 
 # schedule.every(1).minutes.do(kpp_processing)
