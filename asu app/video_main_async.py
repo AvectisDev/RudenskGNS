@@ -27,14 +27,13 @@ def get_opc_value(addr_str):
     Get value from OPC UA server by address:
     Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
     """
-    client = Client("opc.tcp://127.0.0.1:4841")
     var = client.get_node(addr_str)
     return var.get_value()
 
 
 def get_opc_data():
     global RAILWAY, AUTO
-    client = Client("opc.tcp://127.0.0.1:4841")
+
     try:
         client.connect()
         print('Connect to OPC server successful')
@@ -294,22 +293,30 @@ async def gas_loading_processing(server):
                 loading_step = 0
 
 
-async def main():
+async def periodic_kpp_processing():
     while True:
-        # schedule.run_pending()
         # Задачи обработки номеров на КПП. Сервера 4 и 5
         await kpp_processing(INTELLECT_SERVER_LIST[2])
+        await asyncio.sleep(10)  # 300 секунд = 5 минут
 
-        await asyncio.sleep(5)
 
+async def main():
+    kpp_task = asyncio.create_task(periodic_kpp_processing())
+
+    while True:
         # Обработка данных OPC сервера
+        get_opc_data()
 
-        # get_opc_data()
+        # Обработка газовой загрузки
         await gas_loading_processing(INTELLECT_SERVER_LIST[1])
+
+        # Пауза между выполнения задач, если необходимо
+        await asyncio.sleep(5)
 
 
 # schedule.every(1).minutes.do(kpp_processing)
 # schedule.every(10).seconds.do(truck_processing)
 
 if __name__ == "__main__":
+    client = Client("opc.tcp://127.0.0.1:4841")
     asyncio.run(main())
