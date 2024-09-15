@@ -10,15 +10,15 @@ PASSWORD = "rfid-device"
 
 async def get_transport(number, transport_type):
     if transport_type == 'truck':
-        BASE_URL = TRUCKS_URL
+        URL = TRUCKS_URL
     elif transport_type == 'trailer':
-        BASE_URL = TRAILERS_URL
+        URL = TRAILERS_URL
     else:
         return False, "Invalid transport type"
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}?registration_number={number}",
+            async with session.get(f"{URL}?registration_number={number}", timeout=1,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return True, await response.json()
@@ -29,15 +29,15 @@ async def get_transport(number, transport_type):
 
 async def create_transport(data, transport_type):
     if transport_type == 'truck':
-        BASE_URL = TRUCKS_URL
+        URL = TRUCKS_URL
     elif transport_type == 'trailer':
-        BASE_URL = TRAILERS_URL
+        URL = TRAILERS_URL
     else:
         return False, "Invalid transport type"
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(BASE_URL, json=data, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+            async with session.post(URL, json=data, timeout=1, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # HTTPError для ответа с кодами состояния 4xx/5xx
                 return True, await response.json()
 
@@ -47,15 +47,15 @@ async def create_transport(data, transport_type):
 
 async def update_transport(data, transport_type):
     if transport_type == 'truck':
-        BASE_URL = TRUCKS_URL
+        URL = TRUCKS_URL
     elif transport_type == 'trailer':
-        BASE_URL = TRAILERS_URL
+        URL = TRAILERS_URL
     else:
         return False, "Invalid transport type"
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(BASE_URL, json=data, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+            async with session.patch(URL, json=data, timeout=1, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # HTTPError для ответов с кодами состояния 4xx/5xx
                 return True, await response.json()
 
@@ -96,7 +96,7 @@ async def create_batch_gas(data):
     """
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/auto-gas-loading", json=data,
+            async with session.post(f"{BASE_URL}/auto-gas-loading", json=data, timeout=1,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return True, await response.json()
@@ -120,7 +120,7 @@ async def update_batch_gas(data):
     """
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/auto-gas-loading", json=data,
+            async with session.patch(f"{BASE_URL}/auto-gas-loading", json=data, timeout=1,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return True, {"status": "ok"}

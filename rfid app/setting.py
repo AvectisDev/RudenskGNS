@@ -1,8 +1,8 @@
-readers = [{} for i in range(8)]
+READER_LIST = [{} for i in range(8)]
 
 # Считыватели на приёмке
 # Г-образный
-readers[0] = {
+READER_LIST[0] = {
     'ip': '10.10.2.20',
     'port': 10001,
     'number': 1,
@@ -14,7 +14,7 @@ readers[0] = {
 }
 
 # Г-образный
-readers[1] = {
+READER_LIST[1] = {
     'ip': '10.10.2.21',
     'port': 10001,
     'number': 2,
@@ -26,7 +26,7 @@ readers[1] = {
 }
 
 # Считыватели на отгрузке
-readers[2] = {
+READER_LIST[2] = {
     'ip': '10.10.2.22',
     'port': 10001,
     'number': 3,
@@ -37,7 +37,7 @@ readers[2] = {
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 
-readers[3] = {
+READER_LIST[3] = {
     'ip': '10.10.2.23',
     'port': 10001,
     'number': 4,
@@ -48,7 +48,7 @@ readers[3] = {
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 
-readers[4] = {
+READER_LIST[4] = {
     'ip': '10.10.2.24',
     'port': 10001,
     'number': 5,
@@ -59,7 +59,7 @@ readers[4] = {
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 
-readers[5] = {
+READER_LIST[5] = {
     'ip': '10.10.2.25',
     'port': 10001,
     'number': 6,
@@ -71,7 +71,7 @@ readers[5] = {
 }
 
 # Считыватели в цеху
-readers[6] = {
+READER_LIST[6] = {
     'ip': '10.10.2.26',
     'port': 10001,
     'number': 7,
@@ -82,7 +82,7 @@ readers[6] = {
     'batch': {'batch_id': 0, 'balloons_list': []}
 }
 
-readers[7] = {
+READER_LIST[7] = {
     'ip': '10.10.2.27',
     'port': 10001,
     'number': 8,

@@ -262,6 +262,7 @@ class GasLoadingBatch(models.Model):
     trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
                                 verbose_name="Прицеп")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа")
+    weight_gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа (весовая)")
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
@@ -287,6 +288,7 @@ class GasUnloadingBatch(models.Model):
     trailer = models.ForeignKey(Trailer, on_delete=models.DO_NOTHING, null=True, blank=True, default=0,
                                 verbose_name="Прицеп")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество отгруженного газа")
+    weight_gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество отгруженного газа (весовая)")
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
     ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")

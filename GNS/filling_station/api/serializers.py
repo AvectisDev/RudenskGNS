@@ -75,10 +75,12 @@ class RailwayLoadingBatchSerializer(serializers.ModelSerializer):
 class GasLoadingBatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = GasLoadingBatch
-        fields = ['id', 'end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'is_active', 'ttn']
+        fields = ['id', 'end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'weight_gas_amount',
+                  'is_active', 'ttn']
 
 
 class GasUnloadingBatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = GasUnloadingBatch
-        fields = ['id', 'end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'is_active', 'ttn']
+        fields = ['id', 'end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'weight_gas_amount',
+                  'is_active', 'ttn']

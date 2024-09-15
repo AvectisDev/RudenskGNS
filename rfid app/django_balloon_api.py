@@ -10,7 +10,7 @@ PASSWORD = "rfid-device"
 async def get_balloon(nfc_tag):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}",
+            async with session.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", timeout=1,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
 
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
@@ -23,7 +23,7 @@ async def get_balloon(nfc_tag):
 async def create_balloon(data):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/balloon-passport", json=data,
+            async with session.post(f"{BASE_URL}/balloon-passport", json=data, timeout=1,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return True, await response.json()
@@ -35,7 +35,7 @@ async def create_balloon(data):
 async def update_balloon(nfc_tag, data):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data,
+            async with session.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, timeout=1,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # вызывает исключение для кодов ошибок HTTP
                 return True, await response.json()
@@ -73,7 +73,7 @@ async def get_batch_balloons(batch_type: str):
 
                 return False, {'error': "Unknown error"}
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            return False, {"status": str(e)}  # Вернет сообщение об ошибке запроса
+            return False, {"status": str(e)}
         except ValueError:  # Обработка ошибок кода JSON
             return False, {"status": "invalid response"}
 
@@ -100,12 +100,10 @@ async def update_batch_balloons(batch_type: str, reader: dict):
                 return True, {"status": "ok"}
         except KeyError:
             return False, {"status": "no valid response - missing key"}
-        except aiohttp.ClientError as e:  # Уточняем исключения aiohttp
-            return False, {"status": f"request failed: {str(e)}"}
-        except asyncio.TimeoutError:
-            return False, {"status": "request timed out"}
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            return False, {"status": str(e)}
 
-# Пример использования функции в асинхронной среде
+
 # async def main():
 #     reader = {
 #         'batch': {
