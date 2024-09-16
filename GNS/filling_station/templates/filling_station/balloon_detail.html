@@ -5,7 +5,7 @@
 
 <div class="container text-center">
     <div class="row">
-        <div class="col">
+        <div class="col text-end">
             <p>RFID метка</p>
             <p>Серийный номер</p>
             <p>Дата производства</p>
@@ -21,7 +21,7 @@
             <p>Дата изменения</p>
             <p>Время изменения</p>
         </div>
-        <div class="col">
+        <div class="col text-start">
             <p>{{ balloon.nfc_tag}}</p>
             <p>{{ balloon.serial_number|default_if_none:"-" }}</p>
             <p>{{ balloon.creation_date|default_if_none:"-" }}</p>

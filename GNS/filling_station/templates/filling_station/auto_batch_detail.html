@@ -5,7 +5,7 @@
 
 <div class="container text-center">
     <div class="row">
-        <div class="col">
+        <div class="col text-end">
             <p>Номер партии</p>
             <p>Дата начала</p>
             <p>Время начала</p>
@@ -13,11 +13,12 @@
             <p>Время окончания</p>
             <p>Автомобиль</p>
             <p>Прицеп</p>
-            <p>Принято газа</p>
+            <p>Принято газа (массомер)</p>
+            <p>Принято газа (весы)</p>
             <p>В работе</p>
             <p>ТТН</p>
         </div>
-        <div class="col">
+        <div class="col text-start">
             <p>{{ batch.id }}</p>
             <p>{{ batch.begin_date|default_if_none:"-" }}</p>
             <p>{{ batch.begin_time|default_if_none:"-" }}</p>
@@ -25,7 +26,8 @@
             <p>{{ batch.end_time|default_if_none:"-" }}</p>
             <p>{{ batch.truck|default_if_none:"-" }}</p>
             <p>{{ batch.trailer|default_if_none:"-" }}</p>
-            <p>{{ batch.gas_amount|default_if_none:"-" }}</p>
+            <p>{{ batch.gas_amount|floatformat:2|default_if_none:"-" }}</p>
+            <p>{{ batch.weight_gas_amount|floatformat:2|default_if_none:"-" }}</p>
             <p>{% if batch.is_active %}Активна{% else %}Завершена{% endif %}</p>
             <p>{{ batch.ttn|default_if_none:"-" }}</p>
         </div>

@@ -11,7 +11,7 @@
 
         {% if page_obj.number == p %}
         <li class="page-item active" aria-current="page">
-            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+            <a class="page-link" href="?page={{ p }}" >{{ p }}</a>
         </li>
         {% elif p > page_obj.number|add:-4 and p < page_obj.number|add:4 %}
         <li class="page-item">
