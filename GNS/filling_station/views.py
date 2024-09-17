@@ -34,7 +34,7 @@ class BalloonListView(generic.ListView):
         if nfc_tag_filter:
             return Balloon.objects.filter(nfc_tag=nfc_tag_filter)
         else:
-            return Balloon.objects.order_by('-change_date', '-change_time').all()
+            return Balloon.objects.all()
 
 
 class BalloonDetailView(generic.DetailView):
@@ -175,7 +175,7 @@ class GasUnloadingBatchDetailView(generic.DetailView):
 
 class GasUnloadingBatchUpdateView(generic.UpdateView):
     model = GasUnloadingBatch
-    form_class = GasLoadingBatchForm
+    form_class = GasUnloadingBatchForm
     template_name = 'filling_station/_equipment_form.html'
 
 

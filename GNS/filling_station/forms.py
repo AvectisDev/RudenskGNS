@@ -29,7 +29,8 @@ class BalloonForm(forms.ModelForm):
     class Meta:
         model = Balloon
         fields = ['nfc_tag', 'serial_number', 'creation_date', 'size', 'netto', 'brutto', 'current_examination_date',
-                  'next_examination_date', 'status', 'manufacturer', 'wall_thickness', 'filling_status']
+                  'next_examination_date', 'status', 'manufacturer', 'wall_thickness', 'filling_status',
+                  'update_passport_required']
         widgets = {
             'nfc_tag': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -39,12 +40,13 @@ class BalloonForm(forms.ModelForm):
             'size': forms.NumberInput(attrs={'class': 'form-control'}),
             'netto': forms.NumberInput(attrs={'class': 'form-control'}),
             'brutto': forms.NumberInput(attrs={'class': 'form-control'}),
-            'current_examination_date': forms.DateInput(attrs={'type': 'date'}),
-            'next_examination_date': forms.DateInput(attrs={'type': 'date'}),
+            'current_examination_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'next_examination_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'status': forms.TextInput(attrs={'class': 'form-control'}),
             'manufacturer': forms.TextInput(attrs={'class': 'form-control'}),
             'wall_thickness': forms.NumberInput(attrs={'class': 'form-control'}),
-            'filling_status': forms.CheckboxInput(attrs={'class': 'form-control'})
+            'filling_status': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'update_passport_required': forms.CheckboxInput(attrs={'class': 'form-control'})
         }
 
 
@@ -73,9 +75,9 @@ class TruckForm(forms.ModelForm):
             'empty_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'full_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_on_station': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'entry_date': forms.DateInput(attrs={'type': 'date'}),
+            'entry_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'entry_time': forms.TimeInput(attrs={'type': 'time'}),
-            'departure_date': forms.DateInput(attrs={'type': 'date'}),
+            'departure_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'departure_time': forms.TimeInput(attrs={'type': 'time'})
         }
 
@@ -94,7 +96,7 @@ class TrailerForm(forms.ModelForm):
         model = Trailer
         fields = ['trailer_brand', 'registration_number', 'type', 'max_capacity_cylinders_by_type',
                   'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'empty_weight',
-                  'full_weight', 'is_on_station']
+                  'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
         widgets = {
             'trailer_brand': forms.TextInput(attrs={'class': 'form-control'}),
             'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -105,6 +107,10 @@ class TrailerForm(forms.ModelForm):
             'empty_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'full_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_on_station': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'entry_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'entry_time': forms.TimeInput(attrs={'type': 'time'}),
+            'departure_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'departure_time': forms.TimeInput(attrs={'type': 'time'})
         }
 
 
@@ -120,16 +126,17 @@ class RailwayTankForm(forms.ModelForm):
 
     class Meta:
         model = RailwayTank
-        fields = ['number', 'empty_weight', 'full_weight', 'is_on_station', 'entry_date', 'entry_time',
+        fields = ['number', 'empty_weight', 'full_weight', 'gas_amount', 'is_on_station', 'entry_date', 'entry_time',
                   'departure_date', 'departure_time']
         widgets = {
             'number': forms.TextInput(attrs={'class': 'form-control'}),
             'empty_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'full_weight': forms.NumberInput(attrs={'class': 'form-control'}),
+            'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_on_station': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'entry_date': forms.DateInput(attrs={'type': 'date'}),
+            'entry_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'entry_time': forms.TimeInput(attrs={'type': 'time'}),
-            'departure_date': forms.DateInput(attrs={'type': 'date'}),
+            'departure_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'departure_time': forms.TimeInput(attrs={'type': 'time'}),
         }
 
@@ -153,7 +160,7 @@ class TTNForm(forms.ModelForm):
             'name_of_supplier': forms.TextInput(attrs={'class': 'form-control'}),
             'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'balloons_amount': forms.NumberInput(attrs={'class': 'form-control'}),
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            'date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
 
@@ -169,14 +176,15 @@ class BalloonsLoadingBatchForm(forms.ModelForm):
 
     class Meta:
         model = BalloonsLoadingBatch
-        fields = ['end_date', 'end_time', 'truck', 'trailer',
+        fields = ['end_date', 'end_time', 'truck', 'trailer', 'reader_number',
                   'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                   'is_active', 'ttn']
         widgets = {
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer': forms.Select(attrs={'class': 'form-control'}),
+            'reader_number': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_rfid': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_5_liters': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_20_liters': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -199,14 +207,15 @@ class BalloonsUnloadingBatchForm(forms.ModelForm):
 
     class Meta:
         model = BalloonsUnloadingBatch
-        fields = ['end_date', 'end_time', 'truck', 'trailer',
+        fields = ['end_date', 'end_time', 'truck', 'trailer', 'reader_number',
                   'amount_of_rfid', 'amount_of_5_liters', 'amount_of_20_liters', 'amount_of_50_liters', 'gas_amount',
                   'is_active', 'ttn']
         widgets = {
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer': forms.Select(attrs={'class': 'form-control'}),
+            'reader_number': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_rfid': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_5_liters': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_of_20_liters': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -229,10 +238,9 @@ class RailwayLoadingBatchForm(forms.ModelForm):
 
     class Meta:
         model = BalloonsUnloadingBatch
-        fields = ['end_date', 'end_time', 'gas_amount',
-                  'is_active', 'ttn']
+        fields = ['end_date', 'end_time', 'gas_amount', 'is_active', 'ttn']
         widgets = {
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'gas_amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -254,7 +262,7 @@ class GasLoadingBatchForm(forms.ModelForm):
         model = GasLoadingBatch
         fields = ['end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'weight_gas_amount', 'is_active', 'ttn']
         widgets = {
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer': forms.Select(attrs={'class': 'form-control'}),
@@ -279,7 +287,7 @@ class GasUnloadingBatchForm(forms.ModelForm):
         model = GasUnloadingBatch
         fields = ['end_date', 'end_time', 'truck', 'trailer', 'gas_amount', 'weight_gas_amount', 'is_active', 'ttn']
         widgets = {
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer': forms.Select(attrs={'class': 'form-control'}),

@@ -51,8 +51,8 @@ async def write_balloons_amount(reader: dict, from_who: str):
 
             print("Data updated")
 
-    except Exception as e:
-        print('Can`t establish connection to database:', e)
+    except Exception as error:
+        print('Can`t establish connection to database:', error)
 
     finally:
         await conn.close()

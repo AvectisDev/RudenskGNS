@@ -2,8 +2,6 @@ import aiohttp
 import asyncio
 
 BASE_URL = "http://10.10.12.253:8000/api"  # server address
-TRUCKS_URL = "http://10.10.12.253:8000/api/trucks"
-TRAILERS_URL = "http://10.10.12.253:8000/api/trailers"
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 
@@ -38,9 +36,11 @@ async def get_transport(number, transport_type):
                 return True, await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'get_transport function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'get_transport function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}
 
 
@@ -55,9 +55,11 @@ async def create_transport(data, transport_type):
                 return True, await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'create_transport function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'create_transport function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}
 
 
@@ -72,9 +74,11 @@ async def update_transport(data, transport_type):
                 return True, await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'update_transport function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'update_transport function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}
 
 
@@ -108,9 +112,11 @@ async def get_batch_gas(batch_type: str):
                 return True, data
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'get_batch_gas function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'get_batch_gas function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}
 
 
@@ -134,9 +140,11 @@ async def create_batch_gas(data, batch_type: str):
                 return True, await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'create_batch_gas function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'create_batch_gas function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}
 
 
@@ -161,7 +169,9 @@ async def update_batch_gas(data, batch_type: str):
                 return True, {"status": "ok"}
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            print(f'update_batch_gas function error - {error}')
             return False, error  # Возвращаем сообщение об ошибке запроса
 
-        except (ValueError, KeyError):  # Обработка ошибок парсинга JSON и доступа к ключам
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'update_batch_gas function JSON_error - {JSON_error}')
             return False, {"status": "invalid response"}

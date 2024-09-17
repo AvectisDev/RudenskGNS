@@ -30,7 +30,7 @@ class Balloon(models.Model):
     class Meta:
         verbose_name = "Баллон"
         verbose_name_plural = "Баллоны"
-        ordering = ['-id']
+        ordering = ['-change_date', '-change_time']
         indexes = [
             models.Index(fields=['-nfc_tag', '-serial_number']),
         ]
@@ -41,20 +41,20 @@ class Balloon(models.Model):
     def get_update_url(self):
         return reverse('filling_station:balloon_update', args=[self.pk])
 
-    # def get_delete_url(self):
-    #     return reverse('filling_station:balloon_delete', args=[self.pk])
+    def get_delete_url(self):
+        return reverse('filling_station:balloon_delete', args=[self.pk])
 
 
 class Truck(models.Model):
     car_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка авто")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
     type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
-    max_capacity_cylinders_by_type = models.FloatField(null=True, blank=True,
+    max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
-                                                              verbose_name="Максимальная масса перевозимых баллонов")
+                                                            verbose_name="Максимальная масса перевозимых баллонов")
     max_mass_of_transported_gas = models.FloatField(null=True, blank=True,
-                                                      verbose_name="Максимальная масса перевозимого газа")
+                                                    verbose_name="Максимальная масса перевозимого газа")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
@@ -84,12 +84,12 @@ class Trailer(models.Model):
     trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
     type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
-    max_capacity_cylinders_by_type = models.FloatField(null=True, blank=True,
+    max_capacity_cylinders_by_type = models.IntegerField(null=True, blank=True,
                                                          verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
-                                                              verbose_name="Максимальная масса перевозимых баллонов")
+                                                            verbose_name="Максимальная масса перевозимых баллонов")
     max_mass_of_transported_gas = models.FloatField(null=True, blank=True,
-                                                      verbose_name="Максимальная масса перевозимого газа")
+                                                    verbose_name="Максимальная масса перевозимого газа")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с")
     is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")

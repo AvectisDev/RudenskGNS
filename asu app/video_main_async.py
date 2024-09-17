@@ -47,8 +47,8 @@ def get_opc_data():
 
         print(RAILWAY, AUTO)
 
-    except Exception as e:
-        print('No connection to OPC server:', e)
+    except Exception as error:
+        print(f'No connection to OPC server: {error}')
     finally:
         client.disconnect()
         print('Disconnect from OPC server')
@@ -74,7 +74,11 @@ async def get_intellect_data(data) -> list:
                 return []
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(error)
+            print(f'get_intellect_data function error - {error}')
+            return []
+
+        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
+            print(f'get_intellect_data function JSON_error - {JSON_error}')
             return []
 
 
@@ -101,8 +105,8 @@ def separation_string_date(date_string: str = '') -> tuple:
         converted_time = datetime.strptime(date_string, "%d.%m.%Y %H:%M:%S") + timedelta(hours=3)
         string_date = converted_time.strftime("%Y-%m-%d")
         string_time = converted_time.strftime("%H:%M")
-    except ValueError as e:
-        raise ValueError(f"Invalid date format: {str(e)}")
+    except ValueError as error:
+        raise ValueError(f"Invalid date format: {error}")
     return string_date, string_time
 
 
@@ -124,7 +128,7 @@ async def get_registration_number_list(server: dict) -> list:
 
         for item in intellect_data:
             # Если номер плохо считался, показатель validity будет < 90%. Пропускаем обработку
-            if item['validity'] > int(90):
+            if int(item['validity']) > 90:
                 out_list.append({
                     'registration_number': item['number'],
                     'date': item['date'],
@@ -153,7 +157,7 @@ def check_on_station(server: dict, direction) -> bool:
 
 def get_transport_type(registration_number: str) -> str:
     """
-    Функция по номеру транспорта определяет его вид:
+    Функция валидирует регистрационный номер транспорта и определяет вид транспорта:
     - если номер начинается с цифры, значит это легковая машина - пропускаем обработку
     - если номер начинается с 2-х букв, значит это грузовик, иначе - прицеп
     """
@@ -194,11 +198,10 @@ async def transport_process(transport: dict, server: dict):
                 await django_video_api.update_transport(item, transport_type)
                 print(f'{transport_type} with number {transport['registration_number']} update')
         else:
+            entry_date = entry_time = departure_date = departure_time = None
             if is_on_station:
                 entry_date, entry_time = date, time
-                departure_date, departure_time = None, None
             else:
-                entry_date, entry_time = None, None
                 departure_date, departure_time = date, time
 
             new_transport_data = {
@@ -214,12 +217,12 @@ async def transport_process(transport: dict, server: dict):
 
 
 async def kpp_processing(server: dict):
-    print('start truck_processing')
+    print('Обработка регистрационных номеров на КПП')
 
     # получаем от "Интеллекта" список номеров с данными фотофиксации
     transport_list = await get_registration_number_list(server)
 
-    # Задачи для обработки транспорта на django
+    # Задачи для обработки регистрационных номеров на КПП
     tasks = [asyncio.create_task(transport_process(transport, server)) for transport in transport_list]
     await asyncio.gather(*tasks)
 
@@ -248,7 +251,7 @@ async def gas_loading_processing(server):
 
             for transport in reversed(transport_list):  # начинаем с последней определённой машины
                 registration_number = transport['registration_number']
-                transport_type = await get_transport_type(registration_number)
+                transport_type = get_transport_type(registration_number)
 
                 if transport_type == 'truck':
                     print(f'Машина на весах. Номер - {registration_number}')
@@ -264,7 +267,8 @@ async def gas_loading_processing(server):
                             'trailer': 0,
                             'is_active': True
                         }
-                        await django_video_api.create_batch_gas(batch_data, batch_type)  # начинаем партию приёмки газа
+                        # начинаем партию приёмки газа
+                        await django_video_api.create_batch_gas(batch_data, batch_type)
                         GAS_LOADING_BATCH['process_step'] = 2
 
                     # Если был обработан грузовик, то завершаем цикл
@@ -284,8 +288,8 @@ async def gas_loading_processing(server):
                 result = await django_video_api.update_transport(truck_data, 'truck')
                 print(result)
 
-                print(
-                    f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
+                print(f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. '
+                      f'Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
                 GAS_LOADING_BATCH['process_step'] = 3
 
         case 3:
@@ -309,7 +313,8 @@ async def gas_loading_processing(server):
 
                     await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
 
-                print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
+                print(f'Вес пустой машины = {GAS_LOADING_BATCH['truck_empty_weight']}. '
+                      f'Последние показания массомера {GAS_LOADING_BATCH['final_mass_meter']}')
                 GAS_LOADING_BATCH['process_step'] = 0
                 GAS_LOADING_BATCH['start_flag'] = False
 
@@ -338,7 +343,7 @@ async def gas_unloading_processing(server: dict):
 
             for transport in reversed(transport_list):  # начинаем с последней определённой машины
                 registration_number = transport['registration_number']
-                transport_type = await get_transport_type(registration_number)
+                transport_type = get_transport_type(registration_number)
 
                 if transport_type == 'truck':
                     print(f'Машина на весах. Номер - {registration_number}')
@@ -374,8 +379,8 @@ async def gas_unloading_processing(server: dict):
                 result = await django_video_api.update_transport(truck_data, 'truck')
                 print(result)
 
-                print(
-                    f'Вес пустой машины = {GAS_UNLOADING_BATCH['truck_empty_weight']}. Начальные показания массомера {GAS_UNLOADING_BATCH['initial_mass_meter']}')
+                print(f'Вес пустой машины = {GAS_UNLOADING_BATCH['truck_empty_weight']}. '
+                      f'Начальные показания массомера {GAS_UNLOADING_BATCH['initial_mass_meter']}')
                 GAS_UNLOADING_BATCH['process_step'] = 3
 
         case 3:
@@ -399,7 +404,8 @@ async def gas_unloading_processing(server: dict):
 
                     await django_video_api.update_batch_gas(batch_data, batch_type)  # завершаем партию приёмки газа
 
-                print(f'Вес полной машины = {GAS_UNLOADING_BATCH['truck_full_weight']}. Последние показания массомера {GAS_UNLOADING_BATCH['final_mass_meter']}')
+                print(f'Вес полной машины = {GAS_UNLOADING_BATCH['truck_full_weight']}. '
+                      f'Последние показания массомера {GAS_UNLOADING_BATCH['final_mass_meter']}')
                 GAS_UNLOADING_BATCH['process_step'] = 0
                 GAS_UNLOADING_BATCH['start_flag'] = False
 
