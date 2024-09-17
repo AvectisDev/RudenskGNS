@@ -132,26 +132,27 @@ async def get_registration_number_list(server: dict) -> list:
                 out_list.append({
                     'registration_number': item['number'],
                     'date': item['date'],
-                    'direction': item['direction']
+                    'direction': item['direction'],
+                    "camera": item["camera"]
                 })
 
     return out_list
 
 
-def check_on_station(server: dict, direction) -> bool:
+def check_on_station(transport: dict) -> bool:
     """
     Функция обрабатывает направление движения транспорта, определённое "Интеллектом", и возвращает статус
     return:
         True - транспорт въёхал на территорию ГНС
         False - транспорт выехал с территории ГНС
     """
-    if server['id'] == '4' and direction == '1':
+    if transport['camera'] == 'Камера 27' and transport['direction'] == '1':
         return True
-    if server['id'] == '4' and direction == '2':
+    if transport['camera'] == 'Камера 27' and transport['direction'] == '2':
         return False
-    if server['id'] == '5' and direction == '2':
+    if transport['camera'] == 'Камера 28' and transport['direction'] == '2':
         return True
-    if server['id'] == '5' and direction == '1':
+    if transport['camera'] == 'Камера 28' and transport['direction'] == '1':
         return False
 
 
@@ -172,10 +173,10 @@ def get_transport_type(registration_number: str) -> str:
         return 'trailer'
 
 
-async def transport_process(transport: dict, server: dict):
+async def transport_process(transport: dict):
     registration_number = transport['registration_number']
     date, time = separation_string_date(transport['date'])
-    is_on_station = check_on_station(server, transport['direction'])
+    is_on_station = check_on_station(transport)
 
     transport_type = get_transport_type(registration_number)
 
@@ -223,7 +224,7 @@ async def kpp_processing(server: dict):
     transport_list = await get_registration_number_list(server)
 
     # Задачи для обработки регистрационных номеров на КПП
-    tasks = [asyncio.create_task(transport_process(transport, server)) for transport in transport_list]
+    tasks = [asyncio.create_task(transport_process(transport)) for transport in transport_list]
     await asyncio.gather(*tasks)
 
 
