@@ -34,7 +34,7 @@ class BalloonListView(generic.ListView):
         if nfc_tag_filter:
             return Balloon.objects.filter(nfc_tag=nfc_tag_filter)
         else:
-            return Balloon.objects.all()
+            return Balloon.objects.order_by('-change_date', '-change_time').all()
 
 
 class BalloonDetailView(generic.DetailView):
@@ -58,17 +58,17 @@ def reader_info(request, reader='1'):
 
     if request.method == "POST":
         required_date = request.POST.get("date")
-        format_required_date = datetime.strptime(required_date, '%d.%m.%Y')
-        dataset = BalloonResources().export(Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader],
-                                                                                   change_date=format_required_date))
+        format_required_date = datetime.strptime(required_date, '%Y-%m-%d')
+
+        dataset = BalloonResources().export(Balloon.objects.filter(status=STATUS_LIST[reader], change_date=format_required_date))
         response = HttpResponse(dataset.xls, content_type='xls')
-        response[
-            'Content-Disposition'] = f'attachment; filename="RFID_1_{datetime.strftime(format_required_date, '%Y.%m.%d')}.xls"'
+        response['Content-Disposition'] = f'attachment; filename="RFID_1_{required_date}.xls"'
+
         return response
     else:
         date_process = GetBalloonsAmount()
 
-    balloons_list = Balloon.objects.filter(status=STATUS_LIST[reader])
+    balloons_list = Balloon.objects.order_by('-change_date', '-change_time').filter(status=STATUS_LIST[reader])
     current_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date).first()
     previous_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date).first()
 

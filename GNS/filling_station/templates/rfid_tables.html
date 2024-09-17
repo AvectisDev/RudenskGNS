@@ -42,16 +42,19 @@
             - {{ previous_quantity_by_sensor }}</p>
     </div>
 
-    <div>
-        <form method="post" enctype="multipart/form-data">
+    <div class="container-fluid">
+        <form method="post" enctype="multipart/form-data" class="row align-items-center">
             {% csrf_token %}
-            {{ form }}
-            <button class="btn" style="margin: 2% 2% 2% 2%; background-color: #3CBBD9; color: white;" type="submit">
-                Выгрузить список баллонов за дату
-            </button>
+            <div class="col-auto">
+                {{ form }}
+            </div>
+            <div class="col-auto">
+                <button class="btn" style="margin: 2% 2% 2% 2%; background-color: #3CBBD9; color: white;" type="submit">
+                    Выгрузить список баллонов
+                </button>
+            </div>
         </form>
     </div>
-
 </div>
 
 {% endblock content %}
