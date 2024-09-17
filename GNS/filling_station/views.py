@@ -69,27 +69,19 @@ def reader_info(request, reader='1'):
         date_process = GetBalloonsAmount()
 
     balloons_list = Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader])
-    current_quantity_by_sensor = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date)
-    previous_quantity_by_sensor = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date)
-    current_quantity_by_reader = len(balloons_list.filter(change_date=current_date))
-    previous_quantity_by_reader = len(balloons_list.filter(change_date=previous_date))
+    current_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date).first()
+    previous_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date).first()
 
     paginator = Paginator(balloons_list, 15)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
 
-    current_quantity_by_sensor_item = previous_quantity_by_sensor_item = 0
-    for amount in current_quantity_by_sensor:
-        current_quantity_by_sensor_item = amount.amount_of_balloons
-    for amount in previous_quantity_by_sensor:
-        previous_quantity_by_sensor_item = amount.amount_of_balloons
-
     context = {
         "page_obj": page_obj,
-        'current_quantity_by_reader': current_quantity_by_reader,
-        'previous_quantity_by_reader': previous_quantity_by_reader,
-        'current_quantity_by_sensor': current_quantity_by_sensor_item,
-        'previous_quantity_by_sensor': previous_quantity_by_sensor_item,
+        'current_quantity_by_reader': current_quantity.amount_of_rfid,
+        'previous_quantity_by_reader': previous_quantity.amount_of_rfid,
+        'current_quantity_by_sensor': current_quantity.amount_of_balloons,
+        'previous_quantity_by_sensor': previous_quantity.amount_of_balloons,
         'form': date_process,
         'reader': reader
     }

@@ -113,11 +113,15 @@ async def read_nfc_tag(reader: dict):
         if nfc_tag not in reader['previous_nfc_tags']:  # метка отличается от недавно считанных
             balloon_passport_status = await balloon_passport_processing(nfc_tag, reader['status'])
 
+            await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
+
             # ****************************************
             if balloon_passport_status:  # если паспорт заполнен
-                await data_exchange_with_reader(reader, 'read_complete')  # зажигаем зелёную лампу на считывателе
+                # зажигаем зелёную лампу на считывателе
+                await data_exchange_with_reader(reader, 'read_complete')
             else:
-                pass  # вставить команду моргания лампочки
+                # зажигаем зелёную лампу на считывателе
+                await data_exchange_with_reader(reader, 'read_complete_with_error')
             # ****************************************
 
             if reader['function'] is not None:  # если производится приёмка/отгрузка баллонов
@@ -149,7 +153,7 @@ async def read_input_status(reader: dict):
         print("Inputs data is: ", data)
         first_input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
         if first_input_state == 1 and previous_input_state == 0:  # текущее состояние "активен", а ранее он был выключен
-            await db.write_balloons_amount(reader['number'])  # вызываем асинхронную версию этой функции
+            await db.write_balloons_amount(reader, 'sensor')  # сохраняем значение в бд
             return 1  # возвращаем состояние входа "активен"
         elif first_input_state == 0 and previous_input_state == 1:
             return 0  # возвращаем состояние входа "неактивен"
