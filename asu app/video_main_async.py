@@ -1,6 +1,5 @@
 import asyncio
 import aiohttp
-import schedule
 from datetime import datetime, timedelta
 import django_video_api
 from opcua import Client
@@ -55,26 +54,31 @@ def get_opc_data():
         print('Disconnect from OPC server')
 
 
-async def get_intellect_data(data):
+async def get_intellect_data(data) -> list:
     """
     Функция посылает запрос в "Интеллект" и возвращает статус запроса и список словарей с записями о транспорте
     data: словарь с данными для запроса
-    return: кортеж -
-             True и JSON-ответ при успешном запросе;
-             False и код статуса при ошибке
+    return: JSON-ответ в виде списка при успешном запросе;
+            пустой список при ошибке
     """
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(INTELLECT_URL, json=data, timeout=1) as response:
                 response.raise_for_status()  # Вызывает исключение для ошибок HTTP
 
-                return True, await response.json()
+                result = await response.json()
+
+                if result['Status'] == "OK":
+                    item_list = result['Protocols'] if 'Protocols' in result else []
+                    return item_list
+                return []
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            return False, error
+            print(error)
+            return []
 
 
-async def get_start_time(delta_minutes: int) -> str:
+def get_start_time(delta_minutes: int) -> str:
     """
     Функция определяет время, начиная с которого нужно запросить данные в базе данных "Интеллект".
     delta_minutes: числовое значение количества минут, которые будут отниматься от текущего времени.
@@ -86,7 +90,7 @@ async def get_start_time(delta_minutes: int) -> str:
     return start_date_string
 
 
-async def separation_string_date(date_string: str = '') -> tuple:
+def separation_string_date(date_string: str = '') -> tuple:
     """
     Функция преобразует время, полученное из "Интеллект", в кортеж строк (дата, время) для передачи в JSON
     Дополнительно нужно прибавить 3 часа, т.к. "Интеллект" выдаёт данные по часовому поясу UTC+0
@@ -110,26 +114,27 @@ async def get_registration_number_list(server: dict) -> list:
 
     data_for_request = {
         "id": server['id'],
-        "time_from": await get_start_time(server['delta_minutes']),
+        "time_from": get_start_time(server['delta_minutes']),
         "numbers_operation": "OR"
     }
-    status, intellect_data = await get_intellect_data(data_for_request)
+    intellect_data = await get_intellect_data(data_for_request)
 
-    item_list = intellect_data['Protocols'] if 'Protocols' in intellect_data else []
     out_list = []
-    if status and len(item_list) > 0:
+    if len(intellect_data) > 0:
 
-        for item in item_list:
-            out_list.append({
-                'registration_number': item['number'],
-                'date': item['date'],
-                'direction': item['direction']
-            })
+        for item in intellect_data:
+            # Если номер плохо считался, показатель validity будет < 90%. Пропускаем обработку
+            if item['validity'] > int(90):
+                out_list.append({
+                    'registration_number': item['number'],
+                    'date': item['date'],
+                    'direction': item['direction']
+                })
 
     return out_list
 
 
-async def check_on_station(server: dict, direction) -> bool:
+def check_on_station(server: dict, direction) -> bool:
     """
     Функция обрабатывает направление движения транспорта, определённое "Интеллектом", и возвращает статус
     return:
@@ -146,7 +151,7 @@ async def check_on_station(server: dict, direction) -> bool:
         return False
 
 
-async def get_transport_type(registration_number: str) -> str:
+def get_transport_type(registration_number: str) -> str:
     """
     Функция по номеру транспорта определяет его вид:
     - если номер начинается с цифры, значит это легковая машина - пропускаем обработку
@@ -155,19 +160,20 @@ async def get_transport_type(registration_number: str) -> str:
 
     if registration_number[0].isdigit():
         return ''
-
+    if len(registration_number) != 7:
+        return ''
     if registration_number[0:2].isalpha():
         return 'truck'
     else:
         return 'trailer'
 
 
-async def get_transport_from_django(transport: dict, server: dict):
+async def transport_process(transport: dict, server: dict):
     registration_number = transport['registration_number']
-    date, time = await separation_string_date(transport['date'])
-    is_on_station = await check_on_station(server, transport['direction'])
+    date, time = separation_string_date(transport['date'])
+    is_on_station = check_on_station(server, transport['direction'])
 
-    transport_type = await get_transport_type(registration_number)
+    transport_type = get_transport_type(registration_number)
 
     if transport_type:
         # проверяем наличие в базе данных транспорт с данным номером
@@ -188,10 +194,19 @@ async def get_transport_from_django(transport: dict, server: dict):
                 await django_video_api.update_transport(item, transport_type)
                 print(f'{transport_type} with number {transport['registration_number']} update')
         else:
+            if is_on_station:
+                entry_date, entry_time = date, time
+                departure_date, departure_time = None, None
+            else:
+                entry_date, entry_time = None, None
+                departure_date, departure_time = date, time
+
             new_transport_data = {
                 'registration_number': registration_number,
-                'entry_date': date,
-                'entry_time': time,
+                'entry_date': entry_date,
+                'entry_time': entry_time,
+                'departure_date': departure_date,
+                'departure_time': departure_time,
                 'is_on_station': is_on_station
             }
             await django_video_api.create_transport(new_transport_data, transport_type)
@@ -205,7 +220,7 @@ async def kpp_processing(server: dict):
     transport_list = await get_registration_number_list(server)
 
     # Задачи для обработки транспорта на django
-    tasks = [asyncio.create_task(get_transport_from_django(transport, server)) for transport in transport_list]
+    tasks = [asyncio.create_task(transport_process(transport, server)) for transport in transport_list]
     await asyncio.gather(*tasks)
 
 

@@ -8,7 +8,7 @@ USERNAME = "reader"
 PASSWORD = "rfid-device"
 
 
-async def get_transport_path(transport_type: str):
+def get_transport_path(transport_type: str):
     if transport_type == 'truck':
         return 'trucks'
     elif transport_type == 'trailer':
@@ -28,7 +28,7 @@ async def get_transport(number, transport_type):
     Returns:
         tuple: (bool, str or dict) - статус наличия транспорта в базе и его данные или сообщение об ошибке.
     """
-    path = await get_transport_path(transport_type)
+    path = get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -45,7 +45,7 @@ async def get_transport(number, transport_type):
 
 
 async def create_transport(data, transport_type):
-    path = await get_transport_path(transport_type)
+    path = get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -62,7 +62,7 @@ async def create_transport(data, transport_type):
 
 
 async def update_transport(data, transport_type):
-    path = await get_transport_path(transport_type)
+    path = get_transport_path(transport_type)
 
     async with aiohttp.ClientSession() as session:
         try:
