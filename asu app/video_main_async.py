@@ -50,7 +50,6 @@ def get_opc_data():
         AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_total")
 
         print(f'Auto:{AUTO}, Railway:{RAILWAY}')
-        print(f'GAS_LOADING:{GAS_LOADING_BATCH}, GAS_UNLOADING:{GAS_UNLOADING_BATCH}, RAILWAY_BATCH:{RAILWAY_BATCH}')
 
     except Exception as error:
         print(f'No connection to OPC server: {error}')
