@@ -23,11 +23,19 @@ async def write_balloons_amount(reader: dict, from_who: str):
         select_data = await conn.fetch(select_query, reader['number'], current_date.date())
 
         if len(select_data) == 0:  # если данных еще нет в базе
-            insert_query = """INSERT INTO filling_station_balloonamount 
-                              (reader_id, amount_of_balloons, change_date, change_time, amount_of_rfid, reader_status) 
-                              VALUES ($1, $2, $3, $4, $5, $6)"""
-            await conn.execute(insert_query, reader['number'], 1, current_date.date(), current_date.time(), 1,
-                               reader['status'])
+            if from_who == 'sensor':
+                insert_query = """INSERT INTO filling_station_balloonamount 
+                                  (reader_id, amount_of_balloons, change_date, change_time, amount_of_rfid, reader_status) 
+                                  VALUES ($1, $2, $3, $4, $5, $6)"""
+                await conn.execute(insert_query, reader['number'], 1, current_date.date(), current_date.time(), 0,
+                                   reader['status'])
+            if from_who == 'rfid':
+                insert_query = """INSERT INTO filling_station_balloonamount 
+                                  (reader_id, amount_of_balloons, change_date, change_time, amount_of_rfid, reader_status) 
+                                  VALUES ($1, $2, $3, $4, $5, $6)"""
+                await conn.execute(insert_query, reader['number'], 0, current_date.date(), current_date.time(), 1,
+                                   reader['status'])
+
             print("Amount added to database")
         else:
             if from_who == 'sensor':
