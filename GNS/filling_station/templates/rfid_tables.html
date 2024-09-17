@@ -6,8 +6,10 @@
 <div>
     <h5>Данные со считывателя №{{reader}} </h5>
     <div>
-        <table class="table table-striped table-hover vertical-align: middle">
-            <tr align="center" width=100%>
+        <table class="table table-striped table-hover vertical-align: middle"
+               style="border-radius: 5px; overflow: hidden;">
+            <tr class="table-dark" align="center"
+                style="background-color: #051831 !important; color: white !important;">
                 <th>RFID метка</th>
                 <th>Серийный номер</th>
                 <th>Вес НЕТТО</th>
@@ -44,7 +46,9 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form }}
-            <button class="btn" style="margin: 2% 2% 2% 2%; background-color: #3CBBD9; color: white;" type="submit">Выгрузить список баллонов за дату</button>
+            <button class="btn" style="margin: 2% 2% 2% 2%; background-color: #3CBBD9; color: white;" type="submit">
+                Выгрузить список баллонов за дату
+            </button>
         </form>
     </div>
 

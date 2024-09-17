@@ -68,7 +68,7 @@ def reader_info(request, reader='1'):
     else:
         date_process = GetBalloonsAmount()
 
-    balloons_list = Balloon.objects.order_by('-id').filter(status=STATUS_LIST[reader])
+    balloons_list = Balloon.objects.filter(status=STATUS_LIST[reader])
     current_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date).first()
     previous_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date).first()
 
