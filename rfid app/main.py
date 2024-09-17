@@ -17,7 +17,7 @@ async def data_exchange_with_reader(controller: dict, command: str):
     def sync_data_exchange():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
-                s.settimeout(0.5)
+                s.settimeout(1)
                 s.connect((controller['ip'], controller['port']))
                 s.sendall(binascii.unhexlify(COMMANDS[command]))  # команда считывания метки
 
