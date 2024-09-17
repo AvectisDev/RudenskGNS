@@ -33,7 +33,7 @@
             <p>{{ balloon.status|default_if_none:"-" }}</p>
             <p>{{ balloon.manufacturer|default_if_none:"-" }}</p>
             <p>{{ balloon.wall_thickness|default_if_none:"-" }}</p>
-            <p>{{ balloon.filling_status|default_if_none:"-" }}</p>
+            <p>{% if balloon.filling_status %}Да{% else %}Нет{% endif %}</p>
             <p>{{ balloon.change_date|default_if_none:"-" }}</p>
             <p>{{ balloon.change_time|default_if_none:"-" }}</p>
         </div>

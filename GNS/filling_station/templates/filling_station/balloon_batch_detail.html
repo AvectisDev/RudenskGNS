@@ -41,9 +41,16 @@
 </div>
 
 <div class="container text-center">
+    {% if main_list == 'loading' %}
     <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
             onclick="location.href='{% url 'filling_station:balloon_loading_batch_list' %}'">Назад
     </button>
+    {% endif %}
+    {% if main_list == 'unloading' %}
+    <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
+            onclick="location.href='{% url 'filling_station:balloon_unloading_batch_list' %}'">Назад
+    </button>
+    {% endif %}
     <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
             onclick="location.href = '{{ batch.get_update_url }}'">Редактировать
     </button>

@@ -51,3 +51,14 @@ GAS_UNLOADING_BATCH = {
     'truck_empty_weight': 0,
     'weight_gas_amount': 0
 }
+
+RAILWAY_BATCH = {
+    'command_start': False,
+    'start_flag': False,
+    'process_step': 0,
+    'is_active': False,
+    'tank_id': None,
+    'tank_full_weight': 0,
+    'tank_empty_weight': 0,
+    'weight_gas_amount': 0
+}

@@ -3,7 +3,7 @@ import aiohttp
 from datetime import datetime, timedelta
 import django_video_api
 from opcua import Client
-from setting import INTELLECT_URL, INTELLECT_SERVER_LIST, GAS_LOADING_BATCH, GAS_UNLOADING_BATCH
+from setting import INTELLECT_URL, INTELLECT_SERVER_LIST, GAS_LOADING_BATCH, GAS_UNLOADING_BATCH, RAILWAY_BATCH
 
 USERNAME = "reader"
 PASSWORD = "rfid-device"
@@ -37,6 +37,10 @@ def get_opc_data():
         client.connect()
         print('Connect to OPC server successful')
 
+        GAS_LOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
+        GAS_UNLOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
+        RAILWAY_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.start_loading_batch")
+
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
         RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
 
@@ -45,7 +49,8 @@ def get_opc_data():
         AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_total")
         AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_total")
 
-        print(RAILWAY, AUTO)
+        print(f'Auto:{AUTO}, Railway:{RAILWAY}')
+        print(f'GAS_LOADING:{GAS_LOADING_BATCH}, GAS_UNLOADING:{GAS_UNLOADING_BATCH}, RAILWAY_BATCH:{RAILWAY_BATCH}')
 
     except Exception as error:
         print(f'No connection to OPC server: {error}')
@@ -236,6 +241,7 @@ async def gas_loading_processing(server):
 
     if GAS_LOADING_BATCH['command_start'] and not GAS_LOADING_BATCH['start_flag']:
         GAS_LOADING_BATCH['process_step'] = 1
+
         print('Начало партии приёмки автоцистерн')
         GAS_LOADING_BATCH['start_flag'] = True
 
@@ -287,7 +293,6 @@ async def gas_loading_processing(server):
                 }
 
                 result = await django_video_api.update_transport(truck_data, 'truck')
-                print(result)
 
                 print(f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. '
                       f'Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
@@ -328,6 +333,7 @@ async def gas_unloading_processing(server: dict):
 
     if GAS_UNLOADING_BATCH['command_start'] and not GAS_UNLOADING_BATCH['start_flag']:
         GAS_UNLOADING_BATCH['process_step'] = 1
+
         print('Начало партии отгрузки автоцистерн')
         GAS_UNLOADING_BATCH['start_flag'] = True
 

@@ -19,7 +19,8 @@ urlpatterns = [
     }),
          name="balloon_loading_batch_list"),
     path('batch/balloons-loading/<pk>/', views.BalloonLoadingBatchDetailView.as_view(extra_context={
-        "title": "Детали партии приёмки баллонов"
+        "title": "Детали партии приёмки баллонов",
+        "main_list": "loading"
     }),
          name="balloon_loading_batch_detail"),
     path('batch/balloons-loading/<pk>/update/', views.BalloonLoadingBatchUpdateView.as_view(extra_context={
@@ -34,7 +35,8 @@ urlpatterns = [
     }),
          name="balloon_unloading_batch_list"),
     path('batch/balloons-unloading/<pk>/', views.BalloonUnloadingBatchDetailView.as_view(extra_context={
-        "title": "Детали партии отгрузки баллонов"
+        "title": "Детали партии отгрузки баллонов",
+        "main_list": "unloading"
     }),
          name="balloon_unloading_batch_detail"),
     path('batch/balloons-unloading/<pk>/update/', views.BalloonUnloadingBatchUpdateView.as_view(extra_context={
@@ -55,9 +57,13 @@ urlpatterns = [
     path('batch/railway-loading/<pk>/delete/', views.RailwayLoadingBatchDeleteView.as_view(),
          name="railway_loading_batch_delete"),
 
-    path('batch/auto-gas-loading', views.GasLoadingBatchListView.as_view(),
+    path('batch/auto-gas-loading', views.GasLoadingBatchListView.as_view(extra_context={
+        "title": "Партии приёмки газа в авто-цистернах"
+    }),
          name="gas_loading_batch_list"),
-    path('batch/auto-gas-loading/<pk>/', views.GasLoadingBatchDetailView.as_view(),
+    path('batch/auto-gas-loading/<pk>/', views.GasLoadingBatchDetailView.as_view(extra_context={
+        "main_list": "loading"
+    }),
          name="gas_loading_batch_detail"),
     path('batch/auto-gas-loading/<pk>/update/', views.GasLoadingBatchUpdateView.as_view(extra_context={
         "title": "Редактирование партии приёмки газа в авто-цистернах"
@@ -66,9 +72,13 @@ urlpatterns = [
     path('batch/auto-gas-loading/<pk>/delete/', views.GasLoadingBatchDeleteView.as_view(),
          name="gas_loading_batch_delete"),
 
-    path('batch/auto-gas-unloading', views.GasUnloadingBatchListView.as_view(),
+    path('batch/auto-gas-unloading', views.GasUnloadingBatchListView.as_view(extra_context={
+        "title": "Партии отгрузки газа в авто-цистернах"
+    }),
          name="gas_unloading_batch_list"),
-    path('batch/auto-gas-unloading/<pk>/', views.GasUnloadingBatchDetailView.as_view(),
+    path('batch/auto-gas-unloading/<pk>/', views.GasUnloadingBatchDetailView.as_view(extra_context={
+        "main_list": "unloading"
+    }),
          name="gas_unloading_batch_detail"),
     path('batch/auto-gas-unloading/<pk>/update/', views.GasUnloadingBatchUpdateView.as_view(extra_context={
         "title": "Редактирование партии отгрузки газа в авто-цистернах"

@@ -252,7 +252,7 @@ class RailwayLoadingBatchForm(forms.ModelForm):
         self.helper.form_method = 'POST'
 
     class Meta:
-        model = BalloonsUnloadingBatch
+        model = RailwayLoadingBatch
         fields = ['end_date', 'end_time', 'gas_amount', 'is_active', 'ttn']
         widgets = {
             'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
