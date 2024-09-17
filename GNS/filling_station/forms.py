@@ -6,6 +6,22 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 
 
+USER_STATUS_LIST = [
+    ('Создание паспорта баллона', 'Создание паспорта баллона'),
+    ('Наполнение баллона сжиженным газом', 'Наполнение баллона сжиженным газом'),
+    ('Погрузка пустого баллона в трал', 'Погрузка пустого баллона в трал'),
+    ('Снятие RFID метки', 'Снятие RFID метки'),
+    ('Установка новой RFID метки', 'Установка новой RFID метки'),
+    ('Редактирование паспорта баллона', 'Редактирование паспорта баллона'),
+    ('Покраска', 'Покраска'),
+    ('Техническое освидетельствование', 'Техническое освидетельствование'),
+    ('Выбраковка', 'Выбраковка'),
+    ('Утечка газа', 'Утечка газа'),
+    ('Опорожнение(слив) баллона', 'Опорожнение(слив) баллона'),
+    ('Контрольное взвешивание', 'Контрольное взвешивание'),
+]
+
+
 class GetBalloonsAmount(forms.Form):
     date = forms.CharField(max_length=10, label="Дата", widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
 
@@ -17,6 +33,7 @@ class GetBalloonsAmount(forms.Form):
 
 
 class BalloonForm(forms.ModelForm):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -32,9 +49,7 @@ class BalloonForm(forms.ModelForm):
                   'next_examination_date', 'status', 'manufacturer', 'wall_thickness', 'filling_status',
                   'update_passport_required']
         widgets = {
-            'nfc_tag': forms.TextInput(attrs={
-                'class': 'form-control',
-            }),
+            'nfc_tag': forms.TextInput(attrs={'class': 'form-control'}),
             'serial_number': forms.TextInput(attrs={'class': 'form-control'}),
             'creation_date': forms.DateInput(attrs={'type': 'date'}),
             'size': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -42,7 +57,7 @@ class BalloonForm(forms.ModelForm):
             'brutto': forms.NumberInput(attrs={'class': 'form-control'}),
             'current_examination_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'next_examination_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'status': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(choices=USER_STATUS_LIST, attrs={'class': 'form-control'}),
             'manufacturer': forms.TextInput(attrs={'class': 'form-control'}),
             'wall_thickness': forms.NumberInput(attrs={'class': 'form-control'}),
             'filling_status': forms.CheckboxInput(attrs={'class': 'form-control'}),
