@@ -176,7 +176,7 @@ async def main():
         except Exception as e:
             print(f"Error while reading NFC tags: {e}")
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
 
         try:
             # Задачи для считывания состояния входов
@@ -187,7 +187,7 @@ async def main():
         except Exception as e:
             print(f"Error while reading input status: {e}")
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
 
 
 if __name__ == "__main__":
