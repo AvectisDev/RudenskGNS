@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 from datetime import datetime, timedelta
 import django_video_api
-from opcua import Client
+from opcua import Client, ua
 from setting import INTELLECT_URL, INTELLECT_SERVER_LIST, GAS_LOADING_BATCH, GAS_UNLOADING_BATCH, RAILWAY_BATCH
 
 USERNAME = "reader"
@@ -36,7 +36,7 @@ def set_opc_value(addr_str, value):
     Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
     """
     var = client.get_node(addr_str)
-    return var.set_value(value)
+    return var.set_attribute(ua.AttributeIds.Value, ua.DataValue(False))
 
 
 def get_opc_data():
