@@ -30,12 +30,24 @@ def get_opc_value(addr_str):
     return var.get_value()
 
 
+def set_opc_value(addr_str, value):
+    """
+    Get value from OPC UA server by address:
+    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
+    """
+    var = client.get_node(addr_str)
+    return var.set_value(value)
+
+
 def get_opc_data():
     global RAILWAY, AUTO
 
     try:
         client.connect()
         print('Connect to OPC server successful')
+
+        if True:
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch", False)
 
         GAS_LOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
         GAS_UNLOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
