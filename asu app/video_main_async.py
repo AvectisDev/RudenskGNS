@@ -36,7 +36,7 @@ def set_opc_value(addr_str, value):
     Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
     """
     var = client.get_node(addr_str)
-    return var.set_attribute(ua.AttributeIds.Value, ua.DataValue(False))
+    return var.set_attribute(ua.AttributeIds.Value, ua.DataValue(value))
 
 
 def get_opc_data():
