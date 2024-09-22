@@ -32,7 +32,7 @@ async def data_exchange_with_reader(controller: dict, command: str):
     return await loop.run_in_executor(None, sync_data_exchange)
 
 
-def byte_reversal(byte_string: str):
+async def byte_reversal(byte_string: str):
     """
     Функция разворачивает принятые со считывателя байты в обратном порядке, меняя местами первый и последний байт,
     второй и предпоследний и т.д.
@@ -48,7 +48,7 @@ def byte_reversal(byte_string: str):
     return ''.join(data_list)
 
 
-def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
+async def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
     """
     Функция кэширует 5 последних считанных меток и определяет, есть ли в этом списке следующая считанная метка.
     Если метки нет в списке, то добавляет новую метку, если метка есть (повторное считывание), до пропускаем все
@@ -91,7 +91,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
             passport_ok_flag = True
 
         # обновляем паспорт в базе данных
-        await django_balloon_api.update_balloon(nfc_tag, passport)
+        passport = await django_balloon_api.update_balloon(nfc_tag, passport)
 
     else:  # если данных паспорта нет в базе данных
         passport = {
@@ -100,9 +100,9 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
             'update_passport_required': True
         }
         # создание нового паспорта в базе данных
-        await django_balloon_api.create_balloon(passport)
+        passport = await django_balloon_api.create_balloon(passport)
 
-    return passport_ok_flag
+    return passport_ok_flag, passport
 
 
 async def read_nfc_tag(reader: dict):
@@ -112,10 +112,10 @@ async def read_nfc_tag(reader: dict):
     data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
     if len(data) > 24:  # если со считывателя пришли данные с меткой
-        nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
+        nfc_tag = await byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
 
         if nfc_tag not in reader['previous_nfc_tags']:  # метка отличается от недавно считанных
-            balloon_passport_status = await balloon_passport_processing(nfc_tag, reader['status'])
+            balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
 
             await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
 
@@ -133,14 +133,14 @@ async def read_nfc_tag(reader: dict):
 
                 if batch_status:  # если партия активна - заполняем её списком пройденных баллонов
                     reader['batch']['batch_id'] = batch_id
-                    reader['batch']['balloons_list'].append(nfc_tag)
+                    reader['batch']['balloon_list'].append(balloon_passport['id'])
                     await django_balloon_api.update_batch_balloons(reader['function'], reader)
                 else:
                     reader['batch']['batch_id'] = 0
-                    reader['batch']['balloons_list'].clear()
+                    reader['batch']['balloon_list'].clear()
 
         # сохраняем метку в кэше считанных меток
-        work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
+        await work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
         print(reader['ip'], reader['previous_nfc_tags'])
 
     # очищаем буферную память считывателя

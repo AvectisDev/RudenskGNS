@@ -25,8 +25,10 @@ INTELLECT_SERVER_LIST = [
 GAS_LOADING_BATCH = {
     'command_start': False,
     'start_flag': False,
+    'complete': False,
     'process_step': 0,
     'is_active': False,
+    'batch_id': 0,
     'truck_id': None,
     'trailer_id': None,
     'initial_mass_meter': 0,
@@ -40,8 +42,10 @@ GAS_LOADING_BATCH = {
 GAS_UNLOADING_BATCH = {
     'command_start': False,
     'start_flag': False,
+    'complete': False,
     'process_step': 0,
     'is_active': False,
+    'batch_id': 0,
     'truck_id': None,
     'trailer_id': None,
     'initial_mass_meter': 0,
@@ -55,8 +59,10 @@ GAS_UNLOADING_BATCH = {
 RAILWAY_BATCH = {
     'command_start': False,
     'start_flag': False,
+    'complete': False,
     'process_step': 0,
     'is_active': False,
+    'batch_id': 0,
     'tank_id': None,
     'tank_full_weight': 0,
     'tank_empty_weight': 0,

@@ -91,7 +91,7 @@ async def get_batch_path(batch_type: str):
         return False, "Invalid batch type"
 
 
-async def get_batch_gas(batch_type: str):
+async def get_batch_gas(batch_type: str = ''):
     """Проверяет наличие в базе данных активных партий отгрузки газа в автоцистернах и возвращает признак True и данные
     активной партии, если партия есть в базе, и False - если таких партий нет.
 
@@ -101,11 +101,10 @@ async def get_batch_gas(batch_type: str):
     Returns:
         tuple: (bool, str or dict) - статус наличия партии и данные партии или сообщение об ошибке.
     """
-    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}/{path}", timeout=5,
+            async with session.get(f"{BASE_URL}/auto-gas", timeout=5,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 data = await response.json()
@@ -120,21 +119,19 @@ async def get_batch_gas(batch_type: str):
             return False, {"status": "invalid response"}
 
 
-async def create_batch_gas(data, batch_type: str):
+async def create_batch_gas(data):
     """Создает новую партию приёмки/отгрузки газа в автоцистернах с использованием асинхронного HTTP-запроса.
 
     Args:
         data (dict): данные партии газа для создания
-        batch_type (str): тип обрабатываемой партии
 
     Returns:
         tuple: (bool, str or dict) - статус операции и данные созданной партии или сообщение об ошибке.
     """
-    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/{path}", json=data, timeout=5,
+            async with session.post(f"{BASE_URL}/auto-gas", json=data, timeout=5,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return True, await response.json()
@@ -148,25 +145,23 @@ async def create_batch_gas(data, batch_type: str):
             return False, {"status": "invalid response"}
 
 
-async def update_batch_gas(data, batch_type: str):
+async def update_batch_gas(data):
     """
     Обновляет партию приёмки/отгрузки газа в автоцистернах с использованием асинхронного HTTP-запроса.
 
     Args:
         data (dict): данные партии газа для обновления
-        batch_type (str): тип обрабатываемой партии
 
     Returns:
         tuple: (bool, dict) - статус операции и сообщение о результатах обновления.
     """
-    path = await get_batch_path(batch_type)
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/{path}", json=data, timeout=5,
+            async with session.patch(f"{BASE_URL}/auto-gas", json=data, timeout=5,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
-                return True, {"status": "ok"}
+                return True, await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             print(f'update_batch_gas function error - {error}')

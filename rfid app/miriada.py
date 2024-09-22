@@ -9,7 +9,7 @@ async def get_balloon_by_nfc_tag(nfc_tag: str):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, timeout=1) as response:
+            async with session.get(url, timeout=2) as response:
                 if response.status == 200:
                     response_data = await response.json()
                     if response_data.get('status') == "Ok":
@@ -33,7 +33,7 @@ async def search_balloon_by_nfc_tag(nfc_tag):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, headers=headers, timeout=1) as response:
+            async with session.get(url, headers=headers, timeout=2) as response:
                 if response.status == 200:
                     response_data = await response.json()
                     if response_data.get('status') == "Ok":
