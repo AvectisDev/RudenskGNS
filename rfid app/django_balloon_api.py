@@ -56,9 +56,9 @@ async def get_batch_balloons(batch_type: str):
     """
 
     if batch_type == 'loading':
-        url = f'{BASE_URL}/balloons-loading'
+        url = f'{BASE_URL}/balloons-loading?last_active=True'
     elif batch_type == 'unloading':
-        url = f'{BASE_URL}/balloons-unloading'
+        url = f'{BASE_URL}/balloons-unloading?last_active=True'
     else:
         return False, {"status": "invalid batch_type"}
 
@@ -87,8 +87,9 @@ async def update_batch_balloons(batch_type: str, reader: dict):
         return False, {"status": "invalid batch_type"}
 
     data = {
-        'id': reader['batch']['batch_id'],
-        'balloon_list': reader['batch']['balloon_list']
+        'batch_id': reader['batch']['batch_id'],
+        'balloon_id': reader['batch']['balloon_id'],
+        'method': 'add'
     }
 
     async with aiohttp.ClientSession() as session:

@@ -133,11 +133,10 @@ async def read_nfc_tag(reader: dict):
 
                 if batch_status:  # если партия активна - заполняем её списком пройденных баллонов
                     reader['batch']['batch_id'] = batch_id
-                    reader['batch']['balloon_list'].append(balloon_passport['id'])
+                    reader['batch']['balloon_id'] = balloon_passport['id']
                     await django_balloon_api.update_batch_balloons(reader['function'], reader)
                 else:
-                    reader['batch']['batch_id'] = 0
-                    reader['batch']['balloon_list'].clear()
+                    reader['batch']['batch_id'] = reader['batch']['balloon_id'] = 0
 
         # сохраняем метку в кэше считанных меток
         await work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])

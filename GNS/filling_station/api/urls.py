@@ -18,7 +18,7 @@ urlpatterns = [
 
     path('balloons-loading', api.BalloonsLoadingBatchView.as_view()),
     path('balloons-unloading', api.BalloonsUnloadingBatchView.as_view()),
-    path('railway-loading', api.RailwayLoadingBatchView.as_view()),
+    path('railway-loading', api.RailwayBatchView.as_view()),
     path('auto-gas', api.AutoGasBatchView.as_view()),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

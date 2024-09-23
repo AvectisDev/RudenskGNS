@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from .serializers import (BalloonSerializer, TruckSerializer, TrailerSerializer, RailwayTankSerializer, TTNSerializer,
                           BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
-                          RailwayLoadingBatchSerializer, AutoGasBatchSerializer)
+                          RailwayLoadingBatchSerializer, AutoGasBatchSerializer, BalloonsLoadBatchSerializer,
+                          BalloonsUnloadBatchSerializer)
 
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
@@ -193,12 +194,21 @@ class BalloonsLoadingBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        loading_batches = BalloonsLoadingBatch.objects.filter(is_active=True).first()
+        # Проверяем наличие параметров запроса
+        is_active = request.query_params.get('is_active', False)
+        last_active = request.query_params.get('last_active', False)
+
+        if is_active:
+            loading_batches = BalloonsLoadingBatch.objects.filter(is_active=True)
+            serializer = BalloonsLoadBatchSerializer(loading_batches, many=True)
+
+        if last_active:
+            loading_batches = BalloonsLoadingBatch.objects.filter(is_active=True).first()
+            serializer = BalloonsLoadingBatchSerializer(loading_batches)
 
         if not loading_batches:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = BalloonsLoadingBatchSerializer(loading_batches)
         return Response(serializer.data)
 
     def post(self, request):
@@ -209,10 +219,21 @@ class BalloonsLoadingBatchView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request):
-        batch_id = request.data.get('id')
-        loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+        batch_id = request.data.get('batch_id')
+        balloon_id = request.data.get('balloon_id')
+        method = request.data.get('method')
 
-        if not request.data.get('is_active', False):
+        loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+
+        if method == 'add':
+            loading_batch.balloon_list.add(balloon)
+        elif method == 'remove':
+            loading_batch.balloon_list.remove(balloon)
+
+        request.data['id'] = batch_id
+
+        if not request.data.get('is_active', True):
             current_date = datetime.now()
             request.data['end_date'] = current_date.date()
             request.data['end_time'] = current_date.time()
@@ -231,12 +252,21 @@ class BalloonsUnloadingBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        unloading_batches = BalloonsUnloadingBatch.objects.filter(is_active=True).first()
+        # Проверяем наличие параметров запроса
+        is_active = request.query_params.get('is_active', False)
+        last_active = request.query_params.get('last_active', False)
+
+        if is_active:
+            unloading_batches = BalloonsUnloadingBatch.objects.filter(is_active=True)
+            serializer = BalloonsUnloadBatchSerializer(unloading_batches, many=True)
+
+        if last_active:
+            unloading_batches = BalloonsUnloadingBatch.objects.filter(is_active=True).first()
+            serializer = BalloonsUnloadingBatchSerializer(unloading_batches)
 
         if not unloading_batches:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = BalloonsUnloadingBatchSerializer(unloading_batches)
         return Response(serializer.data)
 
     def post(self, request):
@@ -247,10 +277,21 @@ class BalloonsUnloadingBatchView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request):
-        batch_id = request.data.get('id')
-        unloading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+        batch_id = request.data.get('batch_id')
+        balloon_id = request.data.get('balloon_id')
+        method = request.data.get('method')
 
-        if not request.data.get('is_active', False):
+        unloading_batch = get_object_or_404(BalloonsUnloadingBatch, id=batch_id)
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+
+        if method == 'add':
+            unloading_batch.balloon_list.add(balloon)
+        elif method == 'remove':
+            unloading_batch.balloon_list.remove(balloon)
+
+        request.data['id'] = batch_id
+
+        if not request.data.get('is_active', True):
             current_date = datetime.now()
             request.data['end_date'] = current_date.date()
             request.data['end_time'] = current_date.time()
@@ -265,7 +306,7 @@ class BalloonsUnloadingBatchView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RailwayLoadingBatchView(APIView):
+class RailwayBatchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

@@ -10,7 +10,7 @@ READER_LIST[0] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'loading',
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 # Г-образный
@@ -22,7 +22,7 @@ READER_LIST[1] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 # Считыватели на отгрузке
@@ -34,7 +34,7 @@ READER_LIST[2] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 READER_LIST[3] = {
@@ -45,7 +45,7 @@ READER_LIST[3] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 READER_LIST[4] = {
@@ -56,7 +56,7 @@ READER_LIST[4] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 READER_LIST[5] = {
@@ -67,7 +67,7 @@ READER_LIST[5] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'loading',
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 # Считыватели в цеху
@@ -79,7 +79,7 @@ READER_LIST[6] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 READER_LIST[7] = {
@@ -90,7 +90,7 @@ READER_LIST[7] = {
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
-    'batch': {'batch_id': 0, 'balloon_list': []}
+    'batch': {'batch_id': 0, 'balloon_id': 0}
 }
 
 # Команды, посылаемые на считыватель
