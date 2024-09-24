@@ -219,19 +219,8 @@ class BalloonsLoadingBatchView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request):
-        batch_id = request.data.get('batch_id')
-        balloon_id = request.data.get('balloon_id')
-        method = request.data.get('method')
-
+        batch_id = request.data.get('id')
         loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
-        balloon = get_object_or_404(Balloon, id=balloon_id)
-
-        if method == 'add':
-            loading_batch.balloon_list.add(balloon)
-        elif method == 'remove':
-            loading_batch.balloon_list.remove(balloon)
-
-        request.data['id'] = batch_id
 
         if not request.data.get('is_active', True):
             current_date = datetime.now()
@@ -246,6 +235,42 @@ class BalloonsLoadingBatchView(APIView):
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def add_balloon_to_loading_batch(request):
+    balloon_id = request.data.get('balloon_id', None)
+    batch_id = request.data.get('id')
+
+    loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+
+    if not loading_batch:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if balloon_id:
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+        loading_batch.balloon_list.add(balloon)
+
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def remove_balloon_from_loading_batch(request):
+    balloon_id = request.data.get('balloon_id', None)
+    batch_id = request.data.get('id')
+
+    loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+
+    if not loading_batch:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if balloon_id:
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+        loading_batch.balloon_list.remove(balloon)
+
+    return Response(status=status.HTTP_200_OK)
 
 
 class BalloonsUnloadingBatchView(APIView):
@@ -277,33 +302,59 @@ class BalloonsUnloadingBatchView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request):
-        batch_id = request.data.get('batch_id')
-        balloon_id = request.data.get('balloon_id')
-        method = request.data.get('method')
-
+        batch_id = request.data.get('id')
         unloading_batch = get_object_or_404(BalloonsUnloadingBatch, id=batch_id)
-        balloon = get_object_or_404(Balloon, id=balloon_id)
-
-        if method == 'add':
-            unloading_batch.balloon_list.add(balloon)
-        elif method == 'remove':
-            unloading_batch.balloon_list.remove(balloon)
-
-        request.data['id'] = batch_id
-
-        if not request.data.get('is_active', True):
-            current_date = datetime.now()
-            request.data['end_date'] = current_date.date()
-            request.data['end_time'] = current_date.time()
 
         if not unloading_batch:
             return Response(status=status.HTTP_404_NOT_FOUND)
         else:
+            if not request.data.get('is_active', True):
+                current_date = datetime.now()
+                request.data['end_date'] = current_date.date()
+                request.data['end_time'] = current_date.time()
+
             serializer = BalloonsUnloadingBatchSerializer(unloading_batch, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def add_balloon_to_unloading_batch(request):
+    balloon_id = request.data.get('balloon_id', None)
+    batch_id = request.data.get('id')
+
+    unloading_batch = get_object_or_404(BalloonsUnloadingBatch, id=batch_id)
+
+    if not unloading_batch:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if balloon_id:
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+        unloading_batch.balloon_list.add(balloon)
+
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def remove_balloon_from_unloading_batch(request):
+    balloon_id = request.data.get('balloon_id', None)
+    batch_id = request.data.get('id')
+
+    unloading_batch = get_object_or_404(BalloonsUnloadingBatch, id=batch_id)
+
+    if not unloading_batch:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if balloon_id:
+        balloon = get_object_or_404(Balloon, id=balloon_id)
+        unloading_batch.balloon_list.remove(balloon)
+
+    return Response(status=status.HTTP_200_OK)
 
 
 class RailwayBatchView(APIView):
