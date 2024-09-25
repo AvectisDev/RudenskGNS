@@ -69,22 +69,22 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
     passport_ok_flag = False
 
     # проверка наличия паспорта в базе данных
-    passport_found, passport = await django_balloon_api.get_balloon(nfc_tag)
+    passport = await django_balloon_api.get_balloon(nfc_tag)
 
-    if passport_found:  # если данные паспорта есть в базе данных
+    if passport:  # если данные паспорта есть в базе данных
         passport['status'] = status  # присваиваем новый статус баллону
 
         if passport['serial_number'] is None or passport['netto'] is None or passport['brutto'] is None:
             passport['update_passport_required'] = True
 
             # если нет основных данных - запрашиваем их в мириаде
-            miriada_status, miriada_data = await get_balloon(nfc_tag)
+            miriada_passport = await get_balloon(nfc_tag)
 
-            if miriada_status:  # если получили данные из мириады
-                passport['serial_number'] = miriada_data['number']
-                passport['netto'] = float(miriada_data['netto'])
-                passport['brutto'] = float(miriada_data['brutto'])
-                passport['filling_status'] = miriada_data['status']
+            if miriada_passport:  # если получили данные из мириады
+                passport['serial_number'] = miriada_passport['number']
+                passport['netto'] = float(miriada_passport['netto'])
+                passport['brutto'] = float(miriada_passport['brutto'])
+                passport['filling_status'] = miriada_passport['status']
                 passport['update_passport_required'] = False
                 passport_ok_flag = True
         else:
@@ -109,10 +109,10 @@ async def read_nfc_tag(reader: dict):
     """
     Асинхронная функция отправляет запрос на считыватель FEIG и получает в ответ дату, время и номер RFID метки.
     """
-    data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
+    data_from_reader = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
-    if len(data) > 24:  # если со считывателя пришли данные с меткой
-        nfc_tag = await byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
+    if len(data_from_reader) > 24:  # если со считывателя пришли данные с меткой
+        nfc_tag = await byte_reversal(data_from_reader[32:48])  # из буфера получаем номер метки
 
         if nfc_tag not in reader['previous_nfc_tags']:  # метка отличается от недавно считанных
             balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
@@ -129,18 +129,16 @@ async def read_nfc_tag(reader: dict):
             # ****************************************
 
             if reader['function'] is not None:  # если производится приёмка/отгрузка баллонов
-                batch_status, batch_id = await django_balloon_api.get_batch_balloons(reader['function'])
+                batch_data = await django_balloon_api.get_batch_balloons(reader['function'])
 
-                if batch_status:  # если партия активна - заполняем её списком пройденных баллонов
-                    reader['batch']['batch_id'] = batch_id
+                if batch_data:  # если партия активна - заполняем её списком пройденных баллонов
+                    reader['batch']['batch_id'] = batch_data['id']
                     reader['batch']['balloon_id'] = balloon_passport['id']
-                    await django_balloon_api.update_batch_balloons(reader['function'], reader)
-                else:
-                    reader['batch']['batch_id'] = reader['batch']['balloon_id'] = 0
+                    await django_balloon_api.add_balloon_to_batch(reader)
 
         # сохраняем метку в кэше считанных меток
         await work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
-        print(reader['ip'], reader['previous_nfc_tags'])
+        print(f'List of read nfc tags for reader {reader['ip']: {reader['previous_nfc_tags']}}')
 
     # очищаем буферную память считывателя
     await data_exchange_with_reader(reader, 'clean_buffer')
@@ -153,11 +151,11 @@ async def read_input_status(reader: dict):
     # присваиваем предыдущее состояние входа временной переменной
     previous_input_state = reader['input_state']
 
-    data = await data_exchange_with_reader(reader, 'inputs_read')
+    data_from_reader = await data_exchange_with_reader(reader, 'inputs_read')
 
-    if len(data) == 18:
-        print("Inputs data is: ", data)
-        first_input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
+    if len(data_from_reader) == 18:
+        print("Inputs data is: ", data_from_reader)
+        first_input_state = int(data_from_reader[13])  # определяем состояние 1-го входа (13 индекс в ответе)
         if first_input_state == 1 and previous_input_state == 0:  # текущее состояние "активен", а ранее он был выключен
             await db.write_balloons_amount(reader, 'sensor')  # сохраняем значение в бд
             return 1  # возвращаем состояние входа "активен"

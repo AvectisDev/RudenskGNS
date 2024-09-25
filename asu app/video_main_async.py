@@ -46,12 +46,12 @@ def get_opc_data():
         client.connect()
         print('Connect to OPC server successful')
 
-        if GAS_UNLOADING_BATCH['complete']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch", False)
-            GAS_UNLOADING_BATCH['complete'] = False
         if GAS_LOADING_BATCH['complete']:
             set_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch", False)
             GAS_LOADING_BATCH['complete'] = False
+        if GAS_UNLOADING_BATCH['complete']:
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch", False)
+            GAS_UNLOADING_BATCH['complete'] = False
 
         GAS_LOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
         GAS_UNLOADING_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
@@ -202,22 +202,21 @@ async def transport_process(transport: dict):
 
     if transport_type:
         # проверяем наличие в базе данных транспорт с данным номером
-        transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
+        transport_data = await django_video_api.get_transport(registration_number, transport_type)
 
-        if transport_found:
-            for item in transport_data:
-                item['is_on_station'] = is_on_station
-                if is_on_station:
-                    item['entry_date'] = date
-                    item['entry_time'] = time
-                    item['departure_date'] = None
-                    item['departure_time'] = None
-                else:
-                    item['departure_date'] = date
-                    item['departure_time'] = time
+        if transport_data:
+            transport_data['is_on_station'] = is_on_station
+            if is_on_station:
+                transport_data['entry_date'] = date
+                transport_data['entry_time'] = time
+                transport_data['departure_date'] = None
+                transport_data['departure_time'] = None
+            else:
+                transport_data['departure_date'] = date
+                transport_data['departure_time'] = time
 
-                await django_video_api.update_transport(item, transport_type)
-                print(f'{transport_type} with number {transport['registration_number']} update')
+            await django_video_api.update_transport(transport_data, transport_type)
+            print(f'{transport_type} with number {transport['registration_number']} update')
         else:
             entry_date = entry_time = departure_date = departure_time = None
             if is_on_station:
@@ -280,10 +279,10 @@ async def gas_loading_processing(server):
                     print(f'Партия приёмки. Машина на весах. Номер - {registration_number}')
 
                     # запрос данных по текущему номеру машины
-                    transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
+                    truck_data = await django_video_api.get_transport(registration_number, transport_type)
 
-                    if transport_found:
-                        GAS_LOADING_BATCH['truck_id'] = transport_data[0]['id']
+                    if truck_data:
+                        GAS_LOADING_BATCH['truck_id'] = truck_data['id']
 
                         batch_data = {
                             'batch_type': 'l',
@@ -293,7 +292,7 @@ async def gas_loading_processing(server):
                         }
 
                         # начинаем партию приёмки газа
-                        create_status, batch_data = await django_video_api.create_batch_gas(batch_data)
+                        batch_data = await django_video_api.create_batch_gas(batch_data)
                         GAS_LOADING_BATCH['batch_id'] = batch_data['id']
                         GAS_LOADING_BATCH['process_step'] = 2
 
@@ -311,8 +310,8 @@ async def gas_loading_processing(server):
                     'scale_full_weight': GAS_LOADING_BATCH['truck_full_weight']
                 }
 
-                result = await django_video_api.update_batch_gas(batch_data)
-                print(result)
+                batch_data = await django_video_api.update_batch_gas(batch_data)
+                print(batch_data)
 
                 print(f'Вес полной машины = {GAS_LOADING_BATCH['truck_full_weight']}. '
                       f'Начальные показания массомера {GAS_LOADING_BATCH['initial_mass_meter']}')
@@ -373,10 +372,10 @@ async def gas_unloading_processing(server: dict):
                     print(f'Партия отгрузки. Машина на весах. Номер - {registration_number}')
 
                     # запрос данных по текущему номеру машины
-                    transport_found, transport_data = await django_video_api.get_transport(registration_number, transport_type)
+                    transport_data = await django_video_api.get_transport(registration_number, transport_type)
 
-                    if transport_found:
-                        GAS_UNLOADING_BATCH['truck_id'] = transport_data[0]['id']
+                    if transport_data:
+                        GAS_UNLOADING_BATCH['truck_id'] = transport_data['id']
 
                         batch_data = {
                             'batch_type': 'u',
@@ -385,7 +384,7 @@ async def gas_unloading_processing(server: dict):
                             'is_active': True
                         }
                         # начинаем партию отгрузки газа
-                        create_status, batch_data = await django_video_api.create_batch_gas(batch_data)
+                        batch_data = await django_video_api.create_batch_gas(batch_data)
                         GAS_UNLOADING_BATCH['batch_id'] = batch_data['id']
                         GAS_UNLOADING_BATCH['process_step'] = 2
 

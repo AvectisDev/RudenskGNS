@@ -83,17 +83,23 @@ class TruckView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if request.GET.get('on_station') == "True":
+        # Проверяем наличие параметров запроса
+        on_station = request.query_params.get('on_station', False)
+        registration_number = request.query_params.get('registration_number', False)
+
+        if on_station:
             trucks = Truck.objects.filter(is_on_station=True)
-        else:
-            registration_number = request.GET.get('registration_number')
-            trucks = Truck.objects.filter(registration_number=registration_number)
+            if not trucks:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = TruckSerializer(trucks, many=True)
+            return Response(serializer.data)
 
-        if not trucks:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = TruckSerializer(trucks, many=True)
-        return Response(serializer.data)
+        if registration_number:
+            trucks = get_object_or_404(Truck, registration_number=registration_number)
+            if not trucks:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = TruckSerializer(trucks)
+            return Response(serializer.data)
 
     def post(self, request):
         serializer = TruckSerializer(data=request.data)
