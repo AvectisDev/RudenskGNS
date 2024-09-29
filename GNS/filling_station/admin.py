@@ -31,14 +31,14 @@ class TruckAdmin(admin.ModelAdmin):
 @admin.register(Trailer)
 class TrailerAdmin(admin.ModelAdmin):
     list_display = ['id', 'truck', 'trailer_brand', 'registration_number', 'type', 'capacity_cylinders',
-                    'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'gas_volume', 'empty_weight',
+                    'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                     'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
     search_fields = ['trailer_brand', 'registration_number', 'type', 'is_on_station']
 
 
 @admin.register(RailwayTank)
 class RailwayTankAdmin(admin.ModelAdmin):
-    list_display = ['id', 'number', 'empty_weight', 'full_weight', 'gas_weight', 'gas_type', 'is_on_station',
+    list_display = ['id', 'registration_number', 'empty_weight', 'full_weight', 'gas_weight', 'gas_type', 'is_on_station',
                     'entry_date', 'entry_time', 'departure_date', 'departure_time']
     search_fields = ['number', 'is_on_station', 'entry_date', 'departure_date']
 

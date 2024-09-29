@@ -123,7 +123,7 @@ class TrailerForm(forms.ModelForm):
     class Meta:
         model = Trailer
         fields = ['truck', 'trailer_brand', 'registration_number', 'type', 'capacity_cylinders',
-                  'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'gas_volume', 'empty_weight',
+                  'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                   'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
         widgets = {
             'truck': forms.Select(attrs={'class': 'form-control'}),
@@ -133,7 +133,7 @@ class TrailerForm(forms.ModelForm):
             'capacity_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_weight_of_transported_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_mass_of_transported_gas': forms.NumberInput(attrs={'class': 'form-control'}),
-            'gas_volume': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_gas_volume': forms.NumberInput(attrs={'class': 'form-control'}),
             'empty_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'full_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_on_station': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -156,10 +156,10 @@ class RailwayTankForm(forms.ModelForm):
 
     class Meta:
         model = RailwayTank
-        fields = ['number', 'empty_weight', 'full_weight', 'gas_weight', 'gas_type', 'is_on_station',
+        fields = ['registration_number', 'empty_weight', 'full_weight', 'gas_weight', 'gas_type', 'is_on_station',
                   'entry_date', 'entry_time', 'departure_date', 'departure_time']
         widgets = {
-            'number': forms.TextInput(attrs={'class': 'form-control'}),
+            'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
             'empty_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'full_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'gas_weight': forms.NumberInput(attrs={'class': 'form-control'}),

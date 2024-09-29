@@ -99,7 +99,7 @@ class Trailer(models.Model):
                                                             verbose_name="Максимальная масса перевозимых баллонов")
     max_mass_of_transported_gas = models.FloatField(null=True, blank=True,
                                                     verbose_name="Максимальная масса перевозимого газа")
-    gas_volume = models.FloatField(null=True, blank=True, verbose_name="Максимальный объём перевозимого газа")
+    max_gas_volume = models.FloatField(null=True, blank=True, verbose_name="Максимальный объём перевозимого газа")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустого т/с (по техпаспорту)")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полного т/с (по техпаспорту)")
 
@@ -122,33 +122,6 @@ class Trailer(models.Model):
 
     def get_update_url(self):
         return reverse('filling_station:trailer_update', args=[self.pk])
-
-
-class RailwayTank(models.Model):
-    number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
-    empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустой цистерны")
-    full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полной цистерны")
-    gas_weight = models.FloatField(null=True, blank=True, verbose_name="Масса перевозимого газа")
-    gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
-    is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
-    entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
-    entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
-    departure_date = models.DateField(null=True, blank=True, verbose_name="Дата выезда")
-    departure_time = models.TimeField(null=True, blank=True, verbose_name="Время выезда")
-
-    def __str__(self):
-        return self.number
-
-    class Meta:
-        verbose_name = "Ж/д цистерна"
-        verbose_name_plural = "Ж/д цистерны"
-        ordering = ['-entry_date', '-entry_time']
-
-    def get_absolute_url(self):
-        return reverse('filling_station:railway_tank_detail', args=[self.pk])
-
-    def get_update_url(self):
-        return reverse('filling_station:railway_tank_update', args=[self.pk])
 
 
 class BalloonAmount(models.Model):
@@ -245,6 +218,33 @@ class BalloonsUnloadingBatch(models.Model):
 
     def get_update_url(self):
         return reverse('filling_station:balloon_unloading_batch_update', args=[self.pk])
+
+
+class RailwayTank(models.Model):
+    registration_number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
+    empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустой цистерны")
+    full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полной цистерны")
+    gas_weight = models.FloatField(null=True, blank=True, verbose_name="Масса перевозимого газа")
+    gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
+    is_on_station = models.BooleanField(null=True, blank=True, verbose_name="Находится на станции")
+    entry_date = models.DateField(null=True, blank=True, verbose_name="Дата въезда")
+    entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
+    departure_date = models.DateField(null=True, blank=True, verbose_name="Дата выезда")
+    departure_time = models.TimeField(null=True, blank=True, verbose_name="Время выезда")
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = "Ж/д цистерна"
+        verbose_name_plural = "Ж/д цистерны"
+        ordering = ['-entry_date', '-entry_time']
+
+    def get_absolute_url(self):
+        return reverse('filling_station:railway_tank_detail', args=[self.pk])
+
+    def get_update_url(self):
+        return reverse('filling_station:railway_tank_update', args=[self.pk])
 
 
 class RailwayBatch(models.Model):
