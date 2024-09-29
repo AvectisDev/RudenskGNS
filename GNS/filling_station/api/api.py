@@ -366,7 +366,7 @@ class RailwayBatchView(APIView):
         batch_id = request.data.get('id')
         batch = get_object_or_404(RailwayBatch, id=batch_id)
 
-        if not request.data['is_active']:
+        if not request.data.get('is_active', True):
             current_date = datetime.now()
             request.data['end_date'] = current_date.date()
             request.data['end_time'] = current_date.time()
@@ -401,7 +401,7 @@ class AutoGasBatchView(APIView):
         batch_id = request.data.get('id')
         batch = get_object_or_404(AutoGasBatch, id=batch_id)
 
-        if not request.data.get('is_active', False):
+        if not request.data.get('is_active', True):
             current_date = datetime.now()
             request.data['end_date'] = current_date.date()
             request.data['end_time'] = current_date.time()
