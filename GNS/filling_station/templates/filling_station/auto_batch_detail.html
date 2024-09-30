@@ -24,7 +24,7 @@
         </div>
         <div class="col text-start">
             <p>{{ batch.id }}</p>
-            <p>{{ batch.batch_type|default_if_none:"-" }}</p>
+            <p>{% if batch.batch_type == 'l' %}Приёмка{% else %}Отгрузка{% endif %}</p>
             <p>{{ batch.begin_date|default_if_none:"-" }}</p>
             <p>{{ batch.begin_time|default_if_none:"-" }}</p>
             <p>{{ batch.end_date|default_if_none:"-" }}</p>
@@ -44,12 +44,12 @@
 
 <div class="container text-center">
     <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
-            onclick="location.href='{{ batch.get_absolute_url }}'">Назад
+            onclick="location.href='{% url 'filling_station:auto_gas_batch_list' %}'">Назад
     </button>
     <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
             onclick="location.href = '{{ batch.get_update_url }}'">Редактировать
     </button>
-    <button type="button" class="btn btn-danger" onclick="location.href = '{{ batch.get_update_url }}'">Удалить
+    <button type="button" class="btn btn-danger" onclick="location.href = '{{ batch.get_delete_url }}'">Удалить
     </button>
 </div>
 

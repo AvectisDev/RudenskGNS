@@ -45,7 +45,7 @@
             onclick="location.href='{% url 'filling_station:truck_list' %}'">Назад</button>
     <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
             onclick="location.href = '{{ truck.get_update_url }}'">Редактировать</button>
-    <button type="button" class="btn btn-danger" onclick="location.href = '{{ truck.get_update_url }}'">Удалить</button>
+    <button type="button" class="btn btn-danger" onclick="location.href = '{{ truck.get_delete_url }}'">Удалить</button>
 </div>
 
 {% endblock content %}

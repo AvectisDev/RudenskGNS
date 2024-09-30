@@ -87,6 +87,9 @@ class Truck(models.Model):
     def get_update_url(self):
         return reverse('filling_station:truck_update', args=[self.pk])
 
+    def get_delete_url(self):
+        return reverse('filling_station:truck_delete', args=[self.pk])
+
 
 class Trailer(models.Model):
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль", related_name='trailer',
@@ -123,6 +126,9 @@ class Trailer(models.Model):
     def get_update_url(self):
         return reverse('filling_station:trailer_update', args=[self.pk])
 
+    def get_delete_url(self):
+        return reverse('filling_station:trailer_delete', args=[self.pk])
+
 
 class BalloonAmount(models.Model):
     reader_id = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
@@ -157,6 +163,9 @@ class TTN(models.Model):
     def get_update_url(self):
         return reverse('filling_station:ttn_update', args=[self.pk])
 
+    def get_delete_url(self):
+        return reverse('filling_station:ttn_delete', args=[self.pk])
+
 
 class BalloonsLoadingBatch(models.Model):
     begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
@@ -187,6 +196,9 @@ class BalloonsLoadingBatch(models.Model):
 
     def get_update_url(self):
         return reverse('filling_station:balloon_loading_batch_update', args=[self.pk])
+
+    def get_delete_url(self):
+        return reverse('filling_station:balloon_loading_batch_delete', args=[self.pk])
 
 
 class BalloonsUnloadingBatch(models.Model):
@@ -219,6 +231,9 @@ class BalloonsUnloadingBatch(models.Model):
     def get_update_url(self):
         return reverse('filling_station:balloon_unloading_batch_update', args=[self.pk])
 
+    def get_delete_url(self):
+        return reverse('filling_station:balloon_unloading_batch_delete', args=[self.pk])
+
 
 class RailwayTank(models.Model):
     registration_number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
@@ -233,7 +248,7 @@ class RailwayTank(models.Model):
     departure_time = models.TimeField(null=True, blank=True, verbose_name="Время выезда")
 
     def __str__(self):
-        return self.number
+        return self.registration_number
 
     class Meta:
         verbose_name = "Ж/д цистерна"
@@ -265,10 +280,13 @@ class RailwayBatch(models.Model):
         ordering = ['-begin_date', '-begin_time']
 
     def get_absolute_url(self):
-        return reverse('filling_station:railway_loading_batch_detail', args=[self.pk])
+        return reverse('filling_station:railway_batch_detail', args=[self.pk])
 
     def get_update_url(self):
-        return reverse('filling_station:railway_loading_batch_update', args=[self.pk])
+        return reverse('filling_station:railway_batch_update', args=[self.pk])
+
+    def get_delete_url(self):
+        return reverse('filling_station:railway_batch_delete', args=[self.pk])
 
 
 class AutoGasBatch(models.Model):
@@ -299,3 +317,6 @@ class AutoGasBatch(models.Model):
 
     def get_update_url(self):
         return reverse('filling_station:auto_gas_batch_update', args=[self.pk])
+
+    def get_delete_url(self):
+        return reverse('filling_station:auto_gas_batch_delete', args=[self.pk])

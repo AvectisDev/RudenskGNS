@@ -26,8 +26,8 @@ USER_STATUS_LIST = [
     'Опорожнение(слив) баллона',
     'Контрольное взвешивание'
 ]
-BALLOONS_LOADING_READER_LIST = [6]
-BALLOONS_UNLOADING_READER_LIST = [3, 4]
+BALLOONS_LOADING_READER_LIST = [1, 6]
+BALLOONS_UNLOADING_READER_LIST = [2, 3, 4]
 
 
 class BalloonView(APIView):
@@ -249,6 +249,8 @@ def add_balloon_to_loading_batch(request):
     if balloon_id:
         balloon = get_object_or_404(Balloon, id=balloon_id)
         loading_batch.balloon_list.add(balloon)
+        loading_batch.amount_of_rfid = loading_batch.amount_of_rfid + 1
+        loading_batch.save()
 
     return Response(status=status.HTTP_200_OK)
 
@@ -264,6 +266,8 @@ def remove_balloon_from_loading_batch(request):
     if balloon_id:
         balloon = get_object_or_404(Balloon, id=balloon_id)
         loading_batch.balloon_list.remove(balloon)
+        loading_batch.amount_of_rfid = loading_batch.amount_of_rfid - 1
+        loading_batch.save()
 
     return Response(status=status.HTTP_200_OK)
 
@@ -324,6 +328,8 @@ def add_balloon_to_unloading_batch(request):
     if balloon_id:
         balloon = get_object_or_404(Balloon, id=balloon_id)
         unloading_batch.balloon_list.add(balloon)
+        unloading_batch.amount_of_rfid = unloading_batch.amount_of_rfid + 1
+        unloading_batch.save()
 
     return Response(status=status.HTTP_200_OK)
 
@@ -339,6 +345,8 @@ def remove_balloon_from_unloading_batch(request):
     if balloon_id:
         balloon = get_object_or_404(Balloon, id=balloon_id)
         unloading_batch.balloon_list.remove(balloon)
+        unloading_batch.amount_of_rfid = unloading_batch.amount_of_rfid - 1
+        unloading_batch.save()
 
     return Response(status=status.HTTP_200_OK)
 
