@@ -22,27 +22,11 @@ INTELLECT_SERVER_LIST = [
     }
 ]
 
-GAS_LOADING_BATCH = {
+AUTO_BATCH = {
     'command_start': False,
     'start_flag': False,
     'complete': False,
-    'process_step': 0,
-    'is_active': False,
-    'batch_id': 0,
-    'truck_id': None,
-    'trailer_id': None,
-    'initial_mass_meter': 0,
-    'final_mass_meter': 0,
-    'gas_amount': 0,
-    'truck_full_weight': 0,
-    'truck_empty_weight': 0,
-    'weight_gas_amount': 0
-}
-
-GAS_UNLOADING_BATCH = {
-    'command_start': False,
-    'start_flag': False,
-    'complete': False,
+    'type': None,
     'process_step': 0,
     'is_active': False,
     'batch_id': 0,
