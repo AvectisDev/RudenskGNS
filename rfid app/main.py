@@ -72,6 +72,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
     try:
         passport = await django_balloon_api.get_balloon(nfc_tag)
     except Exception as error:
+        passport = None
         print(status, error)
 
     if passport:  # если данные паспорта есть в базе данных
@@ -84,6 +85,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
             try:
                 miriada_data = await get_balloon(nfc_tag)
             except Exception as error:
+                miriada_data = None
                 print('miriada error', error)
 
             if miriada_data:  # если получили данные из мириады
