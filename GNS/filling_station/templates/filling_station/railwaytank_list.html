@@ -3,7 +3,19 @@
 
 {% block content %}
 
-<h5>Список ж/д цистерн</h5>
+<div class="container-fluid">
+    <header class="d-flex flex-wrap align-items-center justify-content-between py-3 mb-4 border-bottom">
+        <div class="col-md-3 mb-2 mb-md-0">
+            <h5>Список ж/д цистерн</h5>
+        </div>
+
+        <div class="col-md-3 mb-2 mb-md-0 ml-auto">
+            <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
+                    onclick="location.href='{% url 'filling_station:railway_tank_create' %}'">Создать
+            </button>
+        </div>
+    </header>
+</div>
 
 <table class="table table-striped table-hover vertical-align: middle" style="border-radius: 5px; overflow: hidden;">
     <tr class="table-dark" align="center" style="background-color: #051831 !important; color: white !important;">
@@ -21,7 +33,7 @@
     {% for railway in page_obj.object_list %}
     <tr align="center">
         <td>
-        <a href="{{ railway.get_absolute_url }}" style="color: #051831;"> {{ railway.number }} </a>
+        <a href="{{ railway.get_absolute_url }}" style="color: #051831;"> {{ railway.registration_number }} </a>
         </td>
         <td>{{ railway.empty_weight|floatformat:2|default_if_none:"-" }}</td>
         <td>{{ railway.full_weight|floatformat:2|default_if_none:"-" }}</td>

@@ -263,6 +263,9 @@ class RailwayTank(models.Model):
     def get_update_url(self):
         return reverse('filling_station:railway_tank_update', args=[self.pk])
 
+    def get_delete_url(self):
+        return reverse('filling_station:railway_tank_delete', args=[self.pk])
+
 
 class RailwayBatch(models.Model):
     begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")

@@ -31,8 +31,8 @@
             <p>{{ trailer.max_weight_of_transported_cylinders|default_if_none:"-" }}</p>
             <p>{{ trailer.max_mass_of_transported_gas|default_if_none:"-" }}</p>
             <p>{{ trailer.gas_volume|default_if_none:"-" }}</p>
-            <p>{{ trailer.empty_weight|floatformat:2|default_if_none:"-" }}</p>
-            <p>{{ trailer.full_weight|floatformat:2|default_if_none:"-" }}</p>
+            <p>{{ trailer.empty_weight|default_if_none:"-" }}</p>
+            <p>{{ trailer.full_weight|default_if_none:"-" }}</p>
             <p>{% if trailer.is_on_station %}Да{% else %}Нет{% endif %}</p>
             <p>{{ trailer.entry_date|default_if_none:"-" }}</p>
             <p>{{ trailer.entry_time|default_if_none:"-" }}</p>

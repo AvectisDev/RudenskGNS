@@ -29,8 +29,8 @@
             <p>{{ truck.max_weight_of_transported_cylinders|default_if_none:"-" }}</p>
             <p>{{ truck.max_mass_of_transported_gas|default_if_none:"-" }}</p>
             <p>{{ truck.max_gas_volume|default_if_none:"-" }}</p>
-            <p>{{ truck.empty_weight|floatformat:2|default_if_none:"-" }}</p>
-            <p>{{ truck.full_weight|floatformat:2|default_if_none:"-" }}</p>
+            <p>{{ truck.empty_weight|default_if_none:"-" }}</p>
+            <p>{{ truck.full_weight|default_if_none:"-" }}</p>
             <p>{% if truck.is_on_station %}Да{% else %}Нет{% endif %}</p>
             <p>{{ truck.entry_date|default_if_none:"-" }}</p>
             <p>{{ truck.entry_time|default_if_none:"-" }}</p>
