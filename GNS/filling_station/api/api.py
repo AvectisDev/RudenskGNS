@@ -9,8 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from .serializers import (BalloonSerializer, TruckSerializer, TrailerSerializer, RailwayTankSerializer, TTNSerializer,
                           BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
-                          RailwayLoadingBatchSerializer, AutoGasBatchSerializer, BalloonsLoadBatchSerializer,
-                          BalloonsUnloadBatchSerializer)
+                          RailwayLoadingBatchSerializer, AutoGasBatchSerializer,
+                          ActiveLoadingBatchSerializer, ActiveUnloadingBatchSerializer,
+                          BalloonAmountLoadingSerializer, BalloonAmountUnloadingSerializer)
 
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
@@ -200,12 +201,13 @@ class BalloonsLoadingBatchView(APIView):
         # Проверяем наличие параметров запроса
         is_active = request.query_params.get('is_active', False)
         last_active = request.query_params.get('last_active', False)
+        rfid_amount = request.query_params.get('rfid_amount', False)
 
         if is_active:
             loading_batches = BalloonsLoadingBatch.objects.filter(is_active=True)
             if not loading_batches:
                 return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = BalloonsLoadBatchSerializer(loading_batches, many=True)
+            serializer = ActiveLoadingBatchSerializer(loading_batches, many=True)
             return Response(serializer.data)
 
         if last_active:
@@ -213,6 +215,14 @@ class BalloonsLoadingBatchView(APIView):
             if not loading_batch:
                 return Response(status=status.HTTP_404_NOT_FOUND)
             serializer = BalloonsLoadingBatchSerializer(loading_batch)
+            return Response(serializer.data)
+
+        if rfid_amount:
+            batch_id = int(request.query_params.get('batch_id'))
+            loading_batch = get_object_or_404(BalloonsLoadingBatch, id=batch_id)
+            if not loading_batch:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = BalloonAmountLoadingSerializer(loading_batch)
             return Response(serializer.data)
 
     def post(self, request):
@@ -285,12 +295,13 @@ class BalloonsUnloadingBatchView(APIView):
         # Проверяем наличие параметров запроса
         is_active = request.query_params.get('is_active', False)
         last_active = request.query_params.get('last_active', False)
+        rfid_amount = request.query_params.get('rfid_amount', False)
 
         if is_active:
             unloading_batches = BalloonsUnloadingBatch.objects.filter(is_active=True)
             if not unloading_batches:
                 return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = BalloonsUnloadBatchSerializer(unloading_batches, many=True)
+            serializer = ActiveUnloadingBatchSerializer(unloading_batches, many=True)
             return Response(serializer.data)
 
         if last_active:
@@ -298,6 +309,14 @@ class BalloonsUnloadingBatchView(APIView):
             if not unloading_batch:
                 return Response(status=status.HTTP_404_NOT_FOUND)
             serializer = BalloonsUnloadingBatchSerializer(unloading_batch)
+            return Response(serializer.data)
+
+        if rfid_amount:
+            batch_id = int(request.query_params.get('batch_id'))
+            unloading_batch = get_object_or_404(BalloonsUnloadingBatch, id=batch_id)
+            if not unloading_batch:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = BalloonAmountLoadingSerializer(unloading_batch)
             return Response(serializer.data)
 
     def post(self, request):
