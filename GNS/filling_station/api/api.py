@@ -35,14 +35,22 @@ class BalloonView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        nfc_tag = request.GET.get('nfc_tag')
-        balloon = Balloon.objects.filter(nfc_tag=nfc_tag).first()
+        nfc_tag = request.query_params.get('nfc_tag', False)
+        serial_number = request.query_params.get('serial_number', False)
 
-        if not balloon:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        if nfc_tag:
+            balloon = get_object_or_404(Balloon, nfc_tag=nfc_tag)
+            if not balloon:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = BalloonSerializer(balloon)
+            return Response(serializer.data)
 
-        serializer = BalloonSerializer(balloon)
-        return Response(serializer.data)
+        if serial_number:
+            balloons = Balloon.objects.filter(serial_number=serial_number)
+            if not balloons:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            serializer = BalloonSerializer(balloons, many=True)
+            return Response(serializer.data)
 
     def post(self, request):
         serializer = BalloonSerializer(data=request.data)
