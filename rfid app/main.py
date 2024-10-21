@@ -4,7 +4,7 @@ import db
 import binascii
 from settings import READER_LIST, COMMANDS
 from miriada import get_balloon_by_nfc_tag as get_balloon
-import django_balloon_api
+import balloon_api
 
 
 async def data_exchange_with_reader(controller: dict, command: str):

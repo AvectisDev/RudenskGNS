@@ -58,9 +58,9 @@ async def get_batch_balloons(batch_type: str):
     """
 
     if batch_type == 'loading':
-        url = f'{BASE_URL}/balloons-loading?last_active=True'
+        url = f'{BASE_URL}/balloons-loading/last-active/'
     elif batch_type == 'unloading':
-        url = f'{BASE_URL}/balloons-unloading?last_active=True'
+        url = f'{BASE_URL}/balloons-unloading/last-active/'
     else:
         print(f'get_batch_balloons function error: No batch type')
         return None
@@ -82,16 +82,17 @@ async def get_batch_balloons(batch_type: str):
 async def add_balloon_to_batch(reader: dict):
     batch_type = reader['function']
 
+    batch_id = reader['batch']['batch_id']
+
     if batch_type == 'loading':
-        url = f'{BASE_URL}/balloons-loading/add-balloon'
+        url = f'{BASE_URL}/balloons-loading/{batch_id}/add-balloon/'
     elif batch_type == 'unloading':
-        url = f'{BASE_URL}/balloons-unloading/add-balloon'
+        url = f'{BASE_URL}/balloons-unloading/{batch_id}/add-balloon/'
     else:
         print(f'get_batch_balloons function error: No batch type')
         return None
 
     data = {
-        'id': reader['batch']['batch_id'],
         'balloon_id': reader['batch']['balloon_id']
     }
 

@@ -9,7 +9,14 @@ app_name = 'filling_station'
 
 
 balloons_loading_router = DefaultRouter()
-balloons_loading_router.register(r'balloons-loading', api.BalloonsLoadingBatchViewSet, basename='balloons-loading')
+balloons_loading_router.register(r'balloons-loading',
+                                 api.BalloonsLoadingBatchViewSet,
+                                 basename='balloons-loading')
+
+balloons_unloading_router = DefaultRouter()
+balloons_unloading_router.register(r'balloons-unloading',
+                                   api.BalloonsUnloadingBatchViewSet,
+                                   basename='balloons-unloading')
 
 urlpatterns = [
     path('balloon-passport', api.BalloonView.as_view()),
@@ -22,10 +29,7 @@ urlpatterns = [
     path('railway-tanks', api.RailwayTanksView.as_view()),
 
     path('', include(balloons_loading_router.urls)),
-
-    path('balloons-unloading', api.BalloonsUnloadingBatchView.as_view()),
-    path('balloons-unloading/add-balloon', api.add_balloon_to_unloading_batch),
-    path('balloons-unloading/remove-balloon', api.remove_balloon_from_unloading_batch),
+    path('', include(balloons_unloading_router.urls)),
 
     path('railway-loading', api.RailwayBatchView.as_view()),
     path('auto-gas', api.AutoGasBatchView.as_view()),
