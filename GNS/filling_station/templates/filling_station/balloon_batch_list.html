@@ -15,9 +15,7 @@
         <th>Автомобиль</th>
         <th>Прицеп</th>
         <th>Баллонов с RFID</th>
-        <th>Баллонов 5л</th>
-        <th>Баллонов 27л</th>
-        <th>Баллонов 50л</th>
+        <th>Баллонов без RFID</th>
         <th>В работе</th>
         <th>ТТН</th>
     </tr>
@@ -33,9 +31,7 @@
         <td>{{ batch.truck|default_if_none:"-" }}</td>
         <td>{{ batch.trailer|default_if_none:"-" }}</td>
         <td>{{ batch.amount_of_rfid|default_if_none:"-" }}</td>
-        <td>{{ batch.amount_of_5_liters|default_if_none:"-" }}</td>
-        <td>{{ batch.amount_of_27_liters|default_if_none:"-" }}</td>
-        <td>{{ batch.amount_of_50_liters|default_if_none:"-" }}</td>
+        <td>{{ batch.get_amount_without_rfid|default_if_none:"-" }}</td>
         <td>{% if batch.is_active %}Активна{% else %}Завершена{% endif %}</td>
         <td>{{ batch.ttn|default_if_none:"-" }}</td>
     </tr>

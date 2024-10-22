@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.urls import reverse_lazy
 from django.views import generic
-
+from django.db.models import Q
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                      RailwayBatch, BalloonAmount, AutoGasBatch)
 from .admin import BalloonResources
@@ -28,10 +28,12 @@ class BalloonListView(generic.ListView):
     paginate_by = 15
 
     def get_queryset(self):
-        nfc_tag_filter = self.request.GET.get('nfc_tag', '')
+        query = self.request.GET.get('query', '')
 
-        if nfc_tag_filter:
-            return Balloon.objects.filter(nfc_tag=nfc_tag_filter)
+        if query:
+            return Balloon.objects.filter(
+                Q(nfc_tag=query) | Q(serial_number=query)
+            )
         else:
             return Balloon.objects.all()
 

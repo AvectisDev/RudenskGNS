@@ -12,7 +12,7 @@
 
         <div class="col-md-3 mb-2 mb-md-0">
             <form method="get" action="{% url 'filling_station:balloon_list' %}" class="d-flex">
-                <input type="text" name="nfc_tag" class="form-control me-2" placeholder="Введите номер метки" value="{{ nfc_tag_filter }}">
+                 <input type="text" name="query" class="form-control me-2" placeholder="Введите номер метки или серийный номер" value="{{ request.GET.query }}">
                 <button type="submit" class="btn" style="background-color: #3CBBD9; color: white;">Фильтровать</button>
             </form>
         </div>

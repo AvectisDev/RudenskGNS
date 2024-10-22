@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import StrictButton
 from django import forms
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                      RailwayBatch, AutoGasBatch)
+from .models import GAS_TYPE_CHOICES, BATCH_TYPE_CHOICES, BALLOON_SIZE_CHOICES
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 
@@ -18,16 +19,6 @@ USER_STATUS_LIST = [
     ('Утечка газа', 'Утечка газа'),
     ('Опорожнение(слив) баллона', 'Опорожнение(слив) баллона'),
     ('Контрольное взвешивание', 'Контрольное взвешивание'),
-]
-GAS_TYPE_CHOICES = [
-    ('Не выбран', 'Не выбран'),
-    ('СПБТ', 'СПБТ'),
-    ('ПБА', 'ПБА'),
-]
-
-BATCH_TYPE_CHOICES = [
-    ('l', 'Приёмка'),
-    ('u', 'Отгрузка'),
 ]
 
 
@@ -64,7 +55,7 @@ class BalloonForm(forms.ModelForm):
             'nfc_tag': forms.TextInput(attrs={'class': 'form-control'}),
             'serial_number': forms.TextInput(attrs={'class': 'form-control'}),
             'creation_date': forms.DateInput(attrs={'type': 'date'}),
-            'size': forms.NumberInput(attrs={'class': 'form-control'}),
+            'size': forms.Select(choices=BALLOON_SIZE_CHOICES, attrs={'class': 'form-control'}),
             'netto': forms.NumberInput(attrs={'class': 'form-control'}),
             'brutto': forms.NumberInput(attrs={'class': 'form-control'}),
             'current_examination_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
