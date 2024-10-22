@@ -18,8 +18,12 @@ BATCH_TYPE_CHOICES = [
 class BalloonSize(models.Model):
     size = models.IntegerField(verbose_name="Объём", default=50)
 
+    def __int__(self):
+        return self.size
+
     class Meta:
         verbose_name = "Объём баллона"
+        verbose_name_plural = "Объём баллона"
 
 
 @pghistory.track(exclude=['filling_status', 'update_passport_required', 'change_date', 'change_time'])
@@ -27,7 +31,7 @@ class Balloon(models.Model):
     nfc_tag = models.CharField(max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
     creation_date = models.DateField(null=True, blank=True, verbose_name="Дата производства")
-    size = models.ForeignKey(BalloonSize, on_delete=models.DO_NOTHING, verbose_name="Объём", default=4)
+    size = models.FloatField(null=True, blank=True, verbose_name="Объём")
     netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
     brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
     current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
