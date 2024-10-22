@@ -7,6 +7,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         # subprocess.run(['python', '../rfid app/main.py'], check=True)
-        # subprocess.Popen(['python', '../rfid app/main.py'])
-        # subprocess.Popen(['python', '../asu app/video_main.py'])
-        pass
+        subprocess.Popen(['python', '../rfid app/main.py'])
+        subprocess.Popen(['python', '../asu app/video_main.py'])
