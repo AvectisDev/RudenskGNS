@@ -79,7 +79,7 @@ class TruckType(models.Model):
 class Truck(models.Model):
     car_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка авто")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
-    new_type = models.ForeignKey(TruckType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
+    type = models.ForeignKey(TruckType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
     capacity_cylinders = models.IntegerField(null=True, blank=True, verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                             verbose_name="Максимальная масса перевозимых баллонов")
@@ -128,7 +128,7 @@ class Trailer(models.Model):
                               default=1)
     trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
-    new_type = models.ForeignKey(TrailerType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
+    type = models.ForeignKey(TrailerType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
     capacity_cylinders = models.IntegerField(null=True, blank=True, verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                             verbose_name="Максимальная масса перевозимых баллонов")

@@ -82,13 +82,13 @@ class TruckForm(forms.ModelForm):
 
     class Meta:
         model = Truck
-        fields = ['car_brand', 'registration_number', 'new_type', 'capacity_cylinders',
+        fields = ['car_brand', 'registration_number', 'type', 'capacity_cylinders',
                   'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                   'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
         widgets = {
             'car_brand': forms.TextInput(attrs={'class': 'form-control'}),
             'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'new_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.TextInput(attrs={'class': 'form-control'}),
             'capacity_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_weight_of_transported_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_mass_of_transported_gas': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -115,14 +115,14 @@ class TrailerForm(forms.ModelForm):
 
     class Meta:
         model = Trailer
-        fields = ['truck', 'trailer_brand', 'registration_number', 'new_type', 'capacity_cylinders',
+        fields = ['truck', 'trailer_brand', 'registration_number', 'type', 'capacity_cylinders',
                   'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                   'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
         widgets = {
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer_brand': forms.TextInput(attrs={'class': 'form-control'}),
             'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'new_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.TextInput(attrs={'class': 'form-control'}),
             'capacity_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_weight_of_transported_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_mass_of_transported_gas': forms.NumberInput(attrs={'class': 'form-control'}),

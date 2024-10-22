@@ -21,7 +21,7 @@ class BalloonAdmin(admin.ModelAdmin):
 
 @admin.register(Truck)
 class TruckAdmin(admin.ModelAdmin):
-    list_display = ['id', 'car_brand', 'registration_number', 'new_type', 'capacity_cylinders',
+    list_display = ['id', 'car_brand', 'registration_number', 'type', 'capacity_cylinders',
                     'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume',
                     'empty_weight', 'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date',
                     'departure_time']
@@ -35,7 +35,7 @@ class TruckTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Trailer)
 class TrailerAdmin(admin.ModelAdmin):
-    list_display = ['id', 'truck', 'trailer_brand', 'registration_number', 'new_type', 'capacity_cylinders',
+    list_display = ['id', 'truck', 'trailer_brand', 'registration_number', 'type', 'capacity_cylinders',
                     'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                     'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
     search_fields = ['trailer_brand', 'registration_number', 'type', 'is_on_station']
