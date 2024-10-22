@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from ..models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
-                      RailwayBatch, AutoGasBatch)
+                      RailwayBatch, AutoGasBatch, TruckType, TrailerType)
 
 
 class BalloonSerializer(serializers.ModelSerializer):
@@ -11,7 +11,15 @@ class BalloonSerializer(serializers.ModelSerializer):
                   'filling_status', 'update_passport_required']
 
 
+class TruckTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TruckType
+        fields = ['type']
+
+
 class TruckSerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+
     class Meta:
         model = Truck
         fields = ['id', 'car_brand', 'registration_number', 'type', 'capacity_cylinders',
@@ -19,13 +27,27 @@ class TruckSerializer(serializers.ModelSerializer):
                   'empty_weight', 'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date',
                   'departure_time']
 
+    def get_type(self, obj):
+        return obj.type.type  # Возвращает значение поля type из модели TruckType
+
+
+class TrailerTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrailerType
+        fields = ['type']
+
 
 class TrailerSerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+
     class Meta:
         model = Trailer
         fields = ['id', 'truck', 'trailer_brand', 'registration_number', 'type', 'capacity_cylinders',
                   'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                   'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
+
+    def get_type(self, obj):
+        return obj.type.type  # Возвращает значение поля type из модели TruckType
 
 
 class RailwayTankSerializer(serializers.ModelSerializer):
