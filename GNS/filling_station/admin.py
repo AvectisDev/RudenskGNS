@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
-                     RailwayBatch, AutoGasBatch)
+                     RailwayBatch, AutoGasBatch, TruckType, TrailerType)
 from import_export import resources
 
 
@@ -28,12 +28,22 @@ class TruckAdmin(admin.ModelAdmin):
     search_fields = ['car_brand', 'registration_number', 'type', 'is_on_station', 'entry_date', 'departure_date']
 
 
+@admin.register(TruckType)
+class TruckTypeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'type']
+
+
 @admin.register(Trailer)
 class TrailerAdmin(admin.ModelAdmin):
     list_display = ['id', 'truck', 'trailer_brand', 'registration_number', 'new_type', 'capacity_cylinders',
                     'max_weight_of_transported_cylinders', 'max_mass_of_transported_gas', 'max_gas_volume', 'empty_weight',
                     'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
     search_fields = ['trailer_brand', 'registration_number', 'type', 'is_on_station']
+
+
+@admin.register(TrailerType)
+class TrailerTypeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'type']
 
 
 @admin.register(RailwayTank)
