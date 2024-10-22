@@ -38,7 +38,7 @@ async def write_balloons_amount(reader: dict, from_who: str):
                 await conn.execute(insert_query, reader['number'], 0, current_date.date(), current_date.time(), 1,
                                    reader['status'])
 
-            print("Amount added to database")
+            print("Balloon amount added to database")
         else:
             if from_who == 'sensor':
                 update_query = """UPDATE public.filling_station_balloonamount 
@@ -51,7 +51,7 @@ async def write_balloons_amount(reader: dict, from_who: str):
                                   WHERE reader_id = $2 AND change_date = $3"""
                 await conn.execute(update_query, current_date.time(), reader['number'], current_date.date())
 
-            print("Data updated")
+            print("Balloon amount updated")
 
     except Exception as error:
         print('Can`t establish connection to database:', error)

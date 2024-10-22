@@ -70,7 +70,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
 
     # проверка наличия паспорта в базе данных
     try:
-        passport = await django_balloon_api.get_balloon(nfc_tag)
+        passport = await balloon_api.get_balloon(nfc_tag)
     except Exception as error:
         passport = None
         print(status, error)
@@ -100,7 +100,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
 
         # обновляем паспорт в базе данных
         try:
-            passport = await django_balloon_api.update_balloon(nfc_tag, passport)
+            passport = await balloon_api.update_balloon(nfc_tag, passport)
         except Exception as error:
             print('update_balloon error', error)
 
@@ -112,7 +112,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
         }
         # создание нового паспорта в базе данных
         try:
-            passport = await django_balloon_api.create_balloon(passport)
+            passport = await balloon_api.create_balloon(passport)
         except Exception as error:
             print('create_balloon error', error)
 
@@ -128,28 +128,27 @@ async def read_nfc_tag(reader: dict):
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
 
-        if nfc_tag not in reader['previous_nfc_tags']:  # метка отличается от недавно считанных
+        # метка отличается от недавно считанных и заканчивается на "e0"
+        if nfc_tag not in reader['previous_nfc_tags'] and nfc_tag.endswith("e0"):
             try:
                 balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
 
                 await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
 
-                # ****************************************
                 if balloon_passport_status:  # если паспорт заполнен
                     # зажигаем зелёную лампу на считывателе
                     await data_exchange_with_reader(reader, 'read_complete')
                 else:
                     # мигание зелёной лампы на считывателе
                     await data_exchange_with_reader(reader, 'read_complete_with_error')
-                # ****************************************
 
                 if reader['function'] is not None:  # если производится приёмка/отгрузка баллонов
-                    batch_data = await django_balloon_api.get_batch_balloons(reader['function'])
+                    batch_data = await balloon_api.get_batch_balloons(reader['function'])
 
                     if batch_data:  # если партия активна - заполняем её списком пройденных баллонов
                         reader['batch']['batch_id'] = batch_data['id']
                         reader['batch']['balloon_id'] = balloon_passport['id']
-                        await django_balloon_api.add_balloon_to_batch(reader)
+                        await balloon_api.add_balloon_to_batch(reader)
             except Exception as error:
                 print('balloon_passport_processing', error)
 
@@ -172,11 +171,11 @@ async def read_input_status(reader: dict):
 
     if len(data) == 18:
         print("Inputs data is: ", data)
-        first_input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
-        if first_input_state == 1 and previous_input_state == 0:  # текущее состояние "активен", а ранее он был выключен
-            await db.write_balloons_amount(reader, 'sensor')  # сохраняем значение в бд
+        input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
+        if input_state == 1 and previous_input_state == 0:
+            await db.write_balloons_amount(reader, 'sensor')
             return 1  # возвращаем состояние входа "активен"
-        elif first_input_state == 0 and previous_input_state == 1:
+        elif input_state == 0 and previous_input_state == 1:
             return 0  # возвращаем состояние входа "неактивен"
         else:
             return previous_input_state
@@ -197,8 +196,6 @@ async def main():
         except Exception as error:
             print(f"Error while reading NFC tags: {error}")
 
-        await asyncio.sleep(0.3)
-
         try:
             # Задачи для считывания состояния входов
             tasks = [asyncio.create_task(read_input_status(reader)) for reader in READER_LIST]
@@ -210,7 +207,7 @@ async def main():
         except Exception as error:
             print(f"Error while reading input status: {error}")
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.3)
 
 
 if __name__ == "__main__":

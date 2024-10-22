@@ -97,7 +97,7 @@ async def transport_process(transport: dict):
 
     if transport_type:
         # проверяем наличие в базе данных транспорт с данным номером
-        transport_data = await django_video_api.get_transport(registration_number, transport_type)
+        transport_data = await video_api.get_transport(registration_number, transport_type)
 
         if transport_data:
             transport_data['is_on_station'] = is_on_station
@@ -110,7 +110,7 @@ async def transport_process(transport: dict):
                 transport_data['departure_date'] = date
                 transport_data['departure_time'] = time
 
-            result = await django_video_api.update_transport(transport_data, transport_type)
+            result = await video_api.update_transport(transport_data, transport_type)
             print(f'{transport_type} with number {transport['registration_number']} update')
         else:
             entry_date = entry_time = departure_date = departure_time = None
@@ -127,7 +127,7 @@ async def transport_process(transport: dict):
                 'departure_time': departure_time,
                 'is_on_station': is_on_station
             }
-            result = await django_video_api.create_transport(new_transport_data, transport_type)
+            result = await video_api.create_transport(new_transport_data, transport_type)
             print(f'{transport_type} with number {transport['registration_number']} create')
         return result
     else:
@@ -155,7 +155,7 @@ async def auto_batch_processing(server):
                     print(f'Машина на весах. Номер - {registration_number}')
 
                     # запрос данных по текущему номеру машины
-                    truck_data = await django_video_api.get_transport(registration_number, transport_type)
+                    truck_data = await video_api.get_transport(registration_number, transport_type)
 
                     if truck_data:
                         AUTO_BATCH['truck_id'] = truck_data['id']
@@ -164,7 +164,7 @@ async def auto_batch_processing(server):
                     print(f'Прицеп на весах. Номер - {registration_number}')
 
                     # запрос данных по текущему номеру машины
-                    trailer_data = await django_video_api.get_transport(registration_number, transport_type)
+                    trailer_data = await video_api.get_transport(registration_number, transport_type)
 
                     if trailer_data:
                         AUTO_BATCH['trailer_id'] = trailer_data['id']
@@ -177,7 +177,7 @@ async def auto_batch_processing(server):
             }
 
             # начинаем партию
-            batch_data = await django_video_api.create_batch_gas(batch_data)
+            batch_data = await video_api.create_batch_gas(batch_data)
             AUTO_BATCH['batch_id'] = batch_data['id']
             AUTO_BATCH['process_step'] = 2
 
@@ -197,7 +197,7 @@ async def auto_batch_processing(server):
                     'scale_empty_weight': AUTO_BATCH['truck_empty_weight']
                 }
 
-                batch_data = await django_video_api.update_batch_gas(batch_data)
+                batch_data = await video_api.update_batch_gas(batch_data)
                 print(batch_data)
                 AUTO_BATCH['process_step'] = 3
 
@@ -222,7 +222,7 @@ async def auto_batch_processing(server):
                 }
 
                 # завершаем партию приёмки газа
-                await django_video_api.update_batch_gas(batch_data)
+                await video_api.update_batch_gas(batch_data)
 
                 AUTO_BATCH['start_flag'] = False
                 AUTO_BATCH['complete'] = True
@@ -271,7 +271,7 @@ async def railway_processing(server: dict):
                 railway_tank['gas_weight'] = railway_tank['full_weight'] - weight
                 railway_tank['empty_weight'] = weight
 
-            await django_video_api.update_transport(railway_tank, 'railway_tank')
+            await video_api.update_transport(railway_tank, 'railway_tank')
         print(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
 
 

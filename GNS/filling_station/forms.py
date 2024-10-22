@@ -88,7 +88,7 @@ class TruckForm(forms.ModelForm):
         widgets = {
             'car_brand': forms.TextInput(attrs={'class': 'form-control'}),
             'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'type': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.Select(attrs={'class': 'form-control'}),
             'capacity_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_weight_of_transported_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_mass_of_transported_gas': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -122,7 +122,7 @@ class TrailerForm(forms.ModelForm):
             'truck': forms.Select(attrs={'class': 'form-control'}),
             'trailer_brand': forms.TextInput(attrs={'class': 'form-control'}),
             'registration_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'type': forms.TextInput(attrs={'class': 'form-control'}),
+            'type': forms.Select(attrs={'class': 'form-control'}),
             'capacity_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_weight_of_transported_cylinders': forms.NumberInput(attrs={'class': 'form-control'}),
             'max_mass_of_transported_gas': forms.NumberInput(attrs={'class': 'form-control'}),
