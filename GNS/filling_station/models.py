@@ -26,7 +26,7 @@ class BalloonSize(models.Model):
         verbose_name_plural = "Объём баллона"
 
 
-@pghistory.track(exclude=['filling_status', 'update_passport_required', 'change_date', 'change_time'])
+@pghistory.track(exclude=['filling_status', 'update_passport_required', 'change_date', 'change_time', 'size'])
 class Balloon(models.Model):
     nfc_tag = models.CharField(max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
