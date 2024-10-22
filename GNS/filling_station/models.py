@@ -23,9 +23,9 @@ BALLOON_SIZE_CHOICES = [
 ]
 
 
-@pghistory.track(exclude=['filling_status', 'update_passport_required', 'change_date', 'change_time', 'size'])
+@pghistory.track(exclude=['filling_status', 'update_passport_required', 'change_date', 'change_time'])
 class Balloon(models.Model):
-    nfc_tag = models.CharField(max_length=30, verbose_name="Номер метки")
+    nfc_tag = models.CharField(null=True, blank=True, max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
     creation_date = models.DateField(null=True, blank=True, verbose_name="Дата производства")
     size = models.IntegerField(choices=BALLOON_SIZE_CHOICES, default=50, verbose_name="Объём")
@@ -33,6 +33,8 @@ class Balloon(models.Model):
     brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
     current_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата освидетельствования")
     next_examination_date = models.DateField(null=True, blank=True, verbose_name="Дата следующего освидетельствования")
+    diagnostic_date = models.DateField(null=True, blank=True, verbose_name="Дата последней диагностики")
+    working_pressure = models.FloatField(null=True, blank=True, verbose_name="Рабочее давление")
     status = models.CharField(null=True, blank=True, max_length=100, verbose_name="Статус")
     manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
     wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
@@ -63,10 +65,21 @@ class Balloon(models.Model):
         return reverse('filling_station:balloon_delete', args=[self.pk])
 
 
+class TruckType(models.Model):
+    type = models.CharField(max_length=50, verbose_name="Тип грузовика")
+
+    def __str__(self):
+        return self.type
+
+    class Meta:
+        verbose_name = "Тип грузовика"
+        verbose_name_plural = "Типы грузовиков"
+
+
 class Truck(models.Model):
     car_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка авто")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
-    type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
+    new_type = models.ForeignKey(TruckType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
     capacity_cylinders = models.IntegerField(null=True, blank=True, verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                             verbose_name="Максимальная масса перевозимых баллонов")
@@ -99,12 +112,23 @@ class Truck(models.Model):
         return reverse('filling_station:truck_delete', args=[self.pk])
 
 
+class TrailerType(models.Model):
+    type = models.CharField(max_length=50, verbose_name="Тип прицепа")
+
+    def __str__(self):
+        return self.type
+
+    class Meta:
+        verbose_name = "Тип прицепа"
+        verbose_name_plural = "Типы прицепов"
+
+
 class Trailer(models.Model):
     truck = models.ForeignKey(Truck, on_delete=models.DO_NOTHING, verbose_name="Автомобиль", related_name='trailer',
                               default=1)
     trailer_brand = models.CharField(null=True, blank=True, max_length=20, verbose_name="Марка прицепа")
     registration_number = models.CharField(max_length=10, verbose_name="Регистрационный знак")
-    type = models.CharField(null=True, blank=True, max_length=50, verbose_name="Тип")
+    new_type = models.ForeignKey(TrailerType, on_delete=models.DO_NOTHING, verbose_name="Тип", default=1)
     capacity_cylinders = models.IntegerField(null=True, blank=True, verbose_name="Максимальная вместимость баллонов")
     max_weight_of_transported_cylinders = models.FloatField(null=True, blank=True,
                                                             verbose_name="Максимальная масса перевозимых баллонов")
