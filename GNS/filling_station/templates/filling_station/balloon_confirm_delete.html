@@ -1,17 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<h1>Подтвердите удаление</h1>
-<p>Вы уверены, что хотите удалить этот объект?</p>
+{% extends 'base.html' %}
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Удалить</button>
-    <a href="{% url 'filling_station:balloon_list' %}">Отмена</a>
-</form>
-</body>
-</html>
+{% block title %} Удаление баллона {% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h6>Вы уверены, что хотите удалить баллон?</h6>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Удалить</button>
+        <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
+                onclick="location.href='{{ balloon.get_absolute_url }}'">Отмена
+        </button>
+    </form>
+</div>
+{% endblock content %}

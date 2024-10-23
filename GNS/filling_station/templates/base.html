@@ -5,14 +5,11 @@
     <meta charset="UTF-8">
     <title>{% block title %} Газонаполнительная станция {% endblock %}</title>
     <link rel="shortcut icon" type="image/ico" href='/static/filling_station/media/Gas.ico'/>
-    <script type="text/javascript" src="/static/filling_station/bootstrap/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="/static/filling_station/bootstrap/css/bootstrap.min.css">
-    <!--    <style>-->
-    <!--        body {-->
-    <!--            background-color: #BBBCC4;-->
-    <!--        }-->
-    <!--    </style>-->
+    <script src="/static/filling_station/bootstrap/jquery-3.5.1.slim.min.js"></script>
+    <script type="text/javascript" src="/static/filling_station/bootstrap/js/bootstrap.bundle.min.js"></script>
 </head>
+
 <body class="bg-white">
 
 <div class="container-fluid">
@@ -35,14 +32,14 @@
                    role="button"
                    aria-expanded="false">Считыватели</a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="/reader/1" style="color: #051831;">RFID №1</a></li>
-                    <li><a class="dropdown-item" href="/reader/2" style="color: #051831;">RFID №2</a></li>
-                    <li><a class="dropdown-item" href="/reader/3" style="color: #051831;">RFID №3</a></li>
-                    <li><a class="dropdown-item" href="/reader/4" style="color: #051831;">RFID №4</a></li>
-                    <li><a class="dropdown-item" href="/reader/5" style="color: #051831;">RFID №5</a></li>
-                    <li><a class="dropdown-item" href="/reader/6" style="color: #051831;">RFID №6</a></li>
-                    <li><a class="dropdown-item" href="/reader/7" style="color: #051831;">RFID №7</a></li>
-                    <li><a class="dropdown-item" href="/reader/8">RFID №8</a></li>
+                    <li><a class="dropdown-item" href="/reader/1" style="color: #051831;">1 - Регистрация пустого баллона на складе (из кассеты)</a></li>
+                    <li><a class="dropdown-item" href="/reader/2" style="color: #051831;">2 - Погрузка полного баллона в кассету</a></li>
+                    <li><a class="dropdown-item" href="/reader/3" style="color: #051831;">3 - Погрузка полного баллона на трал 1</a></li>
+                    <li><a class="dropdown-item" href="/reader/4" style="color: #051831;">4 - Погрузка полного баллона на трал 2</a></li>
+                    <li><a class="dropdown-item" href="/reader/5" style="color: #051831;">5 - Регистрация полного баллона на складе</a></li>
+                    <li><a class="dropdown-item" href="/reader/6" style="color: #051831;">6 - Регистрация пустого баллона на складе (рампа)</a></li>
+                    <li><a class="dropdown-item" href="/reader/7" style="color: #051831;">7 - Регистрация пустого баллона на складе (цех)</a></li>
+                    <li><a class="dropdown-item" href="/reader/8" style="color: #051831;">8 - Наполнение баллона сжиженным газом</a></li>
                 </ul>
             </li>
             <li class="nav-item dropdown">
@@ -87,7 +84,7 @@
 
         <div class="col-md-3 text-end">
             {% if user.is_authenticated %}
-            <p style="color: #051831;">Текущий пользователь - {{ user.get_username }}!</p>
+            <p style="color: #051831;">Текущий пользователь - {{ user.get_username }}</p>
             <!--            <button type="button" class="btn" style="background-color: #3CBBD9; color: white;">Войти</button>-->
             {% endif %}
         </div>

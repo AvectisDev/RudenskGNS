@@ -22,7 +22,7 @@ class TruckSerializer(serializers.ModelSerializer):
                   'departure_time']
 
     def get_type(self, obj):
-        return obj.type.type  # Возвращает значение поля type из модели TruckType
+        return obj.type.type
 
 
 class TrailerSerializer(serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class TrailerSerializer(serializers.ModelSerializer):
                   'full_weight', 'is_on_station', 'entry_date', 'entry_time', 'departure_date', 'departure_time']
 
     def get_type(self, obj):
-        return obj.type.type  # Возвращает значение поля type из модели TruckType
+        return obj.type.type
 
 
 class RailwayTankSerializer(serializers.ModelSerializer):
