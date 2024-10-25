@@ -9,7 +9,7 @@ PASSWORD = "rfid-device"
 async def get_balloon(nfc_tag):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", timeout=3,
+            async with session.get(f"{BASE_URL}/balloons/nfc/{nfc_tag}/", timeout=3,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
 
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
@@ -23,9 +23,9 @@ async def get_balloon(nfc_tag):
 async def create_balloon(data):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/balloon-passport", json=data, timeout=3,
+            async with session.post(f"{BASE_URL}/balloons/", json=data, timeout=3,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
+                response.raise_for_status()
                 return await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
@@ -33,12 +33,12 @@ async def create_balloon(data):
             return None
 
 
-async def update_balloon(nfc_tag, data):
+async def update_balloon(data):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/balloon-passport?nfc_tag={nfc_tag}", json=data, timeout=3,
+            async with session.patch(f"{BASE_URL}/balloons/{data['id']}/", json=data, timeout=3,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # вызывает исключение для кодов ошибок HTTP
+                response.raise_for_status()
                 return await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
@@ -68,7 +68,7 @@ async def get_batch_balloons(batch_type: str):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(url, timeout=3, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # Проверка на успешный статус-код
+                response.raise_for_status()
                 return await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
@@ -99,7 +99,7 @@ async def add_balloon_to_batch(reader: dict):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.patch(url, json=data, timeout=3, auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-                response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
+                response.raise_for_status()
                 return response.status
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:

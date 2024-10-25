@@ -44,8 +44,8 @@ class Balloon(models.Model):
     change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время изменений")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
 
-    def __str__(self):
-        return self.nfc_tag
+    def __int__(self):
+        return self.pk
 
     class Meta:
         verbose_name = "Баллон"

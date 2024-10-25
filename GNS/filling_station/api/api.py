@@ -31,37 +31,34 @@ BALLOONS_LOADING_READER_LIST = [1, 6]
 BALLOONS_UNLOADING_READER_LIST = [2, 3, 4]
 
 
-class BalloonView(APIView):
+class BalloonViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        nfc_tag = request.query_params.get('nfc_tag', False)
-        serial_number = request.query_params.get('serial_number', False)
-
-        if nfc_tag:
-            balloon = get_object_or_404(Balloon, nfc_tag=nfc_tag)
-            serializer = BalloonSerializer(balloon)
-            return Response(serializer.data)
-
-        elif serial_number:
-            balloons = Balloon.objects.filter(serial_number=serial_number)
-            if not balloons:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = BalloonSerializer(balloons, many=True)
-            return Response(serializer.data)
-
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def post(self, request):
-        serializer = BalloonSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        nfc_tag = request.query_params.get('nfc_tag')
+    @action(detail=False, methods=['get'], url_path='nfc/(?P<nfc_tag>[^/.]+)')
+    def get_by_nfc(self, request, nfc_tag=None):
         balloon = get_object_or_404(Balloon, nfc_tag=nfc_tag)
+        serializer = BalloonSerializer(balloon)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='serial-number/(?P<serial_number>[^/.]+)')
+    def get_by_serial_number(self, request, serial_number=None):
+        balloons = Balloon.objects.filter(serial_number=serial_number)
+        serializer = BalloonSerializer(balloons, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        nfc_tag = request.data.get('nfc_tag', None)
+        balloons = Balloon.objects.filter(nfc_tag=nfc_tag)
+        if not balloons:
+            serializer = BalloonSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_409_CONFLICT)
+
+    def partial_update(self, request, pk=None):
+        balloon = get_object_or_404(Balloon, id=pk)
 
         serializer = BalloonSerializer(balloon, data=request.data, partial=True)
         if serializer.is_valid():

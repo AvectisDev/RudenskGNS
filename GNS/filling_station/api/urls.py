@@ -1,8 +1,8 @@
+
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import api
 from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshView)
-from django.views.decorators.csrf import csrf_exempt
 
 
 app_name = 'filling_station'
@@ -18,8 +18,11 @@ balloons_unloading_router.register(r'balloons-unloading',
                                    api.BalloonsUnloadingBatchViewSet,
                                    basename='balloons-unloading')
 
+balloons_router = DefaultRouter()
+balloons_router.register(r'balloons', api.BalloonViewSet, basename='balloons')
+
 urlpatterns = [
-    path('balloon-passport', api.BalloonView.as_view()),
+    path('', include(balloons_router.urls)),
     path('balloon-status-options', api.get_balloon_status_options),
     path('loading-balloon-reader-list', api.get_loading_balloon_reader_list),
     path('unloading-balloon-reader-list', api.get_unloading_balloon_reader_list),

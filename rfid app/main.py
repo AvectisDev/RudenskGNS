@@ -100,7 +100,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
 
         # обновляем паспорт в базе данных
         try:
-            passport = await balloon_api.update_balloon(nfc_tag, passport)
+            passport = await balloon_api.update_balloon(passport)
         except Exception as error:
             print('update_balloon error', error)
 
