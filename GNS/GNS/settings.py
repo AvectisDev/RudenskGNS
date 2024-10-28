@@ -109,7 +109,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'GNS.wsgi.application'
 ASGI_APPLICATION = "GNS.asgi.application"
 
 # Database
