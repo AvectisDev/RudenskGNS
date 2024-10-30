@@ -14,7 +14,7 @@ async def write_balloons_amount(reader: dict, from_who: str):
             host=os.environ.get('DB_HOST'),
             user=os.environ.get('DB_USER'),
             password=os.environ.get('DB_PASSWORD'),
-            port='5432'
+            port=os.environ.get('DB_PORT')
         )
 
         current_date = datetime.now()
