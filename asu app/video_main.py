@@ -303,5 +303,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    client = Client("opc.tcp://host.docker.internal:4841")
+    client = Client("opc.tcp://127.0.0.1:4841")
+    # client = Client("opc.tcp://host.docker.internal:4841") # for work with docker
     asyncio.run(main())

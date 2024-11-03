@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
-                     RailwayBatch, AutoGasBatch, TruckType, TrailerType)
+                     RailwayBatch, AutoGasBatch, TruckType, TrailerType, FilePath)
 from import_export import resources
 
 
@@ -81,7 +81,8 @@ class BalloonsUnloadingBatchAdmin(admin.ModelAdmin):
 
 @admin.register(RailwayBatch)
 class RailwayBatchAdmin(admin.ModelAdmin):
-    list_display = ['id', 'end_date', 'end_time', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'ttn']
+    list_display = ['id', 'end_date', 'end_time', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'import_ttn',
+                    'export_ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']
     search_fields = ['begin_date', 'end_date', 'is_active', 'ttn']
 
@@ -92,3 +93,7 @@ class AutoGasBatchAdmin(admin.ModelAdmin):
                     'scale_empty_weight', 'scale_full_weight', 'weight_gas_amount', 'is_active', 'ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']
     search_fields = ['begin_date', 'end_date', 'truck', 'is_active', 'ttn']
+
+@admin.register(FilePath)
+class FilePathAdmin(admin.ModelAdmin):
+    list_display = ('path',)
