@@ -103,11 +103,11 @@ class BalloonAmountUnloadingSerializer(serializers.ModelSerializer):
         fields = ['id', 'amount_of_rfid']
 
 
-class RailwayLoadingBatchSerializer(serializers.ModelSerializer):
+class RailwayBatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = RailwayBatch
         fields = ['id', 'end_date', 'end_time', 'gas_amount_spbt', 'gas_amount_pba', 'railway_tank_list', 'is_active',
-                  'ttn']
+                  'import_ttn', 'export_ttn']
 
 
 class AutoGasBatchSerializer(serializers.ModelSerializer):

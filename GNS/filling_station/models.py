@@ -300,6 +300,7 @@ class RailwayTank(models.Model):
     entry_time = models.TimeField(null=True, blank=True, verbose_name="Время въезда")
     departure_date = models.DateField(null=True, blank=True, verbose_name="Дата выезда")
     departure_time = models.TimeField(null=True, blank=True, verbose_name="Время выезда")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=1, verbose_name="Пользователь")
 
     def __str__(self):
         return self.registration_number
@@ -328,7 +329,10 @@ class RailwayBatch(models.Model):
     gas_amount_pba = models.FloatField(null=True, blank=True, verbose_name="Количество принятого ПБА газа")
     railway_tank_list = models.ManyToManyField(RailwayTank, blank=True, verbose_name="Список жд цистерн")
     is_active = models.BooleanField(null=True, blank=True, verbose_name="В работе")
-    ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН")
+    import_ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="ТТН на приёмку",
+                                   related_name='import_ttn')
+    export_ttn = models.ForeignKey(TTN, on_delete=models.DO_NOTHING, default=0, verbose_name="Возвратная ТТН",
+                                   related_name='export_ttn')
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=0, verbose_name="Пользователь")
 
     class Meta:
@@ -377,3 +381,11 @@ class AutoGasBatch(models.Model):
 
     def get_delete_url(self):
         return reverse('filling_station:auto_gas_batch_delete', args=[self.pk])
+
+
+class FilePath(models.Model):
+    path = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.path or "API"
+

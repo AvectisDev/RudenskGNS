@@ -1,0 +1,94 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+#    volumes:
+#      - /c/db_data:/var/lib/postgresql/data/
+    networks:
+      - app_network
+
+  adminer:
+      image: adminer
+      container_name: adminer
+      restart: always
+      ports:
+        - 8080:8080
+      networks:
+        - app_network
+
+  django_backend:
+    build: .
+    container_name: django
+    command: daphne -p 8000 GNS.asgi:application --bind 0.0.0.0
+    restart: always
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    networks:
+      - app_network
+
+  rfid:
+    build: ../rfid app
+    container_name: rfid
+    restart: always
+    ports:
+      - 8001:8001
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    networks:
+      - app_network
+
+  asu:
+    build: ../asu app
+    container_name: asu
+    restart: always
+    ports:
+      - 8002:8002
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+    app_network:
+        name: 'app_network'
+        driver: bridge

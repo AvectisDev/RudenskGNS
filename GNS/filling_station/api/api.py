@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime, timedelta
 from .serializers import (BalloonSerializer, TruckSerializer, TrailerSerializer, RailwayTankSerializer, TTNSerializer,
                           BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
-                          RailwayLoadingBatchSerializer, AutoGasBatchSerializer,
+                          RailwayBatchSerializer, AutoGasBatchSerializer,
                           ActiveLoadingBatchSerializer, ActiveUnloadingBatchSerializer,
                           BalloonAmountLoadingSerializer, BalloonAmountUnloadingSerializer)
 
@@ -356,11 +356,11 @@ class RailwayBatchView(APIView):
         if not batches:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = RailwayLoadingBatchSerializer(batches)
+        serializer = RailwayBatchSerializer(batches)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = RailwayLoadingBatchSerializer(data=request.data)
+        serializer = RailwayBatchSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -375,7 +375,7 @@ class RailwayBatchView(APIView):
             request.data['end_date'] = current_date.date()
             request.data['end_time'] = current_date.time()
 
-        serializer = RailwayLoadingBatchSerializer(batch, data=request.data, partial=True)
+        serializer = RailwayBatchSerializer(batch, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
