@@ -207,7 +207,7 @@ async def main():
         except Exception as error:
             print(f"Error while reading input status: {error}")
 
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.9)
 
 
 if __name__ == "__main__":
