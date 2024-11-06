@@ -74,6 +74,7 @@ def get_opc_data():
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
         RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
 
+        AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.gas_type")
         AUTO['weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.auto_weight")
         AUTO['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.weight_is_stable")
         AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_inventory")
@@ -169,11 +170,19 @@ async def auto_batch_processing(server):
                     if trailer_data:
                         AUTO_BATCH['trailer_id'] = trailer_data['id']
 
+            if AUTO_BATCH['gas_type'] == 2:
+                gas_type = 'СПБТ'
+            elif AUTO_BATCH['gas_type'] == 3:
+                gas_type = 'ПБА'
+            else:
+                gas_type = 'Не выбран'
+
             batch_data = {
                 'batch_type': 'l' if AUTO_BATCH['type'] == 'loading' else 'u',
                 'truck': AUTO_BATCH['truck_id'],
                 'trailer': 0 if not AUTO_BATCH['trailer_id'] else AUTO_BATCH['trailer_id'],
-                'is_active': True
+                'is_active': True,
+                'gas_type': gas_type
             }
 
             # начинаем партию
@@ -193,8 +202,8 @@ async def auto_batch_processing(server):
 
                 batch_data = {
                     'id': AUTO_BATCH['batch_id'],
-                    'scale_full_weight': AUTO_BATCH['truck_full_weight'],
-                    'scale_empty_weight': AUTO_BATCH['truck_empty_weight']
+                    'scale_full_weight': AUTO_BATCH['truck_full_weight'] if AUTO_BATCH['type'] == 'loading' else 0,
+                    'scale_empty_weight': AUTO_BATCH['truck_empty_weight'] if AUTO_BATCH['type'] == 'unloading' else 0
                 }
 
                 batch_data = await video_api.update_batch_gas(batch_data)
@@ -203,7 +212,7 @@ async def auto_batch_processing(server):
 
         case 3:
             print('Автоколонка. Шаг 3')
-            if AUTO['weight_is_stable'] and AUTO_BATCH['initial_mass_meter'] != AUTO['volume_total']:
+            if AUTO['weight_is_stable'] and AUTO_BATCH['initial_mass_meter'] != AUTO['volume_total'] and AUTO_BATCH['difference_volume_flow_rate_ok']:
 
                 if AUTO_BATCH['type'] == 'loading':
                     AUTO_BATCH['truck_empty_weight'] = AUTO['weight']

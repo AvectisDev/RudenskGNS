@@ -35,6 +35,8 @@ AUTO_BATCH = {
     'initial_mass_meter': 0,
     'final_mass_meter': 0,
     'gas_amount': 0,
+    'gas_type': 0,  # Тип газа.1-Не выбран, 2-СПБТ, 3-ПБА
+    'difference_volume_flow_rate_ok': False,
     'truck_full_weight': 0,
     'truck_empty_weight': 0,
     'weight_gas_amount': 0

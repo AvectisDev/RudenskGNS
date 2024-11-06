@@ -318,3 +318,59 @@ class TTNDeleteView(generic.DeleteView):
     model = TTN
     success_url = reverse_lazy("filling_station:ttn_list")
     template_name = 'filling_station/ttn_confirm_delete.html'
+
+
+def statistic(request):
+    current_date = datetime.now().date()
+    previous_date = current_date - timedelta(days=1)
+
+    if request.method == "POST":
+        required_date = request.POST.get("date")
+        format_required_date = datetime.strptime(required_date, '%Y-%m-%d')
+
+        date_process = GetBalloonsAmount()
+
+        balloons_reader_1 = BalloonAmount.objects.filter(reader_id=1, change_date=format_required_date).first()
+        balloons_reader_2 = BalloonAmount.objects.filter(reader_id=2, change_date=format_required_date).first()
+        balloons_reader_3 = BalloonAmount.objects.filter(reader_id=3, change_date=format_required_date).first()
+        balloons_reader_4 = BalloonAmount.objects.filter(reader_id=4, change_date=format_required_date).first()
+        balloons_reader_5 = BalloonAmount.objects.filter(reader_id=5, change_date=format_required_date).first()
+        balloons_reader_6 = BalloonAmount.objects.filter(reader_id=6, change_date=format_required_date).first()
+        balloons_reader_7 = BalloonAmount.objects.filter(reader_id=7, change_date=format_required_date).first()
+        balloons_reader_8 = BalloonAmount.objects.filter(reader_id=8, change_date=format_required_date).first()
+        balloons_loading_batches = BalloonsLoadingBatch.objects.filter(change_date=format_required_date)
+        balloons_unloading_batches = BalloonsUnloadingBatch.objects.filter(change_date=format_required_date)
+        context = {
+            'current_balloons_quantity_by_reader_1': balloons_reader_1.amount_of_rfid if balloons_reader_1 is not None else 0,
+            'current_balloons_quantity_by_reader_2': balloons_reader_2.amount_of_rfid if balloons_reader_2 is not None else 0,
+            'current_balloons_quantity_by_reader_3': balloons_reader_3.amount_of_rfid if balloons_reader_3 is not None else 0,
+            'current_balloons_quantity_by_reader_4': balloons_reader_4.amount_of_rfid if balloons_reader_4 is not None else 0,
+            'current_balloons_quantity_by_reader_5': balloons_reader_5.amount_of_rfid if balloons_reader_5 is not None else 0,
+            'current_balloons_quantity_by_reader_6': balloons_reader_6.amount_of_rfid if balloons_reader_6 is not None else 0,
+            'current_balloons_quantity_by_reader_7': balloons_reader_7.amount_of_rfid if balloons_reader_7 is not None else 0,
+            'current_balloons_quantity_by_reader_8': balloons_reader_8.amount_of_rfid if balloons_reader_8 is not None else 0,
+            'balloons_loading_batches': len(balloons_loading_batches),
+            'balloons_unloading_batches': len(balloons_unloading_batches),
+            'form': date_process,
+        }
+
+
+
+        return render(request, "statistic.html", context)
+    else:
+        date_process = GetBalloonsAmount()
+
+    context = {
+        'current_balloons_quantity_by_reader_1': 0,
+        'current_balloons_quantity_by_reader_2': 0,
+        'current_balloons_quantity_by_reader_3': 0,
+        'current_balloons_quantity_by_reader_4': 0,
+        'current_balloons_quantity_by_reader_5': 0,
+        'current_balloons_quantity_by_reader_6': 0,
+        'current_balloons_quantity_by_reader_7': 0,
+        'current_balloons_quantity_by_reader_8': 0,
+        'balloons_loading_batches': 0,
+        'balloons_unloading_batches': 0,
+        'form': date_process,
+    }
+    return render(request, "statistic.html", context)

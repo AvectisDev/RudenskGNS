@@ -23,7 +23,7 @@ async def data_exchange_with_reader(controller: dict, command: str):
 
                 data = s.recv(2048)
                 buffer = binascii.hexlify(data).decode()
-                print(f'Receive complete. Data from {controller["ip"]}:{controller["port"]}: {buffer}')
+                # print(f'Receive complete. Data from {controller["ip"]}:{controller["port"]}: {buffer}')
                 return buffer
             except Exception as error:
                 print(f'Can`t establish connection with RFID reader {controller["ip"]}:{controller["port"]}: {error}')
@@ -170,7 +170,7 @@ async def read_input_status(reader: dict):
     data = await data_exchange_with_reader(reader, 'inputs_read')
 
     if len(data) == 18:
-        print("Inputs data is: ", data)
+        # print("Inputs data is: ", data)
         input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
         if input_state == 1 and previous_input_state == 0:
             await db.write_balloons_amount(reader, 'sensor')
@@ -207,7 +207,7 @@ async def main():
         except Exception as error:
             print(f"Error while reading input status: {error}")
 
-        await asyncio.sleep(0.9)
+        await asyncio.sleep(0.8)
 
 
 if __name__ == "__main__":

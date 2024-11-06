@@ -95,4 +95,7 @@ urlpatterns = [
     }),
          name="railway_tank_update"),
     path('transport/railway_tanks/<pk>/delete/', views.RailwayTankDeleteView.as_view(), name="railway_tank_delete"),
+
+
+    path('statistic', views.statistic, name="statistic"),
 ]
