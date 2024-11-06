@@ -338,8 +338,12 @@ def statistic(request):
         balloons_reader_6 = BalloonAmount.objects.filter(reader_id=6, change_date=format_required_date).first()
         balloons_reader_7 = BalloonAmount.objects.filter(reader_id=7, change_date=format_required_date).first()
         balloons_reader_8 = BalloonAmount.objects.filter(reader_id=8, change_date=format_required_date).first()
-        balloons_loading_batches = BalloonsLoadingBatch.objects.filter(change_date=format_required_date)
-        balloons_unloading_batches = BalloonsUnloadingBatch.objects.filter(change_date=format_required_date)
+        balloons_loading_batches = BalloonsLoadingBatch.objects.filter(begin_date=format_required_date)
+        balloons_unloading_batches = BalloonsUnloadingBatch.objects.filter(begin_date=format_required_date)
+        auto_gas_loading_batches = AutoGasBatch.objects.filter(batch_type='l', begin_date=format_required_date)
+        auto_gas_unloading_batches = AutoGasBatch.objects.filter(batch_type='u', begin_date=format_required_date)
+        railway_batches = RailwayBatch.objects.filter(begin_date=format_required_date)
+
         context = {
             'current_balloons_quantity_by_reader_1': balloons_reader_1.amount_of_rfid if balloons_reader_1 is not None else 0,
             'current_balloons_quantity_by_reader_2': balloons_reader_2.amount_of_rfid if balloons_reader_2 is not None else 0,
@@ -351,6 +355,9 @@ def statistic(request):
             'current_balloons_quantity_by_reader_8': balloons_reader_8.amount_of_rfid if balloons_reader_8 is not None else 0,
             'balloons_loading_batches': len(balloons_loading_batches),
             'balloons_unloading_batches': len(balloons_unloading_batches),
+            'auto_gas_loading_batches': len(auto_gas_loading_batches),
+            'auto_gas_unloading_batches': len(auto_gas_unloading_batches),
+            'railway_batches': len(railway_batches),
             'form': date_process,
         }
 

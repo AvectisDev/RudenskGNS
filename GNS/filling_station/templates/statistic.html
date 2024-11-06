@@ -18,23 +18,52 @@
                     </div>
                     <div class="col-auto">
                         <button class="btn" style="margin: 2% 2% 2% 2%; background-color: #3CBBD9; color: white;"
-                                type="submit">Показать</button>
+                                type="submit">Показать
+                        </button>
                     </div>
                 </form>
             </div>
         </header>
     </div>
-    <div>
-        <p>Количество баллонов RFID-считыватель №1 (Регистрация пустого баллона на складе (из кассеты)) - {{ current_balloons_quantity_by_reader_1 }}</p>
-        <p>Количество баллонов RFID-считыватель №2 (Погрузка полного баллона в кассету)  - {{ current_balloons_quantity_by_reader_2 }}</p>
-        <p>Количество баллонов RFID-считыватель №3 (Погрузка полного баллона на трал 1)  - {{ current_balloons_quantity_by_reader_3 }}</p>
-        <p>Количество баллонов RFID-считыватель №4 (Погрузка полного баллона на трал 2)  - {{ current_balloons_quantity_by_reader_4 }}</p>
-        <p>Количество баллонов RFID-считыватель №5 (Регистрация полного баллона на складе)  - {{ current_balloons_quantity_by_reader_5 }}</p>
-        <p>Количество баллонов RFID-считыватель №6 (Регистрация пустого баллона на складе (рампа))  - {{ current_balloons_quantity_by_reader_6 }}</p>
-        <p>Количество баллонов RFID-считыватель №7 (Регистрация пустого баллона на складе (цех))  - {{ current_balloons_quantity_by_reader_7 }}</p>
-        <p>Количество баллонов RFID-считыватель №8 (Наполнение баллона сжиженным газом)  - {{ current_balloons_quantity_by_reader_8 }}</p>
+
+
+    <div class="container text-center">
+        <div class="row">
+            <div class="col text-end">
+                <p>Количество баллонов RFID-считыватель №1 (Регистрация пустого баллона на складе (из кассеты))</p>
+                <p>Количество баллонов RFID-считыватель №2 (Погрузка полного баллона в кассету)</p>
+                <p>Количество баллонов RFID-считыватель №3 (Погрузка полного баллона на трал 1)</p>
+                <p>Количество баллонов RFID-считыватель №4 (Погрузка полного баллона на трал 2)</p>
+                <p>Количество баллонов RFID-считыватель №5 (Регистрация полного баллона на складе)</p>
+                <p>Количество баллонов RFID-считыватель №6 (Регистрация пустого баллона на складе (рампа))</p>
+                <p>Количество баллонов RFID-считыватель №7 (Регистрация пустого баллона на складе (цех))</p>
+                <p>Количество баллонов RFID-считыватель №8 (Наполнение баллона сжиженным газом)</p>
+                <p>Количество принятых партий баллонов</p>
+                <p>Количество отгруженных партий баллонов</p>
+                <p>Количество принятых партий газа в автоцистернах</p>
+                <p>Количество отгруженных партий газа в автоцистернах</p>
+                <p>Количество принятых партий газа в ж/д цистернах</p>
+            </div>
+            <div class="col text-start">
+                <p>{{ current_balloons_quantity_by_reader_1 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_2 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_3 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_4 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_5 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_6 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_7 }}</p>
+                <p>{{ current_balloons_quantity_by_reader_8 }}</p>
+                <p>{{ balloons_loading_batches }}</p>
+                <p>{{ balloons_unloading_batches }}</p>
+                <p>{{ auto_gas_loading_batches }}</p>
+                <p>{{ auto_gas_unloading_batches }}</p>
+                <p>{{ railway_batches }}</p>
+            </div>
+        </div>
     </div>
 
+
 </div>
+
 
 {% endblock content %}
