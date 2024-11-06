@@ -353,11 +353,11 @@ def statistic(request):
             'current_balloons_quantity_by_reader_6': balloons_reader_6.amount_of_rfid if balloons_reader_6 is not None else 0,
             'current_balloons_quantity_by_reader_7': balloons_reader_7.amount_of_rfid if balloons_reader_7 is not None else 0,
             'current_balloons_quantity_by_reader_8': balloons_reader_8.amount_of_rfid if balloons_reader_8 is not None else 0,
-            'balloons_loading_batches': len(balloons_loading_batches),
-            'balloons_unloading_batches': len(balloons_unloading_batches),
-            'auto_gas_loading_batches': len(auto_gas_loading_batches),
-            'auto_gas_unloading_batches': len(auto_gas_unloading_batches),
-            'railway_batches': len(railway_batches),
+            'balloons_loading_batches': len(balloons_loading_batches) if balloons_loading_batches is not None else 0,
+            'balloons_unloading_batches': len(balloons_unloading_batches) if balloons_unloading_batches is not None else 0,
+            'auto_gas_loading_batches': len(auto_gas_loading_batches) if auto_gas_loading_batches is not None else 0,
+            'auto_gas_unloading_batches': len(auto_gas_unloading_batches) if auto_gas_unloading_batches is not None else 0,
+            'railway_batches': len(railway_batches) if railway_batches is not None else 0,
             'form': date_process,
         }
 
@@ -378,6 +378,9 @@ def statistic(request):
         'current_balloons_quantity_by_reader_8': 0,
         'balloons_loading_batches': 0,
         'balloons_unloading_batches': 0,
+        'auto_gas_loading_batches': 0,
+        'auto_gas_unloading_batches': 0,
+        'railway_batches': 0,
         'form': date_process,
     }
     return render(request, "statistic.html", context)
