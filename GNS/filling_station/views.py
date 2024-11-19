@@ -62,7 +62,8 @@ def reader_info(request, reader='1'):
         required_date = request.POST.get("date")
         format_required_date = datetime.strptime(required_date, '%Y-%m-%d')
 
-        dataset = BalloonResources().export(Balloon.objects.filter(status=STATUS_LIST[reader], change_date=format_required_date))
+        dataset = BalloonResources().export(
+            Balloon.objects.filter(status=STATUS_LIST[reader], change_date=format_required_date))
         response = HttpResponse(dataset.xls, content_type='xls')
         response['Content-Disposition'] = f'attachment; filename="RFID_1_{required_date}.xls"'
 
@@ -242,7 +243,7 @@ class TrailerView(generic.ListView):
 class TrailerDetailView(generic.DetailView):
     model = Trailer
 
-    
+
 class TrailerCreateView(generic.CreateView):
     model = Trailer
     form_class = TrailerForm
@@ -271,7 +272,7 @@ class RailwayTankView(generic.ListView):
 class RailwayTankDetailView(generic.DetailView):
     model = RailwayTank
 
-    
+
 class RailwayTankCreateView(generic.CreateView):
     model = RailwayTank
     form_class = RailwayTankForm
@@ -300,7 +301,7 @@ class TTNView(generic.ListView):
 class TTNDetailView(generic.DetailView):
     model = TTN
 
-    
+
 class TTNCreateView(generic.CreateView):
     model = TTN
     form_class = TTNForm
@@ -354,14 +355,14 @@ def statistic(request):
             'current_balloons_quantity_by_reader_7': balloons_reader_7.amount_of_rfid if balloons_reader_7 is not None else 0,
             'current_balloons_quantity_by_reader_8': balloons_reader_8.amount_of_rfid if balloons_reader_8 is not None else 0,
             'balloons_loading_batches': len(balloons_loading_batches) if balloons_loading_batches is not None else 0,
-            'balloons_unloading_batches': len(balloons_unloading_batches) if balloons_unloading_batches is not None else 0,
+            'balloons_unloading_batches': len(
+                balloons_unloading_batches) if balloons_unloading_batches is not None else 0,
             'auto_gas_loading_batches': len(auto_gas_loading_batches) if auto_gas_loading_batches is not None else 0,
-            'auto_gas_unloading_batches': len(auto_gas_unloading_batches) if auto_gas_unloading_batches is not None else 0,
+            'auto_gas_unloading_batches': len(
+                auto_gas_unloading_batches) if auto_gas_unloading_batches is not None else 0,
             'railway_batches': len(railway_batches) if railway_batches is not None else 0,
             'form': date_process,
         }
-
-
 
         return render(request, "statistic.html", context)
     else:

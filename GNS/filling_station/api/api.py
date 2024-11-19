@@ -90,7 +90,8 @@ class TruckView(APIView):
         registration_number = request.query_params.get('registration_number', False)
 
         if on_station:
-            trucks = Truck.objects.filter(is_on_station=True)
+            # trucks = Truck.objects.filter(is_on_station=True)
+            trucks = Truck.objects.all()
             if not trucks:
                 return Response(status=status.HTTP_404_NOT_FOUND)
             serializer = TruckSerializer(trucks, many=True)
@@ -127,7 +128,8 @@ class TrailerView(APIView):
         registration_number = request.query_params.get('registration_number', False)
 
         if on_station:
-            trailers = Trailer.objects.filter(is_on_station=True)
+            # trailers = Trailer.objects.filter(is_on_station=True)
+            trailers = Trailer.objects.all()
             if not trailers:
                 return Response(status=status.HTTP_404_NOT_FOUND)
             serializer = TrailerSerializer(trailers, many=True)
