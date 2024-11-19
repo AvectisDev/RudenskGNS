@@ -128,8 +128,8 @@ async def transport_process(transport: dict):
                 'departure_time': departure_time,
                 'is_on_station': is_on_station
             }
-            result = await video_api.create_transport(new_transport_data, transport_type)
-            print(f'{transport_type} with number {transport['registration_number']} create')
+            # result = await video_api.create_transport(new_transport_data, transport_type)
+            # print(f'{transport_type} with number {transport['registration_number']} create')
         return result
     else:
         return None
