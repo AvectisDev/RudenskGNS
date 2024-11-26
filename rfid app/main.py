@@ -137,7 +137,7 @@ async def read_nfc_tag(reader: dict):
     """
     data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
-    logger.debug(f'read last item from buffer on {reader["ip"]}:{reader["port"]} - data is {data}')
+    logger.debug(f'{reader["ip"]}:{reader["port"]} - чтение метки из буфера. Данные - {data}')
 
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
@@ -147,7 +147,7 @@ async def read_nfc_tag(reader: dict):
             try:
                 balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
 
-                logger.debug(f'записываем в бд новое количество считанных баллонов - {reader["ip"]}:{reader["port"]}')
+                logger.debug(f'{reader["ip"]}:{reader["port"]} - записываем в бд новое количество rfid баллонов')
                 await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
 
                 if balloon_passport_status:  # если паспорт заполнен
@@ -181,19 +181,19 @@ async def read_input_status(reader: dict):
     """
     # присваиваем предыдущее состояние входа временной переменной
     previous_input_state = reader['input_state']
-    logger.debug(f'начала опроса состояния входов - {reader["ip"]}:{reader["port"]}. Предыдущее состояние - {previous_input_state}')
+    logger.debug(f'{reader["ip"]}:{reader["port"]} начало опроса состояния входов. Предыдущее состояние = {previous_input_state}')
 
     data = await data_exchange_with_reader(reader, 'inputs_read')
-    logger.debug(f'read inputs from {reader["ip"]}:{reader["port"]} - data is {data}')
+    logger.debug(f'{reader["ip"]}:{reader["port"]} Выполнено чтение состояний входов. Данные - {data}')
 
     if len(data) == 18:
-        logger.debug(f'зашли в функцию сверки предыдущего и текущего состояний входов - {reader["ip"]}:{reader["port"]}')
+        logger.debug(f'{reader["ip"]}:{reader["port"]} зашли в функцию сверки предыдущего и текущего состояний входов')
 
         # print("Inputs data is: ", data)
         input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
         logger.debug(f'{reader["ip"]}:{reader["port"]} - состояние 1-го входа = {input_state}')
         if input_state == 1 and previous_input_state == 0:
-            logger.debug(f'записываем в бд новое количество определённых баллонов - {reader["ip"]}:{reader["port"]}')
+            logger.debug(f'{reader["ip"]}:{reader["port"]} записываем в бд новое количество определённых баллонов')
             await db.write_balloons_amount(reader, 'sensor')
             return 1  # возвращаем состояние входа "активен"
         elif input_state == 0 and previous_input_state == 1:
