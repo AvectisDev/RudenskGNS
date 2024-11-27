@@ -1,5 +1,4 @@
 import asyncio
-import socket
 import db
 import binascii
 from settings import READER_LIST, COMMANDS
@@ -25,24 +24,20 @@ async def data_exchange_with_reader(controller: dict, command: str):
     Асинхронная функция выполняет обмен данными со считывателем FEIG.
     Отправляет запрос и возвращает полный буфер данных со считывателя.
     """
-    loop = asyncio.get_event_loop()
+    reader, writer = await asyncio.open_connection(controller['ip'], controller['port'])
+    try:
+        writer.write(binascii.unhexlify(COMMANDS[command]))
+        await writer.drain()
 
-    def sync_data_exchange():
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.settimeout(1)
-                s.connect((controller['ip'], controller['port']))
-                s.sendall(binascii.unhexlify(COMMANDS[command]))  # команда считывания метки
-
-                data = s.recv(2048)
-                buffer = binascii.hexlify(data).decode()
-                return buffer
-            except Exception as error:
-                logger.debug(f'Can`t establish connection with RFID reader {controller["ip"]}:{controller["port"]}: {error}')
-                print(f'Can`t establish connection with RFID reader {controller["ip"]}:{controller["port"]}: {error}')
-                return []
-
-    return await loop.run_in_executor(None, sync_data_exchange)
+        data = await reader.read(2048)
+        buffer = binascii.hexlify(data).decode()
+        return buffer
+    except Exception as error:
+        logger.debug(f'Нет связи с контроллером {controller["ip"]}:{controller["port"]}: {error}')
+        return []
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
 
 def byte_reversal(byte_string: str):
@@ -91,25 +86,25 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
     if passport:  # если данные паспорта есть в базе данных
         passport['status'] = status  # присваиваем новый статус баллону
 
-        if passport['serial_number'] is None or passport['netto'] is None or passport['brutto'] is None:
-            passport['update_passport_required'] = True
-
-            # если нет основных данных - запрашиваем их в мириаде
-            try:
-                miriada_data = await get_balloon(nfc_tag)
-            except Exception as error:
-                miriada_data = None
-                print('miriada error', error)
-
-            if miriada_data:  # если получили данные из мириады
-                passport['serial_number'] = miriada_data['number']
-                passport['netto'] = float(miriada_data['netto'])
-                passport['brutto'] = float(miriada_data['brutto'])
-                passport['filling_status'] = miriada_data['status']
-                passport['update_passport_required'] = False
-                passport_ok_flag = True
-        else:
-            passport_ok_flag = True
+        # if passport['serial_number'] is None or passport['netto'] is None or passport['brutto'] is None:
+        #     passport['update_passport_required'] = True
+        #
+        #     # если нет основных данных - запрашиваем их в мириаде
+        #     try:
+        #         miriada_data = await get_balloon(nfc_tag)
+        #     except Exception as error:
+        #         miriada_data = None
+        #         print('miriada error', error)
+        #
+        #     if miriada_data:  # если получили данные из мириады
+        #         passport['serial_number'] = miriada_data['number']
+        #         passport['netto'] = float(miriada_data['netto'])
+        #         passport['brutto'] = float(miriada_data['brutto'])
+        #         passport['filling_status'] = miriada_data['status']
+        #         passport['update_passport_required'] = False
+        #         passport_ok_flag = True
+        # else:
+        #     passport_ok_flag = True
 
         # обновляем паспорт в базе данных
         try:
@@ -141,6 +136,8 @@ async def read_nfc_tag(reader: dict):
     if reader["ip"] == '10.10.2.23':
         logger.debug(f'{reader["ip"]} rfid 1.чтение метки из буфера. Данные - {data}')
 
+    reader['input_state'] = await read_input_status(reader)
+
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])  # из буфера получаем номер метки (old - data[14:30])
 
@@ -149,6 +146,9 @@ async def read_nfc_tag(reader: dict):
 
         # метка отличается от недавно считанных и заканчивается на "e0"
         if nfc_tag not in reader['previous_nfc_tags'] and nfc_tag.endswith("e0"):
+            # сохраняем метку в кэше считанных меток
+            work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
+
             try:
                 balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
                 
@@ -172,10 +172,6 @@ async def read_nfc_tag(reader: dict):
                         await balloon_api.add_balloon_to_batch(reader)
             except Exception as error:
                 print('balloon_passport_processing', error)
-
-            # сохраняем метку в кэше считанных меток
-            work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
-        print(reader['ip'], reader['previous_nfc_tags'])
 
     # очищаем буферную память считывателя
     await data_exchange_with_reader(reader, 'clean_buffer')
@@ -228,20 +224,20 @@ async def main():
         except Exception as error:
             print(f"Error while reading NFC tags: {error}")
 
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.1)
 
-        try:
-            # Задачи для считывания состояния входов
-            tasks = [asyncio.create_task(read_input_status(reader)) for reader in READER_LIST]
-            results = await asyncio.gather(*tasks)
-
-            for i in range(len(READER_LIST)):
-                READER_LIST[i]['input_state'] = results[i]
-
-        except Exception as error:
-            print(f"Error while reading input status: {error}")
-
-        await asyncio.sleep(0.3)
+        # try:
+        #     # Задачи для считывания состояния входов
+        #     tasks = [asyncio.create_task(read_input_status(reader)) for reader in READER_LIST]
+        #     results = await asyncio.gather(*tasks)
+        #
+        #     for i in range(len(READER_LIST)):
+        #         READER_LIST[i]['input_state'] = results[i]
+        #
+        # except Exception as error:
+        #     print(f"Error while reading input status: {error}")
+        #
+        # await asyncio.sleep(0.1)
 
 
 if __name__ == "__main__":
