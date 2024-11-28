@@ -1,15 +1,12 @@
-from ..models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
-                      RailwayBatch, AutoGasBatch)
+from ..models import (Balloon, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime, timedelta
-from .serializers import (BalloonSerializer, TruckSerializer, TrailerSerializer, RailwayTankSerializer, TTNSerializer,
+from datetime import datetime, date
+from .serializers import (BalloonSerializer, BalloonAmountSerializer,
                           BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
-                          RailwayBatchSerializer, AutoGasBatchSerializer,
                           ActiveLoadingBatchSerializer, ActiveUnloadingBatchSerializer,
                           BalloonAmountLoadingSerializer, BalloonAmountUnloadingSerializer)
 
@@ -46,6 +43,21 @@ class BalloonViewSet(viewsets.ViewSet):
         serializer = BalloonSerializer(balloons, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'], url_path='update-by-reader')
+    def update_by_reader(self, request, *args, **kwargs):
+        nfc_tag = request.data.get('nfc_tag')
+        instance, created = Balloon.objects.get_or_create(
+            nfc_tag=nfc_tag,
+            defaults={
+                'status': request.data.get('status'),
+                'update_passport_required': request.data.get('update_passport_required')
+            }
+        )
+        if not created:
+            instance.status = request.data.get('status')
+            instance.save()
+        return Response(status=status.HTTP_200_OK)
+
     def create(self, request):
         nfc_tag = request.data.get('nfc_tag', None)
         balloons = Balloon.objects.filter(nfc_tag=nfc_tag)
@@ -80,119 +92,6 @@ def get_loading_balloon_reader_list(request):
 @api_view(['GET'])
 def get_unloading_balloon_reader_list(request):
     return Response(BALLOONS_UNLOADING_READER_LIST)
-
-
-class TruckView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        on_station = request.query_params.get('on_station', False)
-        registration_number = request.query_params.get('registration_number', False)
-
-        if on_station:
-            # trucks = Truck.objects.filter(is_on_station=True)
-            trucks = Truck.objects.all()
-            if not trucks:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = TruckSerializer(trucks, many=True)
-            return Response(serializer.data)
-
-        if registration_number:
-            trucks = get_object_or_404(Truck, registration_number=registration_number)
-            serializer = TruckSerializer(trucks)
-            return Response(serializer.data)
-
-    def post(self, request):
-        serializer = TruckSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        truck_id = request.data['id']
-        truck = get_object_or_404(Truck, id=truck_id)
-
-        serializer = TruckSerializer(truck, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class TrailerView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        on_station = request.query_params.get('on_station', False)
-        registration_number = request.query_params.get('registration_number', False)
-
-        if on_station:
-            # trailers = Trailer.objects.filter(is_on_station=True)
-            trailers = Trailer.objects.all()
-            if not trailers:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = TrailerSerializer(trailers, many=True)
-            return Response(serializer.data)
-
-        if registration_number:
-            trailer = get_object_or_404(Trailer, registration_number=registration_number)
-            serializer = TrailerSerializer(trailer)
-            return Response(serializer.data)
-
-    def post(self, request):
-        serializer = TrailerSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        trailer_id = request.data['id']
-        trailer = get_object_or_404(Trailer, id=trailer_id)
-
-        serializer = TrailerSerializer(trailer, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class RailwayTanksView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        on_station = request.query_params.get('on_station', False)
-        registration_number = request.query_params.get('registration_number', False)
-
-        if on_station:
-            railway_tanks = RailwayTank.objects.filter(is_on_station=True)
-            if not railway_tanks:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = RailwayTankSerializer(railway_tanks, many=True)
-            return Response(serializer.data)
-
-        if registration_number:
-            railway_tank = get_object_or_404(RailwayTank, registration_number=registration_number)
-            serializer = RailwayTankSerializer(railway_tank)
-            return Response(serializer.data)
-
-    def post(self, request):
-        serializer = RailwayTankSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        railway_tank_id = request.data['id']
-        railway_tank = get_object_or_404(RailwayTank, id=railway_tank_id)
-
-        serializer = RailwayTankSerializer(railway_tank, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
@@ -349,71 +248,39 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_200_OK)
 
 
-class RailwayBatchView(APIView):
-    permission_classes = [IsAuthenticated]
+class BalloonAmountViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=['post'], url_path='update-amount-of-rfid')
+    def update_amount_of_rfid(self, request, *args, **kwargs):
+        today = date.today()
+        reader_id = request.data.get('reader_id')
+        instance, created = BalloonAmount.objects.get_or_create(
+            change_date=today,
+            reader_id=reader_id,
+            defaults={
+                'amount_of_rfid': 1,
+                'amount_of_balloons': 0,
+                'reader_status': request.data.get('reader_status')
+            }
+        )
+        if not created:
+            instance.amount_of_rfid += 1
+            instance.save()
+        return Response(status=status.HTTP_200_OK)
 
-    def get(self, request):
-        batches = RailwayBatch.objects.filter(is_active=True).first()
-
-        if not batches:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = RailwayBatchSerializer(batches)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = RailwayBatchSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        batch_id = request.data.get('id')
-        batch = get_object_or_404(RailwayBatch, id=batch_id)
-
-        if not request.data.get('is_active', True):
-            current_date = datetime.now()
-            request.data['end_date'] = current_date.date()
-            request.data['end_time'] = current_date.time()
-
-        serializer = RailwayBatchSerializer(batch, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class AutoGasBatchView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        batch = AutoGasBatch.objects.filter(is_active=True).first()
-
-        if not batch:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = AutoGasBatchSerializer(batch)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = AutoGasBatchSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def patch(self, request):
-        batch_id = request.data.get('id')
-        batch = get_object_or_404(AutoGasBatch, id=batch_id)
-
-        if not request.data.get('is_active', True):
-            current_date = datetime.now()
-            request.data['end_date'] = current_date.date()
-            request.data['end_time'] = current_date.time()
-
-        serializer = AutoGasBatchSerializer(batch, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=False, methods=['post'], url_path='update-amount-of-sensor')
+    def update_amount_of_sensor(self, request, *args, **kwargs):
+        today = date.today()
+        reader_id = request.data.get('reader_id')
+        instance, created = BalloonAmount.objects.get_or_create(
+            change_date=today,
+            reader_id=reader_id,
+            defaults={
+                'amount_of_rfid': 0,
+                'amount_of_balloons': 1,
+                'reader_status': request.data.get('reader_status')
+            }
+        )
+        if not created:
+            instance.amount_of_balloons += 1
+            instance.save()
+        return Response(status=status.HTTP_200_OK)
