@@ -141,6 +141,9 @@ async def read_nfc_tag(reader: dict):
             except Exception as error:
                 print('balloon_passport_processing', error)
 
+    else:
+        await asyncio.sleep(0.3)
+
     # очищаем буферную память считывателя
     await data_exchange_with_reader(reader, 'clean_buffer')
 
@@ -187,16 +190,17 @@ async def read_input_status(reader: dict):
 async def main():
     # При запуске программы очищаем буфер считывателей
     tasks = [asyncio.create_task(data_exchange_with_reader(reader, 'clean_buffer')) for reader in READER_LIST]
-    await asyncio.gather(*tasks)
+    await asyncio.wait(tasks)
 
     while True:
         try:
             # Задачи для считывания NFC тегов
             tasks = [asyncio.create_task(read_nfc_tag(reader)) for reader in READER_LIST]
-            await asyncio.gather(*tasks)
+            await asyncio.wait(tasks)
         except Exception as error:
-            print(f"Error while reading NFC tags: {error}")
+            logger.error(f"Error in main: {error}")
 
+        # await asyncio.sleep(0.1)
 
 if __name__ == "__main__":
     asyncio.run(main())
