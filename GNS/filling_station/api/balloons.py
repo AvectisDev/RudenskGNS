@@ -266,7 +266,8 @@ class BalloonAmountViewSet(viewsets.ViewSet):
         if not created:
             instance.amount_of_rfid += 1
             instance.save()
-        return Response(status=status.HTTP_200_OK)
+        serializer = BalloonAmountSerializer(instance)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='update-amount-of-sensor')
     def update_amount_of_sensor(self, request, *args, **kwargs):
