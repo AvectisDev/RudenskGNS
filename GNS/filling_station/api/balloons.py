@@ -56,7 +56,8 @@ class BalloonViewSet(viewsets.ViewSet):
         if not created:
             instance.status = request.data.get('status')
             instance.save()
-        return Response(status=status.HTTP_200_OK)
+        serializer = BalloonSerializer(instance)
+        return Response(serializer.data)
 
     def create(self, request):
         nfc_tag = request.data.get('nfc_tag', None)
@@ -283,4 +284,5 @@ class BalloonAmountViewSet(viewsets.ViewSet):
         if not created:
             instance.amount_of_balloons += 1
             instance.save()
-        return Response(status=status.HTTP_200_OK)
+        serializer = BalloonAmountSerializer(instance)
+        return Response(serializer.data)

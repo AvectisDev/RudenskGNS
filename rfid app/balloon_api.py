@@ -36,7 +36,7 @@ PASSWORD = "rfid-device"
 async def update_balloon(data):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/balloons/update-by-reader/", json=data, timeout=3,
+            async with session.post(f"{BASE_URL}/balloons/update-by-reader/", json=data, timeout=3,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return await response.json()
@@ -56,13 +56,13 @@ async def update_balloon_amount(from_who: str, data):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(url, json=data, timeout=3,
+            async with session.post(url, json=data, timeout=3,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(f'update_balloon function error: {error}')
+            print(f'update_balloon_amount function error: {error}')
             return None
 
 
