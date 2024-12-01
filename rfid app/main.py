@@ -98,7 +98,7 @@ async def read_nfc_tag(reader: dict):
     """
     # Проверяем состояние входов считывателя
     reader['input_state'] = await read_input_status(reader)
-
+    
     # Запрос номера метки в буфере считывателя
     data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
@@ -188,6 +188,10 @@ async def read_input_status(reader: dict):
         return previous_input_state
 
 
+def process_reader_sync(reader):
+    asyncio.run(process_reader(reader))
+
+
 async def process_reader(reader):
     while True:
         try:
@@ -203,7 +207,7 @@ async def main():
 
     with ThreadPoolExecutor(max_workers=len(READER_LIST)) as executor:
         loop = asyncio.get_running_loop()
-        tasks = [loop.run_in_executor(executor, process_reader, reader) for reader in READER_LIST]
+        tasks = [loop.run_in_executor(executor, process_reader_sync, reader) for reader in READER_LIST]
         await asyncio.gather(*tasks)
 
 
