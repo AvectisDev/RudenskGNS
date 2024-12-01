@@ -71,7 +71,7 @@ def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
             nfc_tag_list.append(nfc_tag)
 
 
-async def balloon_passport_processing(nfc_tag: str, status: str):
+async def balloon_passport_processing(nfc_tag: str, reader: dict):
     """
     Функция проверяет наличие и заполненность паспорта в базе данных. Перезаписывает статус баллона в зависимости от
     того, через какой считыватель сейчас прошёл баллон.
@@ -80,7 +80,9 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
 
     passport = {
         'nfc_tag': nfc_tag,
-        'status': status
+        'reader_number': reader['number'],
+        'status': reader['status'],
+        'reader_function': reader['function']
     }
 
     # Обновляем статус баллона в базе данных. Если паспорта нет - создаём запись
@@ -92,7 +94,7 @@ async def balloon_passport_processing(nfc_tag: str, status: str):
             miriada_data = await get_balloon(nfc_tag)
         except Exception as error:
             miriada_data = None
-            logger.debug(f'{status} {nfc_tag} Ошибка запроса к мириаде: {error}')
+            logger.debug(f'{reader['status']} {nfc_tag} Ошибка запроса к мириаде: {error}')
 
         if miriada_data:  # если получили данные из мириады
             passport['serial_number'] = miriada_data['number']
@@ -135,7 +137,7 @@ async def read_nfc_tag(reader: dict):
             work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
 
             try:
-                balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader['status'])
+                balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader)
                 
                 if reader["ip"] == '10.10.2.23':
                     logger.debug(f'{reader["ip"]} rfid 3.записываем в бд новое количество rfid баллонов')

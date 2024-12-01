@@ -45,9 +45,9 @@ class BalloonViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='update-by-reader')
-    def update_by_reader(self, request, *args, **kwargs):
+    def update_by_reader(self, request):
         nfc_tag = request.data.get('nfc_tag')
-        instance, created = Balloon.objects.get_or_create(
+        balloon, created = Balloon.objects.get_or_create(
             nfc_tag=nfc_tag,
             defaults={
                 'status': request.data.get('status'),
@@ -55,12 +55,37 @@ class BalloonViewSet(viewsets.ViewSet):
             }
         )
         if not created:
-            instance.status = request.data.get('status')
-            if instance.update_passport_required:
-                instance.update_passport_required = request.data.get('update_passport_required')
-            instance.save()
-        serializer = BalloonSerializer(instance)
+            balloon.status = request.data.get('status')
+            if balloon.update_passport_required:
+                balloon.update_passport_required = request.data.get('update_passport_required')
+            balloon.save()
+
+        reader_number = request.data.get('reader_number', None)
+        reader_function = request.data.get('reader_function', None)
+        if reader_function:
+            self.add_balloon_to_batch_from_reader(balloon, reader_number, reader_function)
+
+        serializer = BalloonSerializer(balloon)
         return Response(serializer.data)
+
+    def add_balloon_to_batch_from_reader(self, balloon, reader_number, batch_type):
+        today = date.today()
+
+        if batch_type == 'loading':
+            batch = BalloonsLoadingBatch.objects.filter(begin_date=today,
+                                                        reader_number=reader_number,
+                                                        is_active=True).first()
+        elif batch_type == 'unloading':
+            batch = BalloonsUnloadingBatch.objects.filter(begin_date=today,
+                                                          reader_number=reader_number,
+                                                          is_active=True).first()
+        else:
+            batch = None
+
+        if batch:
+            batch.balloon_list.add(balloon)
+            batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1
+            batch.save()
 
     def create(self, request):
         nfc_tag = request.data.get('nfc_tag', None)
@@ -153,10 +178,7 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
                 return Response(status=status.HTTP_207_MULTI_STATUS)
             else:
                 batch.balloon_list.add(balloon)
-                if batch.amount_of_rfid:
-                    batch.amount_of_rfid += 1
-                else:
-                    batch.amount_of_rfid = 1
+                batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1
                 batch.save()
                 return Response(status=status.HTTP_200_OK)
 
@@ -238,10 +260,7 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
                 return Response(status=status.HTTP_207_MULTI_STATUS)
             else:
                 batch.balloon_list.add(balloon)
-                if batch.amount_of_rfid:
-                    batch.amount_of_rfid += 1
-                else:
-                    batch.amount_of_rfid = 1
+                batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1
                 batch.save()
                 return Response(status=status.HTTP_200_OK)
 
