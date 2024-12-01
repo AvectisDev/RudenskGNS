@@ -51,18 +51,20 @@ class BalloonViewSet(viewsets.ViewSet):
             nfc_tag=nfc_tag,
             defaults={
                 'status': request.data.get('status'),
-                'update_passport_required': request.data.get('update_passport_required')
+                'update_passport_required': True
             }
         )
         if not created:
             instance.status = request.data.get('status')
+            if instance.update_passport_required:
+                instance.update_passport_required = request.data.get('update_passport_required')
             instance.save()
         serializer = BalloonSerializer(instance)
         return Response(serializer.data)
 
     def create(self, request):
         nfc_tag = request.data.get('nfc_tag', None)
-        balloons = Balloon.objects.filter(nfc_tag=nfc_tag)
+        balloons = Balloon.objects.filter(nfc_tag=nfc_tag).exists()
         if not balloons:
             serializer = BalloonSerializer(data=request.data)
             if serializer.is_valid():
@@ -147,14 +149,18 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
 
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
-            batch.balloon_list.add(balloon)
-            if batch.amount_of_rfid:
-                batch.amount_of_rfid += 1
+            if batch.balloon_list.filter(id=balloon_id).exists():
+                return Response(status=status.HTTP_207_MULTI_STATUS)
             else:
-                batch.amount_of_rfid = 1
-            batch.save()
+                batch.balloon_list.add(balloon)
+                if batch.amount_of_rfid:
+                    batch.amount_of_rfid += 1
+                else:
+                    batch.amount_of_rfid = 1
+                batch.save()
+                return Response(status=status.HTTP_200_OK)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['patch'], url_path='remove-balloon')
     def remove_balloon(self, request, pk=None):
@@ -163,14 +169,18 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
 
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
-            batch.balloon_list.add(balloon)
-            if batch.amount_of_rfid:
-                batch.amount_of_rfid -= 1
+            if batch.balloon_list.filter(id=balloon_id).exists():
+                batch.balloon_list.remove(balloon)
+                if batch.amount_of_rfid:
+                    batch.amount_of_rfid -= 1
+                else:
+                    batch.amount_of_rfid = 0
+                batch.save()
+                return Response(status=status.HTTP_200_OK)
             else:
-                batch.amount_of_rfid = 0
-            batch.save()
+                return Response(status=status.HTTP_404_NOT_FOUND)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
@@ -224,14 +234,18 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
 
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
-            batch.balloon_list.add(balloon)
-            if batch.amount_of_rfid:
-                batch.amount_of_rfid += 1
+            if batch.balloon_list.filter(id=balloon_id).exists():
+                return Response(status=status.HTTP_207_MULTI_STATUS)
             else:
-                batch.amount_of_rfid = 1
-            batch.save()
+                batch.balloon_list.add(balloon)
+                if batch.amount_of_rfid:
+                    batch.amount_of_rfid += 1
+                else:
+                    batch.amount_of_rfid = 1
+                batch.save()
+                return Response(status=status.HTTP_200_OK)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['patch'], url_path='remove-balloon')
     def remove_balloon(self, request, pk=None):
@@ -240,14 +254,18 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
 
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
-            batch.balloon_list.add(balloon)
-            if batch.amount_of_rfid:
-                batch.amount_of_rfid -= 1
+            if batch.balloon_list.filter(id=balloon_id).exists():
+                batch.balloon_list.remove(balloon)
+                if batch.amount_of_rfid:
+                    batch.amount_of_rfid -= 1
+                else:
+                    batch.amount_of_rfid = 0
+                batch.save()
+                return Response(status=status.HTTP_200_OK)
             else:
-                batch.amount_of_rfid = 0
-            batch.save()
+                return Response(status=status.HTTP_404_NOT_FOUND)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class BalloonAmountViewSet(viewsets.ViewSet):

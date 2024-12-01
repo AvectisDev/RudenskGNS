@@ -1,5 +1,4 @@
 import aiohttp
-import asyncio
 
 BASE_URL = 'https://publicapi-vitebsk.cloud.gas.by'  # miriada server address
 
@@ -18,9 +17,6 @@ async def get_balloon_by_nfc_tag(nfc_tag: str):
                 else:
                     return []
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(f'get_balloon_by_nfc_tag function error: {error}')
-            return None
         except Exception as error:
             print(f'get_balloon_by_nfc_tag function error: {error}')
             return None
@@ -44,9 +40,6 @@ async def search_balloon_by_nfc_tag(nfc_tag):
                 else:
                     return []
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(f'get_balloon_by_nfc_tag function error: {error}')
-            return None
         except Exception as error:
             print(f'get_balloon_by_nfc_tag function error: {error}')
             return None

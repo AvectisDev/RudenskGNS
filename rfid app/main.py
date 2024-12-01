@@ -73,21 +73,39 @@ def work_with_nfc_tag_list(nfc_tag: str, nfc_tag_list: list):
 
 async def balloon_passport_processing(nfc_tag: str, status: str):
     """
-    Функция проверяет наличие и заполненность паспорта в базе данных
+    Функция проверяет наличие и заполненность паспорта в базе данных. Перезаписывает статус баллона в зависимости от
+    того, через какой считыватель сейчас прошёл баллон.
     """
-    passport_ok_flag = True
+    passport_ok_flag = False
 
     passport = {
         'nfc_tag': nfc_tag,
-        'status': status,
-        'update_passport_required': True
+        'status': status
     }
 
-    # обновляем паспорт в базе данных
-    try:
-        passport = await balloon_api.update_balloon(passport)
-    except Exception as error:
-        print('update_balloon error', error)
+    # Обновляем статус баллона в базе данных. Если паспорта нет - создаём запись
+    passport = await balloon_api.update_balloon(passport)
+
+    # Проверяем заполненность паспорта, если нет основных данных - запрашиваем их в мириаде
+    if passport['update_passport_required']:
+        try:
+            miriada_data = await get_balloon(nfc_tag)
+        except Exception as error:
+            miriada_data = None
+            logger.debug(f'{status} {nfc_tag} Ошибка запроса к мириаде: {error}')
+
+        if miriada_data:  # если получили данные из мириады
+            passport['serial_number'] = miriada_data['number']
+            passport['netto'] = float(miriada_data['netto'])
+            passport['brutto'] = float(miriada_data['brutto'])
+            passport['filling_status'] = miriada_data['status']
+            passport['update_passport_required'] = False
+            passport_ok_flag = True
+
+            # Обновляем паспорт баллона в базе данных
+            passport = await balloon_api.update_balloon(passport)
+    else:
+        passport_ok_flag = True
 
     return passport_ok_flag, passport
 
@@ -122,12 +140,12 @@ async def read_nfc_tag(reader: dict):
                 if reader["ip"] == '10.10.2.23':
                     logger.debug(f'{reader["ip"]} rfid 3.записываем в бд новое количество rfid баллонов')
 
-                data_for_amount = {
-                    'reader_id': reader['number'],
-                    'reader_status': reader['status']
-                }
-                await balloon_api.update_balloon_amount('rfid', data_for_amount)
-                # await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
+                # data_for_amount = {
+                #     'reader_id': reader['number'],
+                #     'reader_status': reader['status']
+                # }
+                # await balloon_api.update_balloon_amount('rfid', data_for_amount)
+                await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
 
                 if reader["ip"] == '10.10.2.23':
                     logger.debug(f'{reader["ip"]} rfid 4.запись завершена')
@@ -169,12 +187,12 @@ async def read_input_status(reader: dict):
             if reader["ip"] == '10.10.2.23':
                 logger.debug(f'{reader["ip"]} 3.записываем в бд новое количество определённых баллонов')
 
-            data_for_amount = {
-                'reader_id': reader['number'],
-                'reader_status': reader['status']
-            }
-            await balloon_api.update_balloon_amount('sensor', data_for_amount)
-            # await db.write_balloons_amount(reader, 'sensor')
+            # data_for_amount = {
+            #     'reader_id': reader['number'],
+            #     'reader_status': reader['status']
+            # }
+            # await balloon_api.update_balloon_amount('sensor', data_for_amount)
+            await db.write_balloons_amount(reader, 'sensor')
 
             if reader["ip"] == '10.10.2.23':
                 logger.debug(f'{reader["ip"]} 4.запись завершена')

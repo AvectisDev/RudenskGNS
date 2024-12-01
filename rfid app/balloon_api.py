@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 
-BASE_URL = "http://10.10.12.253:8000/api"  # server address
+BASE_URL = "http://localhost:8000/api"  # server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 
@@ -14,9 +14,9 @@ async def update_balloon(data):
                 response.raise_for_status()
                 return await response.json()
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        except Exception as error:
             print(f'update_balloon function error: {error}')
-            return None
+            return data
 
 
 async def update_balloon_amount(from_who: str, data):
@@ -33,7 +33,7 @@ async def update_balloon_amount(from_who: str, data):
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        except Exception as error:
             print(f'update_balloon_amount function error: {error}')
             return None
 
@@ -63,10 +63,7 @@ async def get_batch_balloons(batch_type: str):
                 response.raise_for_status()
                 return await response.json()
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(f'get_batch_balloons function error: {error}')
-            return None
-        except ValueError as error:  # Обработка ошибок кода JSON
+        except Exception as error:
             print(f'get_batch_balloons function error: {error}')
             return None
 
@@ -94,12 +91,6 @@ async def add_balloon_to_batch(reader: dict):
                 response.raise_for_status()
                 return response.status
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            print(f'update_batch_balloons function error: {error}')
-            return None
-        except ValueError as error:  # Обработка ошибок кода JSON
-            print(f'update_batch_balloons function error: {error}')
-            return None
-        except KeyError as error:
+        except Exception as error:
             print(f'update_batch_balloons function error: {error}')
             return None
