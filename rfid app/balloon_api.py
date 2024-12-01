@@ -6,38 +6,11 @@ USERNAME = "reader"
 PASSWORD = "rfid-device"
 
 
-# async def get_balloon(nfc_tag):
-#     async with aiohttp.ClientSession() as session:
-#         try:
-#             async with session.get(f"{BASE_URL}/balloons/nfc/{nfc_tag}/", timeout=3,
-#                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-#
-#                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
-#                 return await response.json()
-#
-#         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-#             print(f'get_balloon function error: {error}')
-#             return None
-#
-#
-# async def create_balloon(data):
-#     async with aiohttp.ClientSession() as session:
-#         try:
-#             async with session.post(f"{BASE_URL}/balloons/", json=data, timeout=3,
-#                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
-#                 response.raise_for_status()
-#                 return await response.json()
-#
-#         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-#             print(f'create_balloon function error: {error}')
-#             return None
-
-
 async def update_balloon(data):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(f"{BASE_URL}/balloons/update-by-reader/", json=data, timeout=3,
-                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return await response.json()
 
@@ -57,9 +30,8 @@ async def update_balloon_amount(from_who: str, data):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, json=data, timeout=3,
-                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
+                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
-                return await response.json()
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             print(f'update_balloon_amount function error: {error}')

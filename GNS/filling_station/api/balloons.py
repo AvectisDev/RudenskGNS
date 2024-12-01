@@ -1,5 +1,6 @@
 from ..models import (Balloon, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
 from django.shortcuts import get_object_or_404
+from asgiref.sync import sync_to_async
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
@@ -254,6 +255,7 @@ class BalloonAmountViewSet(viewsets.ViewSet):
     def update_amount_of_rfid(self, request, *args, **kwargs):
         today = date.today()
         reader_id = request.data.get('reader_id')
+
         instance, created = BalloonAmount.objects.get_or_create(
             change_date=today,
             reader_id=reader_id,
@@ -263,16 +265,18 @@ class BalloonAmountViewSet(viewsets.ViewSet):
                 'reader_status': request.data.get('reader_status')
             }
         )
+
         if not created:
             instance.amount_of_rfid += 1
             instance.save()
-        serializer = BalloonAmountSerializer(instance)
-        return Response(serializer.data)
+
+        return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='update-amount-of-sensor')
     def update_amount_of_sensor(self, request, *args, **kwargs):
         today = date.today()
         reader_id = request.data.get('reader_id')
+
         instance, created = BalloonAmount.objects.get_or_create(
             change_date=today,
             reader_id=reader_id,
@@ -282,8 +286,9 @@ class BalloonAmountViewSet(viewsets.ViewSet):
                 'reader_status': request.data.get('reader_status')
             }
         )
+
         if not created:
             instance.amount_of_balloons += 1
             instance.save()
-        serializer = BalloonAmountSerializer(instance)
-        return Response(serializer.data)
+
+        return Response(status=status.HTTP_200_OK)

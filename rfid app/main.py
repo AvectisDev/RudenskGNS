@@ -6,6 +6,7 @@ from settings import READER_LIST, COMMANDS
 from miriada import get_balloon_by_nfc_tag as get_balloon
 import balloon_api
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 
 logging.basicConfig(
@@ -187,20 +188,24 @@ async def read_input_status(reader: dict):
         return previous_input_state
 
 
+async def process_reader(reader):
+    while True:
+        try:
+            await read_nfc_tag(reader)
+        except Exception as error:
+            logger.error(f"Error in process_reader: {error}")
+
+
 async def main():
     # При запуске программы очищаем буфер считывателей
     tasks = [asyncio.create_task(data_exchange_with_reader(reader, 'clean_buffer')) for reader in READER_LIST]
     await asyncio.wait(tasks)
 
-    while True:
-        try:
-            # Задачи для считывания NFC тегов
-            tasks = [asyncio.create_task(read_nfc_tag(reader)) for reader in READER_LIST]
-            await asyncio.wait(tasks)
-        except Exception as error:
-            logger.error(f"Error in main: {error}")
+    with ThreadPoolExecutor(max_workers=len(READER_LIST)) as executor:
+        loop = asyncio.get_running_loop()
+        tasks = [loop.run_in_executor(executor, process_reader, reader) for reader in READER_LIST]
+        await asyncio.gather(*tasks)
 
-        # await asyncio.sleep(0.1)
 
 if __name__ == "__main__":
     asyncio.run(main())
