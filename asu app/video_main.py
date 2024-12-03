@@ -49,24 +49,24 @@ def get_opc_data():
         client.connect()
         print('Connect to OPC server successful')
 
-        if AUTO_BATCH['complete']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch", False)
-            set_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch", False)
-            AUTO_BATCH['complete'] = False
-
-        # проверка команд на запуск партий
-        start_loading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
-        start_unloading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
-
-        if start_loading_batch:
-            AUTO_BATCH['command_start'] = True
-            AUTO_BATCH['type'] = 'loading'
-        elif start_unloading_batch:
-            AUTO_BATCH['command_start'] = True
-            AUTO_BATCH['type'] = 'unloading'
-        else:
-            AUTO_BATCH['command_start'] = False
-            AUTO_BATCH['process_step'] = 0
+        # if AUTO_BATCH['complete']:
+        #     set_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch", False)
+        #     set_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch", False)
+        #     AUTO_BATCH['complete'] = False
+        #
+        # # проверка команд на запуск партий
+        # start_loading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
+        # start_unloading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
+        #
+        # if start_loading_batch:
+        #     AUTO_BATCH['command_start'] = True
+        #     AUTO_BATCH['type'] = 'loading'
+        # elif start_unloading_batch:
+        #     AUTO_BATCH['command_start'] = True
+        #     AUTO_BATCH['type'] = 'unloading'
+        # else:
+        #     AUTO_BATCH['command_start'] = False
+        #     AUTO_BATCH['process_step'] = 0
 
         # проверка команды запуска партии приёмки жд цистерн
         RAILWAY_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.start_loading_batch")
@@ -74,11 +74,11 @@ def get_opc_data():
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
         RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
 
-        AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.gas_type")
-        AUTO['weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.auto_weight")
-        AUTO['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.weight_is_stable")
-        AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_inventory")
-        AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_inventory")
+        # AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.gas_type")
+        # AUTO['weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.auto_weight")
+        # AUTO['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.weight_is_stable")
+        # AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_inventory")
+        # AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_inventory")
 
         print(f'Auto:{AUTO}, Railway:{RAILWAY}')
 
