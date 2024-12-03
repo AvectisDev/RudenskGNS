@@ -307,7 +307,7 @@ async def main():
         get_opc_data()
 
         # Обработка процессов приёмки/отгрузки газа в автоцистернах
-        await auto_batch_processing(INTELLECT_SERVER_LIST[1])
+        # await auto_batch_processing(INTELLECT_SERVER_LIST[1])
         await asyncio.sleep(2)
 
 
