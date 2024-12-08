@@ -49,7 +49,7 @@ def byte_reversal(byte_string: str):
     """
     data_list = list(byte_string)
     k = -1
-    for i in range((len(data_list) - 1) // 2):
+    for i in range((len(data_list)) // 2):
         data_list[i], data_list[k] = data_list[k], data_list[i]
         k -= 1
     for i in range(0, len(data_list) - 1, 2):

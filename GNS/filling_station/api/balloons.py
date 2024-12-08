@@ -14,7 +14,15 @@ from .serializers import (BalloonSerializer, BalloonAmountSerializer,
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
     'Наполнение баллона сжиженным газом',
+    'Погрузка полного баллона в кассету',
+    'Погрузка полного баллона в трал',
+    'Погрузка пустого баллона в кассету',
     'Погрузка пустого баллона в трал',
+    'Регистрация полного баллона на складе',
+    'Регистрация пустого баллона на складе',
+    'Снятие пустого баллона у потребителя',
+    'Установка баллона потребителю',
+    'Принятие баллона от другой организации',
     'Снятие RFID метки',
     'Установка новой RFID метки',
     'Редактирование паспорта баллона',
@@ -57,7 +65,11 @@ class BalloonViewSet(viewsets.ViewSet):
         if not created:
             balloon.status = request.data.get('status')
             if balloon.update_passport_required:
-                balloon.update_passport_required = request.data.get('update_passport_required')
+                balloon.update_passport_required = request.data.get('update_passport_required', None)
+                balloon.serial_number = request.data.get('serial_number', None)
+                balloon.netto = request.data.get('netto', None)
+                balloon.brutto = request.data.get('brutto', None)
+                balloon.filling_status = request.data.get('filling_status', False)
             balloon.save()
 
         reader_number = request.data.get('reader_number', None)
@@ -175,7 +187,7 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
             if batch.balloon_list.filter(id=balloon_id).exists():
-                return Response(status=status.HTTP_207_MULTI_STATUS)
+                return Response(status=status.HTTP_409_CONFLICT)
             else:
                 batch.balloon_list.add(balloon)
                 batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1
@@ -257,7 +269,7 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
         if balloon_id:
             balloon = get_object_or_404(Balloon, id=balloon_id)
             if batch.balloon_list.filter(id=balloon_id).exists():
-                return Response(status=status.HTTP_207_MULTI_STATUS)
+                return Response(status=status.HTTP_409_CONFLICT)
             else:
                 batch.balloon_list.add(balloon)
                 batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1

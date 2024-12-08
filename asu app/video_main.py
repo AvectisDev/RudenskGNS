@@ -1,27 +1,13 @@
 import asyncio
-import aiohttp
 from datetime import datetime, timedelta
 import video_api
 from opcua import Client, ua
-from settings import INTELLECT_SERVER_LIST, AUTO_BATCH, RAILWAY_BATCH
+from settings import INTELLECT_SERVER_LIST, AUTO, RAILWAY
 from intellect_functions import (separation_string_date, get_registration_number_list, check_on_station,
                                  get_transport_type)
 
 USERNAME = "reader"
 PASSWORD = "rfid-device"
-
-# OPC constant
-RAILWAY = {
-    'tank_weight': 0.0,
-    'weight_is_stable': False,
-    'last_number': ''
-}
-AUTO = {
-    'weight': 0.0,
-    'weight_is_stable': False,
-    'mass_total': 0.0,
-    'volume_total': 0.0
-}
 
 
 def get_opc_value(addr_str):
@@ -43,42 +29,33 @@ def set_opc_value(addr_str, value):
 
 
 def get_opc_data():
-    global RAILWAY, AUTO
 
     try:
         client.connect()
         print('Connect to OPC server successful')
 
-        # if AUTO_BATCH['complete']:
-        #     set_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch", False)
-        #     set_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch", False)
-        #     AUTO_BATCH['complete'] = False
-        #
-        # # проверка команд на запуск партий
-        # start_loading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_loading_batch")
-        # start_unloading_batch = get_opc_value("ns=4; s=Address Space.PLC_SU2.start_unloading_batch")
-        #
-        # if start_loading_batch:
-        #     AUTO_BATCH['command_start'] = True
-        #     AUTO_BATCH['type'] = 'loading'
-        # elif start_unloading_batch:
-        #     AUTO_BATCH['command_start'] = True
-        #     AUTO_BATCH['type'] = 'unloading'
-        # else:
-        #     AUTO_BATCH['command_start'] = False
-        #     AUTO_BATCH['process_step'] = 0
-
-        # проверка команды запуска партии приёмки жд цистерн
-        RAILWAY_BATCH['command_start'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.start_loading_batch")
+        if AUTO['response_number_detect']:
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_number_detect", True)
+        if AUTO['response_batch_complete']:
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_batch_complete", True)
 
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
         RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
+        RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked")
 
-        # AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.gas_type")
-        # AUTO['weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.auto_weight")
-        # AUTO['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.weight_is_stable")
-        # AUTO['mass_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Mass_inventory")
-        # AUTO['volume_total'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.MicroMotion.Volume_inventory")
+        AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.batch_type")
+        AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_type")
+
+        AUTO['initial_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.initial_mass_meter")
+        AUTO['final_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.final_mass_meter")
+        AUTO['gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_amount")
+
+        AUTO['truck_full_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.truck_full_weight")
+        AUTO['truck_empty_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.truck_empty_weight")
+        AUTO['weight_gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.weight_gas_amount")
+
+        AUTO['request_number_identification'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_number_identification")
+        AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_batch_complete")
 
         print(f'Auto:{AUTO}, Railway:{RAILWAY}')
 
@@ -140,108 +117,67 @@ async def auto_batch_processing(server):
     Формирование и обработка партий приёмки/отгрузки газа в автоцистернах
     """
 
-    match AUTO_BATCH['process_step']:
-        case 1:  # Поиск машины в базе. Создание партии
-            transport_list = await get_registration_number_list(server)
+    if AUTO['request_number_identification']:  # Поиск машины в базе. Создание партии
 
-            if not transport_list:
-                print('Автоколонка. Машина не определена')
-                return
+        transport_list = await get_registration_number_list(server)
 
-            for transport in reversed(transport_list):  # начинаем с последней определённой машины
-                registration_number = transport['registration_number']
-                transport_type = get_transport_type(registration_number)
+        if not transport_list:
+            print('Автоколонка. Машина не определена')
+            return
 
-                if transport_type == 'truck' and not AUTO_BATCH['truck_id']:
-                    print(f'Машина на весах. Номер - {registration_number}')
+        for transport in reversed(transport_list):  # начинаем с последней определённой машины
+            registration_number = transport['registration_number']
+            transport_type = get_transport_type(registration_number)
 
-                    # запрос данных по текущему номеру машины
-                    truck_data = await video_api.get_transport(registration_number, transport_type)
+            if transport_type == 'truck' and not AUTO['truck_id']:
+                print(f'Машина на весах. Номер - {registration_number}')
 
-                    if truck_data:
-                        AUTO_BATCH['truck_id'] = truck_data['id']
+                # запрос данных по текущему номеру машины
+                truck_data = await video_api.get_transport(registration_number, transport_type)
+                if truck_data:
+                    AUTO['truck_id'] = truck_data['id']
 
-                if transport_type == 'trailer' and not AUTO_BATCH['trailer_id']:
-                    print(f'Прицеп на весах. Номер - {registration_number}')
+            if transport_type == 'trailer' and not AUTO['trailer_id']:
+                print(f'Прицеп на весах. Номер - {registration_number}')
 
-                    # запрос данных по текущему номеру машины
-                    trailer_data = await video_api.get_transport(registration_number, transport_type)
+                # запрос данных по текущему номеру прицепа
+                trailer_data = await video_api.get_transport(registration_number, transport_type)
+                if trailer_data:
+                    AUTO['trailer_id'] = trailer_data['id']
 
-                    if trailer_data:
-                        AUTO_BATCH['trailer_id'] = trailer_data['id']
+        if AUTO['gas_type'] == 2:
+            gas_type = 'СПБТ'
+        elif AUTO['gas_type'] == 3:
+            gas_type = 'ПБА'
+        else:
+            gas_type = 'Не выбран'
 
-            if AUTO_BATCH['gas_type'] == 2:
-                gas_type = 'СПБТ'
-            elif AUTO_BATCH['gas_type'] == 3:
-                gas_type = 'ПБА'
-            else:
-                gas_type = 'Не выбран'
+        batch_data = {
+            'batch_type': 'l' if AUTO['batch_type'] == 'loading' else 'u',
+            'truck': AUTO['truck_id'],
+            'trailer': 0 if not AUTO['trailer_id'] else AUTO['trailer_id'],
+            'is_active': True,
+            'gas_type': gas_type
+        }
 
-            batch_data = {
-                'batch_type': 'l' if AUTO_BATCH['type'] == 'loading' else 'u',
-                'truck': AUTO_BATCH['truck_id'],
-                'trailer': 0 if not AUTO_BATCH['trailer_id'] else AUTO_BATCH['trailer_id'],
-                'is_active': True,
-                'gas_type': gas_type
-            }
+        # начинаем партию
+        batch_data = await video_api.create_batch_gas(batch_data)
+        AUTO['batch_id'] = batch_data['id']
+        AUTO['response_number_detect'] = True
 
-            # начинаем партию
-            batch_data = await video_api.create_batch_gas(batch_data)
-            AUTO_BATCH['batch_id'] = batch_data['id']
-            AUTO_BATCH['process_step'] = 2
-
-        case 2:  # Взвешивание машины/сохранение начального веса и показания массомера
-            print('Автоколонка. Шаг 2')
-            if AUTO['weight_is_stable']:
-                if AUTO_BATCH['type'] == 'loading':
-                    AUTO_BATCH['truck_full_weight'] = AUTO['weight']
-                elif AUTO_BATCH['type'] == 'unloading':
-                    AUTO_BATCH['truck_empty_weight'] = AUTO['weight']
-
-                AUTO_BATCH['initial_mass_meter'] = AUTO['volume_total']
-
-                batch_data = {
-                    'id': AUTO_BATCH['batch_id'],
-                    'scale_full_weight': AUTO_BATCH['truck_full_weight'] if AUTO_BATCH['type'] == 'loading' else 0,
-                    'scale_empty_weight': AUTO_BATCH['truck_empty_weight'] if AUTO_BATCH['type'] == 'unloading' else 0
-                }
-
-                batch_data = await video_api.update_batch_gas(batch_data)
-                print(batch_data)
-                AUTO_BATCH['process_step'] = 3
-
-        case 3:
-            print('Автоколонка. Шаг 3')
-            if AUTO['weight_is_stable'] and AUTO_BATCH['initial_mass_meter'] != AUTO['volume_total'] and AUTO_BATCH['difference_volume_flow_rate_ok']:
-
-                if AUTO_BATCH['type'] == 'loading':
-                    AUTO_BATCH['truck_empty_weight'] = AUTO['weight']
-                elif AUTO_BATCH['type'] == 'unloading':
-                    AUTO_BATCH['truck_full_weight'] = AUTO['weight']
-
-                AUTO_BATCH['final_mass_meter'] = AUTO['volume_total']
-
-                batch_data = {
-                    'id': AUTO_BATCH['batch_id'],
-                    'scale_full_weight': AUTO_BATCH['truck_full_weight'],
-                    'scale_empty_weight': AUTO_BATCH['truck_empty_weight'],
-                    'gas_amount': AUTO_BATCH['final_mass_meter'] - AUTO_BATCH['initial_mass_meter'],
-                    'weight_gas_amount': AUTO_BATCH['truck_full_weight'] - AUTO_BATCH['truck_empty_weight'],
-                    'is_active': False
-                }
-
-                # завершаем партию приёмки газа
-                await video_api.update_batch_gas(batch_data)
-
-                AUTO_BATCH['start_flag'] = False
-                AUTO_BATCH['complete'] = True
-
-        case _:  # Запуск процесса обработки партии при наличии команды
-            if AUTO_BATCH['command_start'] and not AUTO_BATCH['start_flag']:
-                AUTO_BATCH['process_step'] = 1
-                AUTO_BATCH['start_flag'] = True
-
-                print('Начало партии приёмки автоцистерн')
+    if AUTO['request_batch_complete']:
+        batch_data = {
+            'is_active': False,
+            'initial_mass_meter': AUTO['initial_mass_meter'],
+            'final_mass_meter': AUTO['final_mass_meter'],
+            'gas_amount': AUTO['gas_amount'],
+            'truck_full_weight': AUTO['truck_full_weight'],
+            'truck_empty_weight': AUTO['truck_empty_weight'],
+            'weight_gas_amount': AUTO['weight_gas_amount'],
+        }
+        # завершаем партию приёмки газа
+        await video_api.update_batch_gas(AUTO['batch_id'], batch_data)
+        AUTO['response_batch_complete'] = True
 
 
 async def kpp_processing(server: dict):
@@ -258,12 +194,11 @@ async def kpp_processing(server: dict):
 async def railway_processing(server: dict):
     print('Обработка жд цистерн')
 
-    if RAILWAY['weight_is_stable']:
+    if RAILWAY['camera_worked']:
         weight = RAILWAY['tank_weight']
 
         # получаем от "Интеллекта" список номеров с данными фотофиксации
         railway_tank_list = await get_registration_number_list(server)
-
         if not railway_tank_list:
             print('ЖД весовая. Цистерна не определена')
             return
@@ -307,7 +242,7 @@ async def main():
         get_opc_data()
 
         # Обработка процессов приёмки/отгрузки газа в автоцистернах
-        # await auto_batch_processing(INTELLECT_SERVER_LIST[1])
+        await auto_batch_processing(INTELLECT_SERVER_LIST[1])
         await asyncio.sleep(2)
 
 

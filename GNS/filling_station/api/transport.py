@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
+from datetime import datetime, date
 from .serializers import (TruckSerializer, TrailerSerializer, RailwayTankSerializer,
                           RailwayBatchSerializer, AutoGasBatchSerializer)
 
@@ -158,28 +159,24 @@ class RailwayBatchView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AutoGasBatchView(APIView):
+class AutoGasBatchView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        batch = AutoGasBatch.objects.filter(is_active=True).first()
-
-        if not batch:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
+    def list(self, request):
+        today = date.today()
+        batch = AutoGasBatch.objects.filter(is_active=True, begin_date=today)
         serializer = AutoGasBatchSerializer(batch)
         return Response(serializer.data)
 
-    def post(self, request):
+    def create(self, request):
         serializer = AutoGasBatchSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
-    def patch(self, request):
-        batch_id = request.data.get('id')
-        batch = get_object_or_404(AutoGasBatch, id=batch_id)
+    def partial_update(self, request, pk=None):
+        batch = get_object_or_404(AutoGasBatch, id=pk)
 
         if not request.data.get('is_active', True):
             current_date = datetime.now()
@@ -190,4 +187,4 @@ class AutoGasBatchView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors)
