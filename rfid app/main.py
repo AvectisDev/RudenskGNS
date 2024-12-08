@@ -122,14 +122,14 @@ async def read_nfc_tag(reader: dict):
     # Запрос номера метки в буфере считывателя
     data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
-    if reader["ip"] == '10.10.2.23':
-        logger.debug(f'{reader["ip"]} rfid 1.чтение метки из буфера. Данные - {data}')
+    # if reader["ip"] == '10.10.2.23':
+    #     logger.debug(f'{reader["ip"]} rfid 1.чтение метки из буфера. Данные - {data}')
 
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])
 
-        if reader["ip"] == '10.10.2.23':
-            logger.debug(f'{reader["ip"]} rfid 2.номер rfid метки = {nfc_tag}, список предыдущих меток = {reader['previous_nfc_tags']}')
+        # if reader["ip"] == '10.10.2.23':
+        #     logger.debug(f'{reader["ip"]} rfid 2.номер rfid метки = {nfc_tag}, список предыдущих меток = {reader['previous_nfc_tags']}')
 
         # метка отличается от недавно считанных и заканчивается на "e0"
         if nfc_tag not in reader['previous_nfc_tags'] and nfc_tag.endswith("e0"):
@@ -139,8 +139,8 @@ async def read_nfc_tag(reader: dict):
             try:
                 balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader)
                 
-                if reader["ip"] == '10.10.2.23':
-                    logger.debug(f'{reader["ip"]} rfid 3.записываем в бд новое количество rfid баллонов')
+                # if reader["ip"] == '10.10.2.23':
+                #     logger.debug(f'{reader["ip"]} rfid 3.записываем в бд новое количество rfid баллонов')
 
                 # data_for_amount = {
                 #     'reader_id': reader['number'],
@@ -149,8 +149,8 @@ async def read_nfc_tag(reader: dict):
                 # await balloon_api.update_balloon_amount('rfid', data_for_amount)
                 await db.write_balloons_amount(reader, 'rfid')  # сохраняем значение в бд
 
-                if reader["ip"] == '10.10.2.23':
-                    logger.debug(f'{reader["ip"]} rfid 4.запись завершена')
+                # if reader["ip"] == '10.10.2.23':
+                #     logger.debug(f'{reader["ip"]} rfid 4.запись завершена')
 
                 if balloon_passport_status:  # если паспорт заполнен
                     # зажигаем зелёную лампу на считывателе
@@ -177,17 +177,17 @@ async def read_input_status(reader: dict):
     previous_input_state = reader['input_state']
 
     data = await data_exchange_with_reader(reader, 'inputs_read')
-    if reader["ip"] == '10.10.2.23':
-        logger.debug(f'{reader["ip"]} 1. чтение состояний входов. Данные - {data}')
+    # if reader["ip"] == '10.10.2.23':
+    #     logger.debug(f'{reader["ip"]} 1. чтение состояний входов. Данные - {data}')
 
     if len(data) == 18:
         input_state = int(data[13])  # определяем состояние 1-го входа (13 индекс в ответе)
-        if reader["ip"] == '10.10.2.23':
-            logger.debug(f'{reader["ip"]} 2.состояние 1-го входа = {input_state}, предыдущее = {previous_input_state}')
+        # if reader["ip"] == '10.10.2.23':
+        #     logger.debug(f'{reader["ip"]} 2.состояние 1-го входа = {input_state}, предыдущее = {previous_input_state}')
 
         if input_state == 1 and previous_input_state == 0:
-            if reader["ip"] == '10.10.2.23':
-                logger.debug(f'{reader["ip"]} 3.записываем в бд новое количество определённых баллонов')
+            # if reader["ip"] == '10.10.2.23':
+            #     logger.debug(f'{reader["ip"]} 3.записываем в бд новое количество определённых баллонов')
 
             # data_for_amount = {
             #     'reader_id': reader['number'],
@@ -196,8 +196,8 @@ async def read_input_status(reader: dict):
             # await balloon_api.update_balloon_amount('sensor', data_for_amount)
             await db.write_balloons_amount(reader, 'sensor')
 
-            if reader["ip"] == '10.10.2.23':
-                logger.debug(f'{reader["ip"]} 4.запись завершена')
+            # if reader["ip"] == '10.10.2.23':
+            #     logger.debug(f'{reader["ip"]} 4.запись завершена')
 
             return 1  # возвращаем состояние входа "активен"
         elif input_state == 0 and previous_input_state == 1:

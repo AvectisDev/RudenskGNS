@@ -1,13 +1,22 @@
 import asyncio
 from datetime import datetime, timedelta
 import video_api
+import logging
 from opcua import Client, ua
 from settings import INTELLECT_SERVER_LIST, AUTO, RAILWAY
 from intellect_functions import (separation_string_date, get_registration_number_list, check_on_station,
                                  get_transport_type)
 
-USERNAME = "reader"
-PASSWORD = "rfid-device"
+logging.basicConfig(
+    level=logging.INFO,  # Уровень логирования
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    filename='video_app_logs.log',
+    filemode='w',
+    encoding='utf-8'
+)
+
+logger = logging.getLogger('app_logger')
+logger.setLevel(logging.DEBUG)
 
 
 def get_opc_value(addr_str):
@@ -32,7 +41,7 @@ def get_opc_data():
 
     try:
         client.connect()
-        print('Connect to OPC server successful')
+        logger.debug('Connect to OPC server successful')
 
         if AUTO['response_number_detect']:
             set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_number_detect", True)
@@ -57,13 +66,13 @@ def get_opc_data():
         AUTO['request_number_identification'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_number_identification")
         AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_batch_complete")
 
-        print(f'Auto:{AUTO}, Railway:{RAILWAY}')
+        logger.debug(f'Auto:{AUTO}, Railway:{RAILWAY}')
 
     except Exception as error:
-        print(f'No connection to OPC server: {error}')
+        logger.error(f'No connection to OPC server: {error}')
     finally:
         client.disconnect()
-        print('Disconnect from OPC server')
+        logger.debug('Disconnect from OPC server')
 
 
 async def transport_process(transport: dict):
@@ -89,7 +98,8 @@ async def transport_process(transport: dict):
                 transport_data['departure_time'] = time
 
             result = await video_api.update_transport(transport_data, transport_type)
-            print(f'{transport_type} with number {transport['registration_number']} update')
+            logger.debug(f'{transport_type} with number {transport['registration_number']} update')
+
         else:
             entry_date = entry_time = departure_date = departure_time = None
             if is_on_station:
@@ -106,7 +116,7 @@ async def transport_process(transport: dict):
                 'is_on_station': is_on_station
             }
             # result = await video_api.create_transport(new_transport_data, transport_type)
-            # print(f'{transport_type} with number {transport['registration_number']} create')
+            # logger.debug(f'{transport_type} with number {transport['registration_number']} create')
         return result
     else:
         return None
@@ -118,11 +128,13 @@ async def auto_batch_processing(server):
     """
 
     if AUTO['request_number_identification']:  # Поиск машины в базе. Создание партии
+        logger.debug('Автовесовая. Запрос определения номера. Начало партии приёмки')
 
         transport_list = await get_registration_number_list(server)
+        logger.debug(f'Автовесовая. Список номеров: {transport_list}')
 
         if not transport_list:
-            print('Автоколонка. Машина не определена')
+            logger.debug('Автоколонка. Машина не определена')
             return
 
         for transport in reversed(transport_list):  # начинаем с последней определённой машины
@@ -130,7 +142,7 @@ async def auto_batch_processing(server):
             transport_type = get_transport_type(registration_number)
 
             if transport_type == 'truck' and not AUTO['truck_id']:
-                print(f'Машина на весах. Номер - {registration_number}')
+                logger.debug(f'Автоколонка. Машина на весах. Номер - {registration_number}')
 
                 # запрос данных по текущему номеру машины
                 truck_data = await video_api.get_transport(registration_number, transport_type)
@@ -138,7 +150,7 @@ async def auto_batch_processing(server):
                     AUTO['truck_id'] = truck_data['id']
 
             if transport_type == 'trailer' and not AUTO['trailer_id']:
-                print(f'Прицеп на весах. Номер - {registration_number}')
+                logger.debug(f'Автоколонка. Прицеп на весах. Номер - {registration_number}')
 
                 # запрос данных по текущему номеру прицепа
                 trailer_data = await video_api.get_transport(registration_number, transport_type)
@@ -161,6 +173,7 @@ async def auto_batch_processing(server):
         }
 
         # начинаем партию
+        logger.debug(f'Автоколонка. Запрос создания партии. Данные - {batch_data}')
         batch_data = await video_api.create_batch_gas(batch_data)
         AUTO['batch_id'] = batch_data['id']
         AUTO['response_number_detect'] = True
@@ -176,12 +189,13 @@ async def auto_batch_processing(server):
             'weight_gas_amount': AUTO['weight_gas_amount'],
         }
         # завершаем партию приёмки газа
+        logger.debug(f'Автоколонка. Запрос редактирования партии. Данные - {batch_data}')
         await video_api.update_batch_gas(AUTO['batch_id'], batch_data)
         AUTO['response_batch_complete'] = True
 
 
 async def kpp_processing(server: dict):
-    print('Обработка регистрационных номеров на КПП')
+    logger.debug('Обработка регистрационных номеров на КПП')
 
     # получаем от "Интеллекта" список номеров с данными фотофиксации
     transport_list = await get_registration_number_list(server)
@@ -192,7 +206,7 @@ async def kpp_processing(server: dict):
 
 
 async def railway_processing(server: dict):
-    print('Обработка жд цистерн')
+    logger.debug('Обработка жд цистерн')
 
     if RAILWAY['camera_worked']:
         weight = RAILWAY['tank_weight']
@@ -200,7 +214,7 @@ async def railway_processing(server: dict):
         # получаем от "Интеллекта" список номеров с данными фотофиксации
         railway_tank_list = await get_registration_number_list(server)
         if not railway_tank_list:
-            print('ЖД весовая. Цистерна не определена')
+            logger.debug('ЖД весовая. Цистерна не определена')
             return
 
         # работаем с номером последней цистерны
@@ -216,7 +230,7 @@ async def railway_processing(server: dict):
                 railway_tank['empty_weight'] = weight
 
             await video_api.update_transport(railway_tank, 'railway_tank')
-        print(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
+            logger.debug(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
 
 
 async def periodic_kpp_processing():
