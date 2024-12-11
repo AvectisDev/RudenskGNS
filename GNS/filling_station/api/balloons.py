@@ -1,4 +1,6 @@
 from ..models import (Balloon, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
+from django.http import JsonResponse
+from django.db.models import Sum, Count
 from django.shortcuts import get_object_or_404
 from asgiref.sync import sync_to_async
 from rest_framework import generics, status, viewsets
@@ -98,6 +100,105 @@ class BalloonViewSet(viewsets.ViewSet):
             batch.balloon_list.add(balloon)
             batch.amount_of_rfid = (batch.amount_of_rfid or 0) + 1
             batch.save()
+
+    @action(detail=False, methods=['get'], url_path='statistic')
+    def get_statistic(self, request):
+        today = date.today()
+        first_day_of_month = today.replace(day=1)
+
+        # Баллонов на станции
+        filled_balloons_on_station = (Balloon.objects
+                                      .filter(status='Регистрация полного баллона на складе')
+                                      .aggregate(total=Count('id')))
+        empty_balloons_on_station = (Balloon.objects
+                                     .filter(status__in=['Регистрация пустого баллона на складе (рампа)',
+                                                         'Регистрация пустого баллона на складе (цех)'])
+                                     .aggregate(total=Count('id')))
+
+        # Баллонов за текущий месяц
+        balloons_monthly_stats = (BalloonAmount.objects
+                                  .filter(change_date__gte=first_day_of_month)
+                                  .order_by('reader_id')
+                                  .values('reader_id')
+                                  .annotate(balloons_month=Sum('amount_of_balloons'), rfid_month=Sum('amount_of_rfid'))
+                                  )
+
+        # Баллонов за текущий день
+        balloons_today_stats = (BalloonAmount.objects
+                                .filter(change_date=today)
+                                .values('reader_id')
+                                .annotate(balloons_today=Sum('amount_of_balloons'), rfid_today=Sum('amount_of_rfid')))
+
+        # Партий за текущий месяц
+        loading_batches_last_month = (BalloonsLoadingBatch.objects
+                                      .filter(begin_date__gte=first_day_of_month)
+                                      .values('reader_number')
+                                      .annotate(month_batches=Count('id'))
+                                      )
+        unloading_batches_last_month = (BalloonsUnloadingBatch.objects
+                                        .filter(begin_date__gte=first_day_of_month)
+                                        .values('reader_number')
+                                        .annotate(month_batches=Count('id'))
+                                        )
+        # Объединяем результаты по партиям за последний месяц
+        batches_last_month = {}
+        for batch in loading_batches_last_month:
+            reader_number = batch['reader_number']
+            batches_last_month[reader_number] = batches_last_month.get(reader_number, 0) + batch['month_batches']
+
+        for batch in unloading_batches_last_month:
+            reader_number = batch['reader_number']
+            batches_last_month[reader_number] = batches_last_month.get(reader_number, 0) + batch['month_batches']
+
+        # Партий за текущий день
+        loading_batches_last_day = (BalloonsLoadingBatch.objects
+                                    .filter(begin_date=today)
+                                    .values('reader_number')
+                                    .annotate(day_batches=Count('id'))
+                                    )
+        unloading_batches_last_day = (BalloonsUnloadingBatch.objects
+                                      .filter(begin_date=today)
+                                      .values('reader_number')
+                                      .annotate(day_batches=Count('id'))
+                                      )
+        # Объединяем результаты по партиям за последний день
+        batches_last_day = {}
+        for batch in loading_batches_last_day:
+            reader_number = batch['reader_number']
+            batches_last_day[reader_number] = batches_last_day.get(reader_number, 0) + batch['day_batches']
+
+        for batch in unloading_batches_last_day:
+            reader_number = batch['reader_number']
+            batches_last_day[reader_number] = batches_last_day.get(reader_number, 0) + batch['day_batches']
+
+        # Преобразуем данные по баллонам за сегодня в словарь для быстрого доступа
+        today_dict = {stat['reader_id']: stat for stat in balloons_today_stats}
+
+        # Объединяем данные
+        response = []
+        for stat in balloons_monthly_stats:
+            reader_id = stat['reader_id']
+            balloons_today = today_dict.get(reader_id, {}).get('balloons_today', 0)
+            rfid_today = today_dict.get(reader_id, {}).get('rfid_today', 0)
+            truck_month = batches_last_month.get(reader_id, 0)
+            truck_today = batches_last_day.get(reader_id, 0)
+
+            # Создаем новый словарь с данными
+            response.append({
+                'reader_id': reader_id,
+                'balloons_month': stat['balloons_month'],
+                'rfid_month': stat['rfid_month'],
+                'balloons_today': balloons_today,
+                'rfid_today': rfid_today,
+                'truck_month': truck_month,
+                'truck_today': truck_today
+            })
+
+        response.append({
+            'filled_balloons_on_station': filled_balloons_on_station.get('total', 0),
+            'empty_balloons_on_station': empty_balloons_on_station.get('total', 0)
+        })
+        return JsonResponse(response, safe=False)
 
     def create(self, request):
         nfc_tag = request.data.get('nfc_tag', None)
@@ -341,3 +442,28 @@ class BalloonAmountViewSet(viewsets.ViewSet):
             instance.save()
 
         return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_active_balloon_batch(request):
+    today = date.today()
+    # Активные партии на сегодня
+    loading_batches = (BalloonsLoadingBatch.objects
+                       .filter(begin_date=today, is_active=True))
+    unloading_batches = (BalloonsUnloadingBatch.objects
+                         .filter(begin_date=today, is_active=True))
+
+    response = []
+    for batch in loading_batches:
+        response.append({
+            'reader_id': batch.reader_number,
+            'truck_registration_number': batch.truck.registration_number,
+            'trailer_registration_number': batch.trailer.registration_number
+        })
+    for batch in unloading_batches:
+        response.append({
+            'reader_id': batch.reader_number,
+            'truck_registration_number': batch.truck.registration_number,
+            'trailer_registration_number': batch.trailer.registration_number
+        })
+    return JsonResponse(response, safe=False)

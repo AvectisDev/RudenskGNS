@@ -3,7 +3,6 @@ from rest_framework.routers import DefaultRouter
 from . import balloons, transport
 from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshView)
 
-
 app_name = 'filling_station'
 
 balloons_loading_router = DefaultRouter()
@@ -22,15 +21,18 @@ balloons_router.register(r'balloons', balloons.BalloonViewSet, basename='balloon
 balloons_amount_router = DefaultRouter()
 balloons_amount_router.register(r'balloons-amount', balloons.BalloonAmountViewSet, basename='balloonamount')
 
-#video app urls
+# video app urls
 auto_gas_router = DefaultRouter()
-auto_gas_router.register(r'auto-gas', transport.AutoGasBatchView, basename='auto-gas')
+auto_gas_router.register(r'auto-gas-batch', transport.AutoGasBatchView, basename='auto-gas-batch')
+railway_batch_router = DefaultRouter()
+railway_batch_router.register(r'railway-batch', transport.RailwayBatchView, basename='railway-batch')
 
 urlpatterns = [
     path('', include(balloons_router.urls)),
     path('balloon-status-options', balloons.get_balloon_status_options),
     path('loading-balloon-reader-list', balloons.get_loading_balloon_reader_list),
     path('unloading-balloon-reader-list', balloons.get_unloading_balloon_reader_list),
+    path('get-active-balloon-batch', balloons.get_active_balloon_batch),
 
     path('trucks', transport.TruckView.as_view()),
     path('trailers', transport.TrailerView.as_view()),
@@ -41,8 +43,8 @@ urlpatterns = [
 
     path('', include(balloons_amount_router.urls)),
 
-    path('railway-loading', transport.RailwayBatchView.as_view()),
     path('', include(auto_gas_router.urls)),
+    path('', include(railway_batch_router.urls)),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -1,6 +1,9 @@
 from ..models import (Truck, Trailer, RailwayTank,
                       RailwayBatch, AutoGasBatch)
 from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.db.models import Sum, Count, Value, Case, When, IntegerField
+from django.db.models.functions import Coalesce
 from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -124,10 +127,61 @@ class RailwayTanksView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RailwayBatchView(APIView):
+class RailwayBatchView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    @action(detail=False, methods=['get'], url_path='statistic')
+    def railway_batch_statistic(self, request):
+        today = date.today()
+        first_day_of_month = today.replace(day=1)
+
+        result = []
+        # Партии за последний месяц
+        result.append(RailwayBatch.objects
+        .filter(begin_date__gte=first_day_of_month)
+        .aggregate(
+            last_month_total_tanks_spbt=Count(Case(
+                When(railway_tank_list__gas_type='СПБТ', then=1),
+                output_field=IntegerField()
+            )),
+            last_month_total_tanks_pba=Count(Case(
+                When(railway_tank_list__gas_type='ПБА', then=1),
+                output_field=IntegerField()
+            )),
+            last_month_gas_amount_spbt=Coalesce(Sum('gas_amount_spbt'), Value(0.0)),
+            last_month_gas_amount_pba=Coalesce(Sum('gas_amount_pba'), Value(0.0)))
+        )
+
+        # Партии за последний день
+        result.append(RailwayBatch.objects
+        .filter(begin_date=today)
+        .aggregate(last_day_total_tanks_spbt=Count(Case(
+            When(railway_tank_list__gas_type='СПБТ', then=1),
+            output_field=IntegerField()
+        )),
+            last_day_total_tanks_pba=Count(Case(
+                When(railway_tank_list__gas_type='ПБА', then=1),
+                output_field=IntegerField()
+            )),
+            last_day_gas_amount_spbt=Coalesce(Sum('gas_amount_spbt'), Value(0.0)),
+            last_day_gas_amount_pba=Coalesce(Sum('gas_amount_pba'), Value(0.0)))
+        )
+
+        response = {}
+        for item in result:
+            response['loading_batch'] = response.get('loading_batch', {}) | item
+
+        # Активная партия
+        tanks_on_station = RailwayTank.objects.filter(is_on_station=True)
+        for tank in tanks_on_station:
+            response[tank.registration_number] = {
+                'registration_number': tank.registration_number,
+                'gas_type': tank.gas_type,
+                'full_weight': tank.full_weight if tank.full_weight else 0
+            }
+        return JsonResponse(response, safe=False)
+
+    def list(self, request):
         batches = RailwayBatch.objects.filter(is_active=True).first()
 
         if not batches:
@@ -136,16 +190,15 @@ class RailwayBatchView(APIView):
         serializer = RailwayBatchSerializer(batches)
         return Response(serializer.data)
 
-    def post(self, request):
+    def create(self, request):
         serializer = RailwayBatchSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def patch(self, request):
-        batch_id = request.data.get('id')
-        batch = get_object_or_404(RailwayBatch, id=batch_id)
+    def partial_update(self, request, pk=None):
+        batch = get_object_or_404(RailwayBatch, id=pk)
 
         if not request.data.get('is_active', True):
             current_date = datetime.now()
@@ -161,6 +214,87 @@ class RailwayBatchView(APIView):
 
 class AutoGasBatchView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], url_path='statistic')
+    def auto_batch_statistic(self, request):
+        today = date.today()
+        first_day_of_month = today.replace(day=1)
+
+        result = []
+        # Партии за последний месяц
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date__gte=first_day_of_month, batch_type='l', gas_type='ПБА')
+                      .values('gas_type', 'batch_type')
+                      .annotate(last_month_loading_batches=Count('id'),
+                                last_month_loading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date__gte=first_day_of_month, batch_type='l', gas_type='СПБТ')
+                      .values('gas_type', 'batch_type')
+                      .annotate(last_month_loading_batches=Count('id'),
+                                last_month_loading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date__gte=first_day_of_month, batch_type='u', gas_type='ПБА')
+                      .values('gas_type', 'batch_type')
+                      .annotate(last_month_unloading_batches=Count('id'),
+                                last_month_unloading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date__gte=first_day_of_month, batch_type='u',
+                              gas_type='СПБТ')
+                      .values('gas_type', 'batch_type')
+                      .annotate(last_month_unloading_batches=Count('id'),
+                                last_month_unloading_weight=Sum('weight_gas_amount')))
+
+        # Партии за последний день
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date=today, batch_type='l', gas_type='ПБА')
+                      .values('gas_type', 'batch_type')
+                      .annotate(today_loading_batches=Count('id'),
+                                today_loading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date=today, batch_type='l', gas_type='СПБТ')
+                      .values('gas_type', 'batch_type')
+                      .annotate(today_loading_batches=Count('id'),
+                                today_loading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date=today, batch_type='u', gas_type='ПБА')
+                      .values('gas_type', 'batch_type')
+                      .annotate(today_unloading_batches=Count('id'),
+                                today_unloading_weight=Sum('weight_gas_amount')))
+        result.append(AutoGasBatch.objects
+                      .filter(begin_date=today, batch_type='u', gas_type='СПБТ')
+                      .values('gas_type', 'batch_type')
+                      .annotate(today_unloading_batches=Count('id'),
+                                today_unloading_weight=Sum('weight_gas_amount')))
+
+        response = {'loading_batch': {}, 'unloading_batch': {}}
+        for item in result:
+            for r in item:
+                if r['batch_type'] == 'l':
+                    if r['gas_type'] == 'ПБА':
+                        response['loading_batch']['ПБА'] = response.get('loading_batch', {}).get('ПБА', {}) | r
+                    else:
+                        response['loading_batch']['СПБТ'] = response.get('loading_batch', {}).get('СПБТ', {}) | r
+                else:
+                    if r['gas_type'] == 'ПБА':
+                        response['unloading_batch']['ПБА'] = response.get('unloading_batch', {}).get('ПБА', {}) | r
+                    else:
+                        response['unloading_batch']['СПБТ'] = response.get('unloading_batch', {}).get('СПБТ', {}) | r
+
+        # Активная партия
+        active_batch = AutoGasBatch.objects.filter(is_active=True).first()
+        response['active_batch'] = {
+            'batch_type': 'Приёмка' if active_batch.batch_type == 'l' else 'Отгрузка',
+            'gas_type': active_batch.gas_type,
+            'car_brand': active_batch.truck.car_brand,
+            'truck_number': active_batch.truck.registration_number,
+            'trailer_number': active_batch.trailer.registration_number,
+            'truck_gas_capacity': active_batch.truck.max_gas_volume if active_batch.truck.max_gas_volume else 0,
+            'scale_empty_weight': active_batch.scale_empty_weight if active_batch.scale_empty_weight else 0,
+            'scale_full_weight': active_batch.scale_full_weight if active_batch.scale_full_weight else 0,
+            'ttn_number': active_batch.ttn.number,
+            'ttn_consignee': active_batch.ttn.consignee,
+        }
+        return JsonResponse(response, safe=False)
 
     def list(self, request):
         today = date.today()
