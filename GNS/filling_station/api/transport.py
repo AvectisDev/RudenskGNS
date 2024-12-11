@@ -282,18 +282,19 @@ class AutoGasBatchView(viewsets.ViewSet):
 
         # Активная партия
         active_batch = AutoGasBatch.objects.filter(is_active=True).first()
-        response['active_batch'] = {
-            'batch_type': 'Приёмка' if active_batch.batch_type == 'l' else 'Отгрузка',
-            'gas_type': active_batch.gas_type,
-            'car_brand': active_batch.truck.car_brand,
-            'truck_number': active_batch.truck.registration_number,
-            'trailer_number': active_batch.trailer.registration_number,
-            'truck_gas_capacity': active_batch.truck.max_gas_volume if active_batch.truck.max_gas_volume else 0,
-            'scale_empty_weight': active_batch.scale_empty_weight if active_batch.scale_empty_weight else 0,
-            'scale_full_weight': active_batch.scale_full_weight if active_batch.scale_full_weight else 0,
-            'ttn_number': active_batch.ttn.number,
-            'ttn_consignee': active_batch.ttn.consignee,
-        }
+        if active_batch:
+            response['active_batch'] = {
+                'batch_type': 'Приёмка' if active_batch.batch_type == 'l' else 'Отгрузка',
+                'gas_type': active_batch.gas_type,
+                'car_brand': active_batch.truck.car_brand,
+                'truck_number': active_batch.truck.registration_number,
+                'trailer_number': active_batch.trailer.registration_number,
+                'truck_gas_capacity': active_batch.truck.max_gas_volume if active_batch.truck.max_gas_volume else 0,
+                'scale_empty_weight': active_batch.scale_empty_weight if active_batch.scale_empty_weight else 0,
+                'scale_full_weight': active_batch.scale_full_weight if active_batch.scale_full_weight else 0,
+                'ttn_number': active_batch.ttn.number,
+                'ttn_consignee': active_batch.ttn.consignee,
+            }
         return JsonResponse(response, safe=False)
 
     def list(self, request):
