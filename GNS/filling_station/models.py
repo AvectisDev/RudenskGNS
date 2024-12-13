@@ -312,7 +312,7 @@ class RailwayTank(models.Model):
     class Meta:
         verbose_name = "Ж/д цистерна"
         verbose_name_plural = "Ж/д цистерны"
-        ordering = ['-entry_date', '-entry_time']
+        ordering = ['-id', '-entry_date', '-entry_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:railway_tank_detail', args=[self.pk])
