@@ -202,5 +202,5 @@ async def update_railway_batch(data):
                 return await response.json()
 
         except Exception as error:
-            print(f'update_batch_gas function error - {error}')
+            print(f'update_railway_batch function error - {error}')
             return None

@@ -67,15 +67,15 @@ class BalloonViewSet(viewsets.ViewSet):
         if not created:
             balloon.status = request.data.get('status')
             if balloon.update_passport_required:
-                balloon.update_passport_required = request.data.get('update_passport_required', None)
-                balloon.serial_number = request.data.get('serial_number', None)
-                balloon.netto = request.data.get('netto', None)
-                balloon.brutto = request.data.get('brutto', None)
+                balloon.update_passport_required = request.data.get('update_passport_required')
+                balloon.serial_number = request.data.get('serial_number')
+                balloon.netto = request.data.get('netto')
+                balloon.brutto = request.data.get('brutto')
                 balloon.filling_status = request.data.get('filling_status', False)
             balloon.save()
 
-        reader_number = request.data.get('reader_number', None)
-        reader_function = request.data.get('reader_function', None)
+        reader_number = request.data.get('reader_number')
+        reader_function = request.data.get('reader_function')
         if reader_function:
             self.add_balloon_to_batch_from_reader(balloon, reader_number, reader_function)
 

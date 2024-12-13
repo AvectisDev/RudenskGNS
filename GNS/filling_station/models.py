@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.urls import reverse
 import pghistory
@@ -45,7 +46,7 @@ class Balloon(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
 
     def __int__(self):
-        return self.pk
+        return f"Balloon {self.nfc_tag}"
 
     class Meta:
         verbose_name = "Баллон"
@@ -64,6 +65,9 @@ class Balloon(models.Model):
     def get_delete_url(self):
         return reverse('filling_station:balloon_delete', args=[self.pk])
 
+    def clean(self):
+        if self.brutto and self.netto and self.brutto < self.netto:
+            raise ValidationError("Вес наполненного баллона должен быть больше веса пустого баллона.")
 
 class TruckType(models.Model):
     type = models.CharField(max_length=50, verbose_name="Тип грузовика")
