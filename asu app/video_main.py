@@ -8,7 +8,7 @@ from intellect_functions import (separation_string_date, get_registration_number
                                  get_transport_type)
 
 logging.basicConfig(
-    level=logging.INFO,  # Уровень логирования
+    level=logging.DEBUG,  # Уровень логирования
     format='%(asctime)s - %(levelname)s - %(message)s',
     filename='video_app_logs.log',
     filemode='w',
