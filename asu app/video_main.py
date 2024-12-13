@@ -150,16 +150,16 @@ async def auto_batch_processing(server):
 
                 # запрос данных по текущему номеру машины
                 truck_data = await video_api.get_transport(registration_number, transport_type)
-                if truck_data and truck_data.get('type', None) == 'Цистерна':
-                    AUTO['truck_id'] = truck_data.get('id', None)
+                if truck_data and truck_data.get('type') == 'Цистерна':
+                    AUTO['truck_id'] = truck_data.get('id')
 
             if transport_type == 'trailer' and not AUTO['trailer_id']:
                 logger.debug(f'Автоколонка. Прицеп на весах. Номер - {registration_number}')
 
                 # запрос данных по текущему номеру прицепа
                 trailer_data = await video_api.get_transport(registration_number, transport_type)
-                if trailer_data and trailer_data.get('type', None) == 'Полуприцеп цистерна':
-                    AUTO['trailer_id'] = trailer_data.get('id', None)
+                if trailer_data and trailer_data.get('type') == 'Полуприцеп цистерна':
+                    AUTO['trailer_id'] = trailer_data.get('id')
 
         if AUTO['gas_type'] == 2:
             gas_type = 'СПБТ'
@@ -179,7 +179,7 @@ async def auto_batch_processing(server):
         # начинаем партию
         logger.debug(f'Автоколонка. Запрос создания партии. Данные - {batch_data}')
         batch_data = await video_api.create_batch_gas(batch_data)
-        AUTO['batch_id'] = batch_data.get('id', None)
+        AUTO['batch_id'] = batch_data.get('id')
         AUTO['response_number_detect'] = True
 
     if AUTO['request_batch_complete']:
