@@ -21,7 +21,7 @@ async def get_transport(number, transport_type):
 
     Args:
         number (str): регистрационный номер транспорта
-        transport_type (str): тип обрабатываемой партии
+        transport_type (str): тип обрабатываемого транспорта (грузовик, прицеп, жд-цистерна)
 
     Returns:
         dict: данные транспорта в базе.
@@ -83,7 +83,7 @@ async def get_batch_gas():
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(f"{BASE_URL}/auto-gas/", timeout=3,
+            async with session.get(f"{BASE_URL}/auto-gas-batch/", timeout=3,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return await response.json()
@@ -105,7 +105,7 @@ async def create_batch_gas(data):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(f"{BASE_URL}/auto-gas/", json=data, timeout=3,
+            async with session.post(f"{BASE_URL}/auto-gas-batch/", json=data, timeout=3,
                                     auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
                 return await response.json()
@@ -129,7 +129,7 @@ async def update_batch_gas(batch_id, data):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.patch(f"{BASE_URL}/auto-gas/{batch_id}/", json=data, timeout=3,
+            async with session.patch(f"{BASE_URL}/auto-gas-batch/{batch_id}/", json=data, timeout=3,
                                      auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()  # Поднимает исключение для 4xx и 5xx
                 return await response.json()

@@ -80,6 +80,7 @@ async def transport_process(transport: dict):
     date, time = separation_string_date(transport['date'])
     is_on_station = check_on_station(transport)
 
+    # Определяем тип т/с
     transport_type = get_transport_type(registration_number)
 
     if transport_type:
@@ -101,22 +102,25 @@ async def transport_process(transport: dict):
             logger.debug(f'{transport_type} with number {transport['registration_number']} update')
 
         else:
-            entry_date = entry_time = departure_date = departure_time = None
-            if is_on_station:
-                entry_date, entry_time = date, time
-            else:
-                departure_date, departure_time = date, time
+            # создаём в базе только записи для жд цистерн (временно, пока не настроят камеры на КПП)
+            if transport_type == 'railway_tank':
 
-            new_transport_data = {
-                'registration_number': registration_number,
-                'entry_date': entry_date,
-                'entry_time': entry_time,
-                'departure_date': departure_date,
-                'departure_time': departure_time,
-                'is_on_station': is_on_station
-            }
-            # result = await video_api.create_transport(new_transport_data, transport_type)
-            # logger.debug(f'{transport_type} with number {transport['registration_number']} create')
+                entry_date = entry_time = departure_date = departure_time = None
+                if is_on_station:
+                    entry_date, entry_time = date, time
+                else:
+                    departure_date, departure_time = date, time
+
+                new_transport_data = {
+                    'registration_number': registration_number,
+                    'entry_date': entry_date,
+                    'entry_time': entry_time,
+                    'departure_date': departure_date,
+                    'departure_time': departure_time,
+                    'is_on_station': is_on_station
+                }
+                result = await video_api.create_transport(new_transport_data, transport_type)
+                logger.debug(f'{transport_type} with number {transport['registration_number']} create')
         return result
     else:
         return None
@@ -146,16 +150,16 @@ async def auto_batch_processing(server):
 
                 # запрос данных по текущему номеру машины
                 truck_data = await video_api.get_transport(registration_number, transport_type)
-                if truck_data:
-                    AUTO['truck_id'] = truck_data['id']
+                if truck_data and truck_data.get('type', None) == 'Цистерна':
+                    AUTO['truck_id'] = truck_data.get('id', None)
 
             if transport_type == 'trailer' and not AUTO['trailer_id']:
                 logger.debug(f'Автоколонка. Прицеп на весах. Номер - {registration_number}')
 
                 # запрос данных по текущему номеру прицепа
                 trailer_data = await video_api.get_transport(registration_number, transport_type)
-                if trailer_data:
-                    AUTO['trailer_id'] = trailer_data['id']
+                if trailer_data and trailer_data.get('type', None) == 'Полуприцеп цистерна':
+                    AUTO['trailer_id'] = trailer_data.get('id', None)
 
         if AUTO['gas_type'] == 2:
             gas_type = 'СПБТ'
@@ -175,7 +179,7 @@ async def auto_batch_processing(server):
         # начинаем партию
         logger.debug(f'Автоколонка. Запрос создания партии. Данные - {batch_data}')
         batch_data = await video_api.create_batch_gas(batch_data)
-        AUTO['batch_id'] = batch_data['id']
+        AUTO['batch_id'] = batch_data.get('id', None)
         AUTO['response_number_detect'] = True
 
     if AUTO['request_batch_complete']:

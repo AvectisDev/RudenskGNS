@@ -1,4 +1,3 @@
-import asyncio
 import aiohttp
 from datetime import datetime, timedelta
 from settings import INTELLECT_URL
@@ -23,12 +22,8 @@ async def get_intellect_data(data) -> list:
                     return item_list
                 return []
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        except Exception as error:
             print(f'get_intellect_data function error - {error}')
-            return []
-
-        except (ValueError, KeyError) as JSON_error:  # Обработка ошибок парсинга JSON и доступа к ключам
-            print(f'get_intellect_data function JSON_error - {JSON_error}')
             return []
 
 
@@ -69,7 +64,7 @@ async def get_registration_number_list(server: dict) -> list:
     data_for_request = {
         "id": server['id'],
         "time_from": get_start_time(server['delta_minutes']),
-        "validaty_from": "90"
+        "validaty_from": "20"
     }
     intellect_data = await get_intellect_data(data_for_request)
 
