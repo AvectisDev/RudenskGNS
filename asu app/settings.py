@@ -10,7 +10,7 @@ INTELLECT_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intel
 INTELLECT_SERVER_LIST = [
     {
         'id': '1',
-        'delta_minutes': 5
+        'delta_minutes': 8000
     },
     {
         'id': '2,3',

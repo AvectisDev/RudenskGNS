@@ -48,6 +48,10 @@ def get_opc_data():
         if AUTO['response_batch_complete']:
             set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_batch_complete", True)
 
+        if RAILWAY['complete']:
+            set_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked", False)
+            RAILWAY['complete'] = False
+
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
         RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
         RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked")
@@ -241,7 +245,7 @@ async def railway_processing(server: dict):
 
             await video_api.update_transport(railway_tank, 'railway_tank')
             logger.warning(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
-
+            RAILWAY['complete'] = True
 
 async def periodic_kpp_processing():
     while True:
