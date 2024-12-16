@@ -10,7 +10,7 @@ INTELLECT_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intel
 INTELLECT_SERVER_LIST = [
     {
         'id': '1',
-        'delta_minutes': 8000
+        'delta_minutes': 3
     },
     {
         'id': '2,3',
@@ -29,10 +29,7 @@ RAILWAY = {
     'camera_worked': False,
     'last_number': '',
     'complete': False,
-    'tank_id': None,
-    'tank_full_weight': 0,
-    'tank_empty_weight': 0,
-    'weight_gas_amount': 0
+    'tank_id': None
 }
 
 AUTO = {

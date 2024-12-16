@@ -224,28 +224,36 @@ async def railway_processing(server: dict):
 
     if RAILWAY['camera_worked']:
         weight = RAILWAY['tank_weight']
+        logger.warning(f'Вес жд цистерны {RAILWAY['tank_weight']}')
 
         # получаем от "Интеллекта" список номеров с данными фотофиксации
         railway_tank_list = await get_registration_number_list(server)
         if not railway_tank_list:
             logger.warning('ЖД весовая. Цистерна не определена')
             return
+        try:
+            # работаем с номером последней цистерны
+            railway_tank_data = railway_tank_list[-1]
+            logger.warning(f'Номер последней жд цистерны {railway_tank_data['registration_number']}')
+            if railway_tank_data['registration_number'] != RAILWAY['last_number']:
+                RAILWAY['last_number'] = railway_tank_data['registration_number']
+                logger.warning(f'Запуск функции transport_process')
+                railway_tank_status, railway_tank = await transport_process(railway_tank_data)
+                logger.warning(f'Окончание функции transport_process')
 
-        # работаем с номером последней цистерны
-        railway_tank_data = railway_tank_list[-1]
-        if railway_tank_data['registration_number'] != RAILWAY['last_number']:
-            RAILWAY['last_number'] = railway_tank_data['registration_number']
-            railway_tank = await transport_process(railway_tank_data)
+                if railway_tank['is_on_station']:
+                    railway_tank['full_weight'] = weight
+                else:
+                    railway_tank['gas_weight'] = railway_tank.get('full_weight') or 0 - weight
+                    railway_tank['empty_weight'] = weight
 
-            if railway_tank['is_on_station']:
-                railway_tank['full_weight'] = weight
-            else:
-                railway_tank['gas_weight'] = railway_tank['full_weight'] - weight
-                railway_tank['empty_weight'] = weight
-
-            await video_api.update_transport(railway_tank, 'railway_tank')
-            logger.warning(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
-            RAILWAY['complete'] = True
+                logger.warning(f'Выполняем update_transport')
+                await video_api.update_transport(railway_tank, 'railway_tank')
+                logger.warning(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
+                RAILWAY['complete'] = True
+                logger.warning(f'ЖД весовая. Партия завершена. complete = {RAILWAY['complete']}')
+        except Exception as error:
+            logger.error(f'ЖД весовая. {error}')
 
 async def periodic_kpp_processing():
     while True:
