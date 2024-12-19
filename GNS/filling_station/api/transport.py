@@ -126,7 +126,7 @@ class RailwayTankView(viewsets.ViewSet):
                 railway_tank.departure_date = current_date
                 railway_tank.departure_time = current_time
                 railway_tank.empty_weight = tank_weight
-                railway_tank.gas_weight = railway_tank.full_weight - railway_tank.empty_weight
+                railway_tank.gas_weight = railway_tank.full_weight or 0 - railway_tank.empty_weight or 0
             railway_tank.save()
 
         return Response(status=status.HTTP_200_OK)
