@@ -54,7 +54,7 @@ def get_opc_data():
 
         RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_stable_weight")
         RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked")
-        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank_is_on_station")
+        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_is_on_station")
 
         AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.batch_type")
         AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_type")

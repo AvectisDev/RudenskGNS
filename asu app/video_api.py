@@ -224,7 +224,6 @@ async def update_railway_tank(railway_tank_data):
             async with session.post(f"{BASE_URL}/railway-tank/update/", json=railway_tank_data, timeout=3,
                                    auth=aiohttp.BasicAuth(USERNAME, PASSWORD)) as response:
                 response.raise_for_status()
-                return await response.json()
 
         except Exception as error:
             print(f'get_railway_tank function error - {error}')
