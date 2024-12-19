@@ -10,7 +10,7 @@ INTELLECT_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intel
 INTELLECT_SERVER_LIST = [
     {
         'id': '1',
-        'delta_minutes': 3
+        'delta_minutes': 30000
     },
     {
         'id': '2,3',
@@ -25,11 +25,10 @@ INTELLECT_SERVER_LIST = [
 # OPC tags
 RAILWAY = {
     'tank_weight': 0.0,
-    'weight_is_stable': False,
     'camera_worked': False,
     'last_number': '',
     'complete': False,
-    'tank_id': None
+    'tank_is_on_station': False
 }
 
 AUTO = {

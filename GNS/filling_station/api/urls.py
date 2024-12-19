@@ -24,6 +24,10 @@ balloons_amount_router.register(r'balloons-amount', balloons.BalloonAmountViewSe
 # video app urls
 auto_gas_router = DefaultRouter()
 auto_gas_router.register(r'auto-gas-batch', transport.AutoGasBatchView, basename='auto-gas-batch')
+
+railway_tank_router = DefaultRouter()
+railway_tank_router.register(r'railway-tank', transport.RailwayTankView, basename='railway-tank')
+
 railway_batch_router = DefaultRouter()
 railway_batch_router.register(r'railway-batch', transport.RailwayBatchView, basename='railway-batch')
 
@@ -36,7 +40,6 @@ urlpatterns = [
 
     path('trucks', transport.TruckView.as_view()),
     path('trailers', transport.TrailerView.as_view()),
-    path('railway-tanks', transport.RailwayTanksView.as_view()),
 
     path('', include(balloons_loading_router.urls)),
     path('', include(balloons_unloading_router.urls)),
@@ -44,6 +47,7 @@ urlpatterns = [
     path('', include(balloons_amount_router.urls)),
 
     path('', include(auto_gas_router.urls)),
+    path('', include(railway_tank_router.urls)),
     path('', include(railway_batch_router.urls)),
 
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

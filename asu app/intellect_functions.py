@@ -64,7 +64,7 @@ async def get_registration_number_list(server: dict) -> list:
     data_for_request = {
         "id": server['id'],
         "time_from": get_start_time(server['delta_minutes']),
-        "validaty_from": "10" if server.get('id') == '1' else "90"
+        "validaty_from": "5" if server.get('id') == '1' else "90"
     }
     intellect_data = await get_intellect_data(data_for_request)
 

@@ -52,9 +52,9 @@ def get_opc_data():
             set_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked", False)
             RAILWAY['complete'] = False
 
-        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight")
-        RAILWAY['weight_is_stable'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_weight_is_stable")
+        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_stable_weight")
         RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked")
+        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank_is_on_station")
 
         AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.batch_type")
         AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_type")
@@ -70,7 +70,8 @@ def get_opc_data():
         AUTO['request_number_identification'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_number_identification")
         AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_batch_complete")
 
-        logger.warning(f'Auto:{AUTO}, Railway:{RAILWAY}')
+        logger.warning(f'Auto:{AUTO}')
+        logger.warning(f'Railway:{RAILWAY}')
 
     except Exception as error:
         logger.error(f'No connection to OPC server: {error}')
@@ -136,77 +137,81 @@ async def auto_batch_processing(server):
     """
 
     if AUTO['request_number_identification']:  # Поиск машины в базе. Создание партии
-        logger.warning('Автовесовая. Запрос определения номера. Начало партии приёмки')
+        try:
+            logger.warning('Автовесовая. Запрос определения номера. Начало партии приёмки')
 
-        transport_list = await get_registration_number_list(server)
-        logger.warning(f'Автовесовая. Список номеров: {transport_list}')
+            transport_list = await get_registration_number_list(server)
+            logger.warning(f'Автовесовая. Список номеров: {transport_list}')
 
-        if not transport_list:
-            logger.warning('Автоколонка. Машина не определена')
-            return
+            if not transport_list:
+                logger.warning('Автоколонка. Машина не определена')
+                return
 
-        for transport in reversed(transport_list):  # начинаем с последней определённой машины
+            for transport in reversed(transport_list):  # начинаем с последней определённой машины
 
-            registration_number = transport['registration_number']
-            logger.warning(f'Номер - {registration_number}')
-            transport_type = get_transport_type(registration_number)
-            logger.warning(f'Тип - {transport_type}')
-            if transport_type == 'truck' and not AUTO['truck_id']:
-                logger.warning(f'Автоколонка. Машина на весах. Номер - {registration_number}')
+                registration_number = transport['registration_number']
+                transport_type = get_transport_type(registration_number)
+                logger.warning(f'Номер - {registration_number}. Тип - {transport_type}')
+                if transport_type == 'truck' and not AUTO['truck_id']:
+                    logger.warning(f'Автоколонка. Машина на весах. Номер - {registration_number}')
 
-                # запрос данных по текущему номеру машины
-                logger.warning(f'Автоколонка. запрос данных по текущему номеру машины')
-                truck_data = await video_api.get_transport(registration_number, transport_type)
-                logger.warning(f'Автоколонка. запрос данных по текущему номеру машины выполнен')
-                if truck_data and truck_data.get('type') == 'Цистерна':
-                    AUTO['truck_id'] = truck_data.get('id')
+                    # запрос данных по текущему номеру машины
+                    logger.warning(f'Автоколонка. запрос данных по текущему номеру машины')
+                    truck_data = await video_api.get_transport(registration_number, transport_type)
+                    logger.warning(f'Автоколонка. запрос данных по текущему номеру машины выполнен')
+                    if truck_data and truck_data.get('type') == 'Цистерна':
+                        AUTO['truck_id'] = truck_data.get('id')
 
-            if transport_type == 'trailer' and not AUTO['trailer_id']:
-                logger.warning(f'Автоколонка. Прицеп на весах. Номер - {registration_number}')
+                if transport_type == 'trailer' and not AUTO['trailer_id']:
+                    logger.warning(f'Автоколонка. Прицеп на весах. Номер - {registration_number}')
 
-                # запрос данных по текущему номеру прицепа
-                logger.warning(f'Автоколонка. запрос данных по текущему номеру прицепа')
-                trailer_data = await video_api.get_transport(registration_number, transport_type)
-                logger.warning(f'Автоколонка. запрос данных по текущему номеру прицепа выполнен')
-                if trailer_data and trailer_data.get('type') == 'Полуприцеп цистерна':
-                    AUTO['trailer_id'] = trailer_data.get('id')
-        logger.warning(f'Автоколонка. Выходим из цикла проверки номеров')
-        if AUTO['gas_type'] == 2:
-            gas_type = 'СПБТ'
-        elif AUTO['gas_type'] == 3:
-            gas_type = 'ПБА'
-        else:
-            gas_type = 'Не выбран'
+                    # запрос данных по текущему номеру прицепа
+                    logger.warning(f'Автоколонка. запрос данных по текущему номеру прицепа')
+                    trailer_data = await video_api.get_transport(registration_number, transport_type)
+                    logger.warning(f'Автоколонка. запрос данных по текущему номеру прицепа выполнен')
+                    if trailer_data and trailer_data.get('type') == 'Полуприцеп цистерна':
+                        AUTO['trailer_id'] = trailer_data.get('id')
+            logger.warning(f'Автоколонка. Выходим из цикла проверки номеров')
+            if AUTO['gas_type'] == 2:
+                gas_type = 'СПБТ'
+            elif AUTO['gas_type'] == 3:
+                gas_type = 'ПБА'
+            else:
+                gas_type = 'Не выбран'
 
-        batch_data = {
-            'batch_type': 'l' if AUTO['batch_type'] == 'loading' else 'u',
-            'truck': AUTO['truck_id'],
-            'trailer': 0 if not AUTO['trailer_id'] else AUTO['trailer_id'],
-            'is_active': True,
-            'gas_type': gas_type
-        }
+            batch_data = {
+                'batch_type': 'l' if AUTO['batch_type'] == 'loading' else 'u',
+                'truck': AUTO['truck_id'],
+                'trailer': 0 if not AUTO['trailer_id'] else AUTO['trailer_id'],
+                'is_active': True,
+                'gas_type': gas_type
+            }
 
-        # начинаем партию
-        logger.warning(f'Автоколонка. Запрос создания партии. Данные - {batch_data}')
-        batch_data = await video_api.create_batch_gas(batch_data)
-        AUTO['batch_id'] = batch_data.get('id')
-        AUTO['response_number_detect'] = True
+            # начинаем партию
+            logger.warning(f'Автоколонка. Запрос создания партии. Данные - {batch_data}')
+            batch_data = await video_api.create_batch_gas(batch_data)
+            AUTO['batch_id'] = batch_data.get('id')
+            AUTO['response_number_detect'] = True
+        except Exception as error:
+            logger.error(f'Автоколонка. response_number_detect - {error}')
 
     if AUTO['request_batch_complete']:
-        batch_data = {
-            'is_active': False,
-            'initial_mass_meter': AUTO['initial_mass_meter'],
-            'final_mass_meter': AUTO['final_mass_meter'],
-            'gas_amount': AUTO['gas_amount'],
-            'truck_full_weight': AUTO['truck_full_weight'],
-            'truck_empty_weight': AUTO['truck_empty_weight'],
-            'weight_gas_amount': AUTO['weight_gas_amount'],
-        }
-        # завершаем партию приёмки газа
-        logger.warning(f'Автоколонка. Запрос редактирования партии. Данные - {batch_data}')
-        await video_api.update_batch_gas(AUTO['batch_id'], batch_data)
-        AUTO['response_batch_complete'] = True
-
+        try:
+            batch_data = {
+                'is_active': False,
+                'initial_mass_meter': AUTO['initial_mass_meter'],
+                'final_mass_meter': AUTO['final_mass_meter'],
+                'gas_amount': AUTO['gas_amount'],
+                'truck_full_weight': AUTO['truck_full_weight'],
+                'truck_empty_weight': AUTO['truck_empty_weight'],
+                'weight_gas_amount': AUTO['weight_gas_amount'],
+            }
+            # завершаем партию приёмки газа
+            logger.warning(f'Автоколонка. Запрос редактирования партии. Данные - {batch_data}')
+            await video_api.update_batch_gas(AUTO['batch_id'], batch_data)
+            AUTO['response_batch_complete'] = True
+        except Exception as error:
+            logger.error(f'Автоколонка. response_batch_complete - {error}')
 
 async def kpp_processing(server: dict):
     logger.warning('Обработка регистрационных номеров на КПП')
@@ -229,29 +234,24 @@ async def railway_processing(server: dict):
         # получаем от "Интеллекта" список номеров с данными фотофиксации
         railway_tank_list = await get_registration_number_list(server)
         if not railway_tank_list:
-            logger.warning('ЖД весовая. Цистерна не определена')
+            logger.warning('ЖД цистерна не определена')
             return
         try:
             # работаем с номером последней цистерны
-            railway_tank_data = railway_tank_list[-1]
-            logger.warning(f'Номер последней жд цистерны {railway_tank_data['registration_number']}')
-            if railway_tank_data['registration_number'] != RAILWAY['last_number']:
-                RAILWAY['last_number'] = railway_tank_data['registration_number']
-                logger.warning(f'Запуск функции transport_process')
-                railway_tank_status, railway_tank = await transport_process(railway_tank_data)
-                logger.warning(f'Окончание функции transport_process')
+            railway_tank = railway_tank_list[-1]
+            if railway_tank['registration_number'] != RAILWAY['last_number']:
+                RAILWAY['last_number'] = railway_tank['registration_number']
+                railway_tank_update_data = {
+                    'registration_number': railway_tank['registration_number'],
+                    'is_on_station': RAILWAY['tank_is_on_station'],
+                    'tank_weight': RAILWAY['tank_weight']
+                }
 
-                if railway_tank['is_on_station']:
-                    railway_tank['full_weight'] = weight
-                else:
-                    railway_tank['gas_weight'] = railway_tank.get('full_weight') or 0 - weight
-                    railway_tank['empty_weight'] = weight
-
-                logger.warning(f'Выполняем update_transport')
-                await video_api.update_transport(railway_tank, 'railway_tank')
-                logger.warning(f'ЖД весовая. Цистерна № {RAILWAY['last_number']} на весах. Вес = {weight} тонн')
+                logger.warning(f'ЖД весовая. Запрос на сервер. Номер жд цистерны {railway_tank['registration_number']}')
+                await video_api.update_railway_tank(railway_tank_update_data)
                 RAILWAY['complete'] = True
-                logger.warning(f'ЖД весовая. Партия завершена. complete = {RAILWAY['complete']}')
+                logger.warning(f'ЖД весовая. Обработка завершена. Цистерна № {RAILWAY['last_number']}. Вес = {weight} тонн')
+
         except Exception as error:
             logger.error(f'ЖД весовая. {error}')
 

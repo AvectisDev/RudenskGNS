@@ -90,35 +90,56 @@ class TrailerView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RailwayTanksView(APIView):
+class RailwayTankView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        on_station = request.query_params.get('on_station', False)
-        registration_number = request.query_params.get('registration_number', False)
+    @action(detail=False, methods=['post'], url_path='update')
+    def update_railway_tank(self, request):
+        current_date = datetime.now().date()
+        current_time = datetime.now().time()
 
-        if on_station:
-            railway_tanks = RailwayTank.objects.filter(is_on_station=True)
-            if not railway_tanks:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            serializer = RailwayTankSerializer(railway_tanks, many=True)
-            return Response(serializer.data)
+        registration_number = request.data.get('registration_number', None)
+        is_on_station = request.data.get('is_on_station', False)
+        tank_weight = request.data.get('tank_weight', 0.0)
 
-        if registration_number:
-            railway_tank = get_object_or_404(RailwayTank, registration_number=registration_number)
-            serializer = RailwayTankSerializer(railway_tank)
-            return Response(serializer.data)
+        railway_tank, created = RailwayTank.objects.get_or_create(
+            registration_number=registration_number,
+            defaults={
+                'registration_number': registration_number,
+                'is_on_station': is_on_station,
+                'entry_date': current_date if is_on_station else None,
+                'entry_time': current_time if is_on_station else None,
+                'departure_date': current_date if not is_on_station else None,
+                'departure_time': current_time if not is_on_station else None,
+                'full_weight': tank_weight if is_on_station else None,
+                'empty_weight': tank_weight if not is_on_station else None,
+            }
+        )
 
-    def post(self, request):
+        if not created:
+            railway_tank.is_on_station = is_on_station
+            if is_on_station:
+                railway_tank.entry_date = current_date
+                railway_tank.entry_time = current_time
+                railway_tank.full_weight = tank_weight
+            else:
+                railway_tank.departure_date = current_date
+                railway_tank.departure_time = current_time
+                railway_tank.empty_weight = tank_weight
+                railway_tank.gas_weight = railway_tank.full_weight - railway_tank.empty_weight
+            railway_tank.save()
+
+        return Response(status=status.HTTP_200_OK)
+
+    def create(self, request):
         serializer = RailwayTankSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def patch(self, request):
-        railway_tank_id = request.data['id']
-        railway_tank = get_object_or_404(RailwayTank, id=railway_tank_id)
+    def partial_update(self, request, pk=None):
+        railway_tank = get_object_or_404(RailwayTank, id=pk)
 
         serializer = RailwayTankSerializer(railway_tank, data=request.data, partial=True)
         if serializer.is_valid():
