@@ -23,6 +23,15 @@ INTELLECT_SERVER_LIST = [
 ]
 
 # OPC tags
+class Railway:
+    def __init__(self):
+        self.tank_weight = 0.0
+        self.camera_worked = False
+        self.last_number = None
+        self.tank_is_on_station = False
+        self.complete = False
+
+
 RAILWAY = {
     'tank_weight': 0.0,
     'camera_worked': False,
@@ -30,6 +39,51 @@ RAILWAY = {
     'complete': False,
     'tank_is_on_station': False
 }
+
+
+class Auto:
+    def __init__(self):
+        self.batch_type = None
+        self.gas_type = 0  # Тип газа: 1 - Не выбран, 2 - СПБТ, 3 - ПБА
+        self.batch_id = 0
+        self.truck_id = None
+        self.trailer_id = None
+        self.initial_mass_meter = 0
+        self.final_mass_meter = 0
+        self.gas_amount = 0
+        self.truck_full_weight = 0
+        self.truck_empty_weight = 0
+        self.weight_gas_amount = 0
+        self.truck_capacity = 0
+        self.request_number_identification = False
+        self.response_number_detect = False
+        self.request_batch_complete = False
+        self.response_batch_complete = False
+
+    def reset(self):
+        """Сбросить атрибуты к их начальному значению."""
+        self.batch_type = None
+        self.gas_type = 0
+        self.batch_id = 0
+        self.truck_id = None
+        self.trailer_id = None
+        self.initial_mass_meter = 0
+        self.final_mass_meter = 0
+        self.gas_amount = 0
+        self.truck_full_weight = 0
+        self.truck_empty_weight = 0
+        self.weight_gas_amount = 0
+        self.truck_capacity = 0
+        self.request_number_identification = False
+        self.response_number_detect = False
+        self.request_batch_complete = False
+        self.response_batch_complete = False
+
+    def update_truck_weights(self, full_weight, empty_weight):
+        """Обновить веса грузовика."""
+        self.truck_full_weight = full_weight
+        self.truck_empty_weight = empty_weight
+
 
 AUTO = {
     'batch_type': None,

@@ -104,7 +104,7 @@ class Truck(models.Model):
     class Meta:
         verbose_name = "Грузовик"
         verbose_name_plural = "Грузовики"
-        ordering = ['-entry_date', '-entry_time']
+        ordering = ['-entry_date', '-entry_time', '-departure_date', '-departure_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:truck_detail', args=[self.pk])
@@ -154,7 +154,7 @@ class Trailer(models.Model):
     class Meta:
         verbose_name = "Прицеп"
         verbose_name_plural = "Прицепы"
-        ordering = ['-entry_date', '-entry_time']
+        ordering = ['-entry_date', '-entry_time', '-departure_date', '-departure_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:trailer_detail', args=[self.pk])
@@ -176,10 +176,10 @@ class BalloonAmount(models.Model):
 
 
 class TTN(models.Model):
-    number = models.CharField(blank=False, max_length=20, verbose_name="Номер ТТН")
-    contract = models.CharField(blank=False, max_length=20, verbose_name="Номер договора")
-    shipper = models.CharField(blank=False, max_length=20, verbose_name="Грузоотправитель")
-    consignee = models.CharField(blank=False, max_length=20, verbose_name="Грузополучатель")
+    number = models.CharField(blank=False, max_length=100, verbose_name="Номер ТТН")
+    contract = models.CharField(blank=True, max_length=100, verbose_name="Номер договора")
+    shipper = models.CharField(blank=False, max_length=100, verbose_name="Грузоотправитель")
+    consignee = models.CharField(blank=False, max_length=100, verbose_name="Грузополучатель")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
     gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
     balloons_amount = models.IntegerField(null=True, blank=True, verbose_name="Количество баллонов")
@@ -312,7 +312,7 @@ class RailwayTank(models.Model):
     class Meta:
         verbose_name = "Ж/д цистерна"
         verbose_name_plural = "Ж/д цистерны"
-        ordering = ['-id', '-entry_date', '-entry_time']
+        ordering = ['-id', '-entry_date', '-entry_time', '-departure_date', '-departure_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:railway_tank_detail', args=[self.pk])

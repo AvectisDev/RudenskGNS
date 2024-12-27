@@ -44,31 +44,33 @@ def get_opc_data():
         logger.warning('Connect to OPC server successful')
 
         if AUTO['response_number_detect']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_number_detect", True)
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.batch.response_number_detect", True)
+            AUTO['response_number_detect'] = False
         if AUTO['response_batch_complete']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.response_batch_complete", True)
+            set_opc_value("ns=4; s=Address Space.PLC_SU2.batch.response_batch_complete", True)
+            AUTO['response_batch_complete'] = False
 
         if RAILWAY['complete']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked", False)
+            set_opc_value("ns=4; s=Address Space.PLC_SU1.tank.camera_worked", False)
             RAILWAY['complete'] = False
 
-        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_stable_weight")
-        RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.camera_worked")
-        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.railway_tank_is_on_station")
+        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.stable_weight")
+        RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.camera_worked")
+        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.on_station")
 
-        AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.batch_type")
-        AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_type")
+        AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.batch_type")
+        AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.gas_type")
 
-        AUTO['initial_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.initial_mass_meter")
-        AUTO['final_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.final_mass_meter")
-        AUTO['gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.gas_amount")
+        AUTO['initial_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.initial_mass_meter")
+        AUTO['final_mass_meter'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.final_mass_meter")
+        AUTO['gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.gas_amount")
 
-        AUTO['truck_full_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.truck_full_weight")
-        AUTO['truck_empty_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.truck_empty_weight")
-        AUTO['weight_gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.weight_gas_amount")
+        AUTO['truck_full_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.truck_full_weight")
+        AUTO['truck_empty_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.truck_empty_weight")
+        AUTO['weight_gas_amount'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.weight_gas_amount")
 
-        AUTO['request_number_identification'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_number_identification")
-        AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.Batches.request_batch_complete")
+        AUTO['request_number_identification'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.request_number_identification")
+        AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.request_batch_complete")
 
         logger.warning(f'Auto:{AUTO}')
         logger.warning(f'Railway:{RAILWAY}')
@@ -136,7 +138,8 @@ async def auto_batch_processing(server):
     Формирование и обработка партий приёмки/отгрузки газа в автоцистернах
     """
 
-    if AUTO['request_number_identification']:  # Поиск машины в базе. Создание партии
+    # Поиск машины в базе. Создание партии
+    if AUTO['request_number_identification'] and not AUTO['response_number_detect']:
         try:
             logger.warning('Автовесовая. Запрос определения номера. Начало партии приёмки')
 
@@ -253,20 +256,26 @@ async def railway_processing(server: dict):
                 logger.warning(f'ЖД весовая. Обработка завершена. Цистерна № {RAILWAY['last_number']}. Вес = {weight} тонн')
 
         except Exception as error:
-            logger.error(f'ЖД весовая. {error}')
+            logger.error(f'ЖД весовая: {error}')
 
 async def periodic_kpp_processing():
     while True:
         # Задачи обработки номеров на КПП. Сервера 4 и 5
-        await kpp_processing(INTELLECT_SERVER_LIST[2])
-        await asyncio.sleep(60)  # 60 секунд = 1 минута
+        try:
+            await kpp_processing(INTELLECT_SERVER_LIST[2])
+            await asyncio.sleep(60)  # 60 секунд = 1 минута
+        except Exception as error:
+            logger.error(f'КПП: {error}')
 
 
 async def periodic_railway_processing():
     while True:
         # Задачи обработки жд цистерн. Сервер 1
-        await railway_processing(INTELLECT_SERVER_LIST[0])
-        await asyncio.sleep(2)
+        try:
+            await railway_processing(INTELLECT_SERVER_LIST[0])
+            await asyncio.sleep(5)
+        except Exception as error:
+            logger.error(f'ЖД весовая: {error}')
 
 
 async def main():
@@ -278,8 +287,11 @@ async def main():
         get_opc_data()
 
         # Обработка процессов приёмки/отгрузки газа в автоцистернах
-        await auto_batch_processing(INTELLECT_SERVER_LIST[1])
-        await asyncio.sleep(2)
+        try:
+            await auto_batch_processing(INTELLECT_SERVER_LIST[1])
+            await asyncio.sleep(5)
+        except Exception as error:
+            logger.error(f'Автоколонка: {error}')
 
 
 if __name__ == "__main__":
