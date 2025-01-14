@@ -1,5 +1,5 @@
 services:
-  db:
+  postgres:
     image: postgres:16-alpine
     container_name: postgres
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
       container_name: adminer
       restart: always
       ports:
-        - 8080:8080
+        - 8005:8080
       networks:
         - app_network
 
@@ -37,13 +37,65 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - db
+      - postgres
+      - redis
     environment:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
+      REDIS_URL: redis://redis:6379/0
+    networks:
+      - app_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - app_network
+
+  celery:
+    build: .
+    container_name: celery
+    command: celery -A GNS worker --loglevel=info
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_URL: redis://redis:6379/0
+    networks:
+      - app_network
+
+  celery_beat:
+    build: .
+    container_name: celery_beat
+    command: celery -A GNS beat --loglevel=info
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+      - postgres
+      - celery
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_URL: redis://redis:6379/0
     networks:
       - app_network
 
@@ -56,26 +108,7 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - db
-    environment:
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-    networks:
-      - app_network
-
-  asu:
-    build: ../asu app
-    container_name: asu
-    restart: always
-    ports:
-      - 8002:8002
-    env_file:
-      - ./.env
-    depends_on:
-      - db
+      - postgres
     environment:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}

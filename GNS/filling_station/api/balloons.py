@@ -1,3 +1,5 @@
+import logging
+import time
 from ..models import (Balloon, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
 from django.http import JsonResponse
 from django.db.models import Sum, Count
@@ -6,7 +8,7 @@ from asgiref.sync import sync_to_async
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import datetime, date
 from .serializers import (BalloonSerializer, BalloonAmountSerializer,
                           BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
@@ -38,6 +40,7 @@ USER_STATUS_LIST = [
 BALLOONS_LOADING_READER_LIST = [1, 6]
 BALLOONS_UNLOADING_READER_LIST = [2, 3, 4]
 
+logger = logging.getLogger('filling_station')
 
 class BalloonViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

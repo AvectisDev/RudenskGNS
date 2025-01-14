@@ -1,40 +1,8 @@
 import asyncio
-from datetime import datetime, timedelta
-import video_api
 import logging
 from opcua import Client, ua
-from settings import INTELLECT_SERVER_LIST, AUTO, RAILWAY
-from intellect_functions import (separation_string_date, get_registration_number_list, check_on_station,
-                                 get_transport_type)
-
-logging.basicConfig(
-    level=logging.WARNING,  # Уровень логирования
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='video_app_logs.log',
-    filemode='w',
-    encoding='utf-8'
-)
-
-logger = logging.getLogger('app_logger')
-logger.setLevel(logging.WARNING)
-
-
-def get_opc_value(addr_str):
-    """
-    Get value from OPC UA server by address:
-    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
-    """
-    var = client.get_node(addr_str)
-    return var.get_value()
-
-
-def set_opc_value(addr_str, value):
-    """
-    Get value from OPC UA server by address:
-    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
-    """
-    var = client.get_node(addr_str)
-    return var.set_attribute(ua.AttributeIds.Value, ua.DataValue(value))
+from filling_station.management.commands.intellect import (separation_string_date, get_registration_number_list, check_on_station,
+                                                           get_transport_type)
 
 
 def get_opc_data():
