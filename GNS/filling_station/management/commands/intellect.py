@@ -37,7 +37,7 @@ def get_intellect_data(data) -> list:
     """
     try:
         response = requests.post(INTELLECT_URL, json=data, timeout=5)
-        response.raise_for_status()  # Вызывает исключение для ошибок HTTP
+        response.raise_for_status()
 
         result = response.json()
 
@@ -47,7 +47,7 @@ def get_intellect_data(data) -> list:
         return []
 
     except Exception as error:
-        logger.error(f'Ошибка в функции "get_intellect_data" - {error}')
+        logger.error(f'Модуль intellect. Ошибка в функции "get_intellect_data" - {error}')
         return []
 
 

@@ -7,4 +7,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         subprocess.Popen(['python', '../rfid app/main.py'])
-        subprocess.Popen(['python', '../asu app/video_main.py'])

@@ -7,8 +7,7 @@ from import_export import resources
 class BalloonResources(resources.ModelResource):
     class Meta:
         model = Balloon
-        fields = ['id', 'nfc_tag', 'serial_number', 'creation_date', 'size', 'netto', 'brutto',
-                  'current_examination_date', 'next_examination_date', 'manufacturer', 'wall_thickness', 'status']
+        fields = ['nfc_tag', 'serial_number', 'size', 'netto', 'brutto', 'filling_status', "change_date", "change_time"]
 
 
 @admin.register(Balloon)

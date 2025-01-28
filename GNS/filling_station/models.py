@@ -325,10 +325,8 @@ class RailwayTank(models.Model):
 
 
 class RailwayBatch(models.Model):
-    begin_date = models.DateField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
-    begin_time = models.TimeField(null=True, blank=True, auto_now_add=True, verbose_name="Время начала приёмки")
-    end_date = models.DateField(null=True, blank=True, verbose_name="Дата окончания приёмки")
-    end_time = models.TimeField(null=True, blank=True, verbose_name="Время окончания приёмки")
+    begin_date = models.DateTimeField(null=True, blank=True, auto_now_add=True, verbose_name="Дата начала приёмки")
+    end_date = models.DateTimeField(null=True, blank=True, verbose_name="Дата окончания приёмки")
     gas_amount_spbt = models.FloatField(null=True, blank=True, verbose_name="Количество принятого СПБТ газа")
     gas_amount_pba = models.FloatField(null=True, blank=True, verbose_name="Количество принятого ПБА газа")
     railway_tank_list = models.ManyToManyField(RailwayTank, blank=True, verbose_name="Список жд цистерн")

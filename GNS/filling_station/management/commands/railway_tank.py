@@ -91,9 +91,26 @@ class Command(BaseCommand):
                     logger.error(f"Объект с номером {registration_number} не существует")
                 except MultipleObjectsReturned:
                     logger.error(f"Найдено более одного объекта с номером {registration_number}")
+
+                # Проверяем активные партии. Если партии нет - создаём её
+                try:
+                    railway_batch, batch_created = RailwayBatch.objects.get_or_create(
+                        is_active=True,
+                        defaults={
+                            'is_active': True
+                        }
+                    )
+
+                    # Привязываем цистерну к партии
+                    railway_batch.railway_tank_list.add(railway_tank)
+
+                except ObjectDoesNotExist:
+                    logger.error(f"Активной партии не существует")
+                except MultipleObjectsReturned:
+                    logger.error(f"Найдено более одной активной партии")
+
         except Exception as error:
             logger.error(f'No connection to OPC server: {error}')
-            return {'error': f'No connection to OPC server: {error}'}
         finally:
             self.client.disconnect()
             logger.info('Disconnect from OPC server')
