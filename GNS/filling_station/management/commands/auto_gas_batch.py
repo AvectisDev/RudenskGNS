@@ -67,8 +67,8 @@ class Command(BaseCommand):
             # Создаём партию
             AutoGasBatch.objects.create(
                 batch_type='l' if batch_type == 'loading' else 'u',
-                truck=auto_batch_truck,
-                trailer=auto_batch_trailer,
+                truck=auto_batch_truck.id,
+                trailer=auto_batch_trailer.id if auto_batch_trailer else 0,
                 is_active=True,
                 gas_type=batch_gas_type
             )

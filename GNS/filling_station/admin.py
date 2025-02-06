@@ -80,8 +80,7 @@ class BalloonsUnloadingBatchAdmin(admin.ModelAdmin):
 
 @admin.register(RailwayBatch)
 class RailwayBatchAdmin(admin.ModelAdmin):
-    list_display = ['id', 'end_date', 'end_time', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'import_ttn',
-                    'export_ttn']
+    list_display = ['id', 'end_date', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'import_ttn', 'export_ttn']
     list_filter = ['begin_date', 'end_date', 'is_active']
     search_fields = ['begin_date', 'end_date', 'is_active', 'ttn']
 

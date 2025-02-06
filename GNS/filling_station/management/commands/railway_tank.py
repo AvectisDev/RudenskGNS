@@ -47,18 +47,22 @@ class Command(BaseCommand):
                 railway_tank_list = get_registration_number_list(INTELLECT_SERVER_LIST[0])
 
                 if not railway_tank_list:
+                    # Если цистерна не определена, то создаём цистерну без номера
                     logger.info('ЖД цистерна не определена')
-                    return
-
-                # работаем с номером последней цистерны
-                railway_tank = railway_tank_list[-1]
-                registration_number = railway_tank['registration_number']
+                    registration_number = 'Не определён'
+                else:
+                    # работаем с номером последней цистерны
+                    railway_tank = railway_tank_list[-1]
+                    registration_number = railway_tank['registration_number']
 
                 if registration_number != self.last_number:
                     cache.set('last_tank_number', self.last_number)
+
+                # Инициализация переменной railway_tank
+                railway_tank = None
                 try:
                     railway_tank, tank_created = RailwayTank.objects.get_or_create(
-                        registration_number=registration_number,
+                        registration_number=registration_number if registration_number != 'Не определён' else ' ',
                         defaults={
                             'registration_number': registration_number,
                             'is_on_station': is_on_station,
@@ -101,8 +105,11 @@ class Command(BaseCommand):
                         }
                     )
 
-                    # Привязываем цистерну к партии
-                    railway_batch.railway_tank_list.add(railway_tank)
+                    # Привязываем цистерну к партии, если railway_tank определена
+                    if railway_tank is not None:
+                        railway_batch.railway_tank_list.add(railway_tank)
+                    else:
+                        logger.error("Не удалось создать или обновить цистерну. Привязка к партии невозможна.")
 
                 except ObjectDoesNotExist:
                     logger.error(f"Активной партии не существует")

@@ -266,10 +266,9 @@ class RailwayBatchForm(forms.ModelForm):
 
     class Meta:
         model = RailwayBatch
-        fields = ['end_date', 'end_time', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'import_ttn', 'export_ttn']
+        fields = ['end_date', 'gas_amount_spbt', 'gas_amount_pba', 'is_active', 'import_ttn', 'export_ttn']
         widgets = {
-            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'end_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_date': forms.DateTimeInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'gas_amount_spbt': forms.NumberInput(attrs={'class': 'form-control'}),
             'gas_amount_pba': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

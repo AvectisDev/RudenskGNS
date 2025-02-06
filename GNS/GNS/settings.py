@@ -166,13 +166,21 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_BEAT_SCHEDULE = {
-    'generate_1C_file_every_hour': {
-        'task': 'filling_station.tasks.generate_1c_file',
-        'schedule': 3600.0,  # каждый час
-    },
+    # 'generate_1C_file_every_hour': {
+    #     'task': 'filling_station.tasks.generate_1c_file',
+    #     'schedule': 3600.0,  # каждый час
+    # },
     'railway_tank_processing': {
         'task': 'filling_station.tasks.railway_tank_processing',
         'schedule': 5.0,  # каждые 5 сек
+    },
+    'railway_batch_processing': {
+        'task': 'filling_station.tasks.railway_batch_processing',
+        'schedule': 5.0,  # каждые 5 сек
+    },
+    'auto_gas_processing': {
+        'task': 'filling_station.tasks.auto_gas_processing',
+        'schedule': 1200.0,  # каждые 20 мин
     },
 }
 

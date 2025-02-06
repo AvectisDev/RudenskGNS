@@ -3,6 +3,7 @@ from celery import shared_task
 from .management.commands.generate_1C_file import Command as Generate1CFileCommand
 from .management.commands.railway_tank import Command as RailwayTankHandleCommand
 from .management.commands.auto_gas_batch import Command as AutoGasBatchHandleCommand
+from .management.commands.railway_batch import Command as RailwayBatchHandleCommand
 
 logger = logging.getLogger('filling_station')
 
@@ -15,6 +16,12 @@ def generate_1c_file():
 def railway_tank_processing():
     command = RailwayTankHandleCommand()
     logger.info('Начало обработки жд цистерн...')
+    command.handle()
+
+@shared_task
+def railway_batch_processing():
+    command = RailwayBatchHandleCommand()
+    logger.info('Проверка активных партий...')
     command.handle()
 
 @shared_task

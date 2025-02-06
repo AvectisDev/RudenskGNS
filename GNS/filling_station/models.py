@@ -69,6 +69,31 @@ class Balloon(models.Model):
         if self.brutto and self.netto and self.brutto < self.netto:
             raise ValidationError("Вес наполненного баллона должен быть больше веса пустого баллона.")
 
+
+class Reader(models.Model):
+    number = models.IntegerField(verbose_name="Номер считывателя")
+    nfc_tag = models.CharField(null=True, blank=True, max_length=30, verbose_name="Номер метки")
+    serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
+    size = models.IntegerField(choices=BALLOON_SIZE_CHOICES, default=50, verbose_name="Объём")
+    netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
+    brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
+    filling_status = models.BooleanField(null=True, blank=True, verbose_name="Готов к наполнению")
+    change_date = models.DateField(auto_now=True, verbose_name="Дата изменений")
+    change_time = models.TimeField(auto_now=True, verbose_name="Время изменений")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
+
+    def __int__(self):
+        return self.pk
+
+    def __str__(self):
+        return self.number
+
+    class Meta:
+        verbose_name = "Считыватель"
+        verbose_name_plural = "Считыватели"
+        ordering = ['-change_date', '-change_time']
+
+
 class TruckType(models.Model):
     type = models.CharField(max_length=50, verbose_name="Тип грузовика")
 
@@ -312,7 +337,7 @@ class RailwayTank(models.Model):
     class Meta:
         verbose_name = "Ж/д цистерна"
         verbose_name_plural = "Ж/д цистерны"
-        ordering = ['-id', '-entry_date', '-entry_time', '-departure_date', '-departure_time']
+        ordering = ['is_on_station', '-entry_date', '-entry_time', '-departure_date', '-departure_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:railway_tank_detail', args=[self.pk])
@@ -340,7 +365,7 @@ class RailwayBatch(models.Model):
     class Meta:
         verbose_name = "Партия приёмки жд цистерн"
         verbose_name_plural = "Партии приёмки жд цистерн"
-        ordering = ['-begin_date', '-begin_time']
+        ordering = ['-begin_date']
 
     def get_absolute_url(self):
         return reverse('filling_station:railway_batch_detail', args=[self.pk])
