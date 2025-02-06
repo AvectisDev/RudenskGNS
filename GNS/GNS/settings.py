@@ -176,11 +176,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'railway_batch_processing': {
         'task': 'filling_station.tasks.railway_batch_processing',
-        'schedule': 5.0,  # каждые 5 сек
+        'schedule': 1200.0,  # каждые 20 мин
     },
     'auto_gas_processing': {
         'task': 'filling_station.tasks.auto_gas_processing',
-        'schedule': 1200.0,  # каждые 20 мин
+        'schedule': 5.0,  # каждые 5 сек
     },
 }
 
