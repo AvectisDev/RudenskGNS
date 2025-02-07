@@ -12,7 +12,7 @@ urlpatterns = [
          name="balloon_update"),
     path("balloon/<pk>/delete/", views.BalloonDeleteView.as_view(), name="balloon_delete"),
 
-    path('reader/<str:reader>', views.reader_info, name="reader"),
+    path('reader/<int:reader>', views.reader_info, name="reader"),
 
     path('batch/balloons-loading', views.BalloonLoadingBatchListView.as_view(extra_context={
         "title": "Партии приёмки баллонов"
