@@ -1,6 +1,6 @@
 import logging
 import time
-from ..models import (Balloon, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
+from ..models import (Balloon, Reader, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
 from django.http import JsonResponse
 from django.db.models import Sum, Count
 from django.shortcuts import get_object_or_404
@@ -81,6 +81,17 @@ class BalloonViewSet(viewsets.ViewSet):
         reader_function = request.data.get('reader_function')
         if reader_function:
             self.add_balloon_to_batch_from_reader(balloon, reader_number, reader_function)
+
+        # Добавляем информацию по баллону в таблицу с ридерами
+        reader = Reader.objects.create(
+            number=reader_number,
+            nfc_tag=nfc_tag,
+            serial_number=balloon.serial_number,
+            size=balloon.size,
+            netto=balloon.netto,
+            brutto=balloon.brutto,
+            filling_status=balloon.filling_status
+        )
 
         serializer = BalloonSerializer(balloon)
         return Response(serializer.data)

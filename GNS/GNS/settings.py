@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '10.10.12.253']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '10.10.12.253', 'django']
 
 # Application definition
 
