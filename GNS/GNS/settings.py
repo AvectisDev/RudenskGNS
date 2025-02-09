@@ -105,7 +105,8 @@ DATABASES = {
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT')
+        'PORT': os.environ.get('DB_PORT'),
+        'CONN_MAX_AGE': 600,  # Соединение будет жить 10 минут
     }
 }
 
@@ -168,7 +169,7 @@ CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_BEAT_SCHEDULE = {
     # 'generate_1C_file_every_hour': {
     #     'task': 'filling_station.tasks.generate_1c_file',
-    #     'schedule': 3600.0,  # каждый час
+    #     'schedule': crontab(hour=1),
     # },
     'railway_tank_processing': {
         'task': 'filling_station.tasks.railway_tank_processing',
@@ -176,7 +177,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'railway_batch_processing': {
         'task': 'filling_station.tasks.railway_batch_processing',
-        'schedule': 1200.0,  # каждые 20 мин
+        'schedule': crontab(),  #minute=20 каждые 20 мин
     },
     'auto_gas_processing': {
         'task': 'filling_station.tasks.auto_gas_processing',
