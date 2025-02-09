@@ -1,30 +1,54 @@
-import aiohttp
+import requests
+import logging
 from datetime import datetime, timedelta
-from settings import INTELLECT_URL
 
 
-async def get_intellect_data(data) -> list:
+logger = logging.getLogger('filling_station')
+
+"""
+Номера серверов "Интеллект":
+    - Камера 23 (ЖД Весовая) -> "id": "1", direction = 3 - направо, 4 - налево
+    - Камера 25 (Весовая автотранспорта 1) -> "id": "2"
+    - Камера 26 (Весовая автотранспорта 2) -> "id": "3"
+    - Камера 27 (Распознавание номеров КПП Выезд) -> "id": "4", direction = 1 - от камеры, 2 - к камере
+    - Камера 28 (Распознавание номеров КПП Въезд) -> "id": "5", direction = 1 - от камеры, 2 - к камере
+"""
+INTELLECT_URL = "http://10.10.0.252:10001/lprserver/GetProtocolNumbers"  # intellect server address
+INTELLECT_SERVER_LIST = [
+    {
+        'id': '1',
+        'delta_minutes': 1
+    },
+    {
+        'id': '2,3',
+        'delta_minutes': 30
+    },
+    {
+        'id': '4,5',
+        'delta_minutes': 3
+    }
+]
+
+def get_intellect_data(data) -> list:
     """
-    Функция посылает запрос в "Интеллект" и возвращает статус запроса и список словарей с записями о транспорте
-    data: словарь с данными для запроса
-    return: JSON-ответ в виде списка при успешном запросе;
-            пустой список при ошибке
+    Функция посылает запрос в "Интеллект" и возвращает статус запроса и список словарей с записями о транспорте.
+    data: словарь с данными для запроса.
+    return: JSON-ответ в виде списка при успешном запросе; пустой список при ошибке.
     """
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.post(INTELLECT_URL, json=data, timeout=5) as response:
-                response.raise_for_status()  # Вызывает исключение для ошибок HTTP
+    try:
+        response = requests.post(INTELLECT_URL, json=data, timeout=5)
+        response.raise_for_status()
 
-                result = await response.json()
+        result = response.json()
 
-                if result['Status'] == "OK":
-                    item_list = result['Protocols'] if 'Protocols' in result else []
-                    return item_list
-                return []
+        if result['Status'] == "OK":
+            item_list = result.get('Protocols', [])
+            return item_list
+        return []
 
-        except Exception as error:
-            print(f'get_intellect_data function error - {error}')
-            return []
+    except Exception as error:
+        logger.error(f'Модуль intellect. Ошибка в функции "get_intellect_data" - {error}')
+        return []
 
 
 def get_start_time(delta_minutes: int) -> str:
@@ -51,22 +75,23 @@ def separation_string_date(date_string: str = '') -> tuple:
         string_date = converted_time.strftime("%Y-%m-%d")
         string_time = converted_time.strftime("%H:%M")
     except ValueError as error:
+        logger.error(f'Ошибка в функции "separation_string_date" - {error}')
         raise ValueError(f"Invalid date format: {error}")
     return string_date, string_time
 
 
-async def get_registration_number_list(server: dict) -> list:
+def get_registration_number_list(server: dict) -> list:
     """
     Функция формирует тело запроса к базе данных "Интеллект".
     Возвращает номер и дату прибывших/убывших машин и прицепов в виде списка словарей.
     """
 
     data_for_request = {
-        "id": server['id'],
-        "time_from": get_start_time(server['delta_minutes']),
+        "id": server.get('id'),
+        "time_from": get_start_time(server.get('delta_minutes')),
         "validaty_from": "5" if server.get('id') == '1' else "90"
     }
-    intellect_data = await get_intellect_data(data_for_request)
+    intellect_data = get_intellect_data(data_for_request)
 
     out_list = []
     if len(intellect_data) > 0:

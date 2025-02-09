@@ -1,40 +1,8 @@
 import asyncio
-from datetime import datetime, timedelta
-import video_api
 import logging
 from opcua import Client, ua
-from settings import INTELLECT_SERVER_LIST, AUTO, RAILWAY
-from intellect_functions import (separation_string_date, get_registration_number_list, check_on_station,
-                                 get_transport_type)
-
-logging.basicConfig(
-    level=logging.WARNING,  # Уровень логирования
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='video_app_logs.log',
-    filemode='w',
-    encoding='utf-8'
-)
-
-logger = logging.getLogger('app_logger')
-logger.setLevel(logging.WARNING)
-
-
-def get_opc_value(addr_str):
-    """
-    Get value from OPC UA server by address:
-    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
-    """
-    var = client.get_node(addr_str)
-    return var.get_value()
-
-
-def set_opc_value(addr_str, value):
-    """
-    Get value from OPC UA server by address:
-    Can look it in Editor.exe(SimpleScada)->Variable-> Double-click on the necessary variable->address
-    """
-    var = client.get_node(addr_str)
-    return var.set_attribute(ua.AttributeIds.Value, ua.DataValue(value))
+from filling_station.management.commands.intellect import (separation_string_date, get_registration_number_list, check_on_station,
+                                                           get_transport_type)
 
 
 def get_opc_data():
@@ -49,14 +17,6 @@ def get_opc_data():
         if AUTO['response_batch_complete']:
             set_opc_value("ns=4; s=Address Space.PLC_SU2.batch.response_batch_complete", True)
             AUTO['response_batch_complete'] = False
-
-        if RAILWAY['complete']:
-            set_opc_value("ns=4; s=Address Space.PLC_SU1.tank.camera_worked", False)
-            RAILWAY['complete'] = False
-
-        RAILWAY['tank_weight'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.stable_weight")
-        RAILWAY['camera_worked'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.camera_worked")
-        RAILWAY['tank_is_on_station'] = get_opc_value("ns=4; s=Address Space.PLC_SU1.tank.on_station")
 
         AUTO['batch_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.batch_type")
         AUTO['gas_type'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.gas_type")
@@ -73,7 +33,6 @@ def get_opc_data():
         AUTO['request_batch_complete'] = get_opc_value("ns=4; s=Address Space.PLC_SU2.batch.request_batch_complete")
 
         logger.warning(f'Auto:{AUTO}')
-        logger.warning(f'Railway:{RAILWAY}')
 
     except Exception as error:
         logger.error(f'No connection to OPC server: {error}')
@@ -227,37 +186,6 @@ async def kpp_processing(server: dict):
         await transport_process(transport)
 
 
-async def railway_processing(server: dict):
-    logger.warning('Обработка жд цистерн')
-
-    if RAILWAY['camera_worked']:
-        weight = RAILWAY['tank_weight']
-        logger.warning(f'Вес жд цистерны {RAILWAY['tank_weight']}')
-
-        # получаем от "Интеллекта" список номеров с данными фотофиксации
-        railway_tank_list = await get_registration_number_list(server)
-        if not railway_tank_list:
-            logger.warning('ЖД цистерна не определена')
-            return
-        try:
-            # работаем с номером последней цистерны
-            railway_tank = railway_tank_list[-1]
-            if railway_tank['registration_number'] != RAILWAY['last_number']:
-                RAILWAY['last_number'] = railway_tank['registration_number']
-                railway_tank_update_data = {
-                    'registration_number': railway_tank['registration_number'],
-                    'is_on_station': RAILWAY['tank_is_on_station'],
-                    'tank_weight': RAILWAY['tank_weight']
-                }
-
-                logger.warning(f'ЖД весовая. Запрос на сервер. Номер жд цистерны {railway_tank['registration_number']}')
-                await video_api.update_railway_tank(railway_tank_update_data)
-                RAILWAY['complete'] = True
-                logger.warning(f'ЖД весовая. Обработка завершена. Цистерна № {RAILWAY['last_number']}. Вес = {weight} тонн')
-
-        except Exception as error:
-            logger.error(f'ЖД весовая: {error}')
-
 async def periodic_kpp_processing():
     while True:
         # Задачи обработки номеров на КПП. Сервера 4 и 5
@@ -267,15 +195,6 @@ async def periodic_kpp_processing():
         except Exception as error:
             logger.error(f'КПП: {error}')
 
-
-async def periodic_railway_processing():
-    while True:
-        # Задачи обработки жд цистерн. Сервер 1
-        try:
-            await railway_processing(INTELLECT_SERVER_LIST[0])
-            await asyncio.sleep(5)
-        except Exception as error:
-            logger.error(f'ЖД весовая: {error}')
 
 
 async def main():

@@ -8,8 +8,8 @@ from filling_station.models import FilePath, RailwayBatch, BalloonsUnloadingBatc
 class Command(BaseCommand):
     help = 'Generate 1C file'
     today = timezone.now().strftime('%d.%m.%y')
-    # day_for_search = timezone.now()
-    day_for_search = datetime(2024, 10, 17)     # для тестирования
+    day_for_search = timezone.now()
+    # day_for_search = datetime(2024, 10, 17)     # для тестирования
 
     def handle(self, *args, **kwargs):
         filename = f'ГНС{self.today}.txt'

@@ -4,7 +4,20 @@
 {% block content %}
 
 <div>
-    <h5>Данные со считывателя №{{reader}} </h5>
+    <div class="container-fluid">
+    <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+        <div class="col-md-7 mb-2 mb-md-0">
+            <h5>Данные со считывателя №{{ reader }} - {{ reader_status }}</h5>
+        </div>
+
+        <div class="col-md-4 mb-2 mb-md-0">
+            <form method="get" action="{% url 'filling_station:balloon_list' %}" class="d-flex">
+                 <input type="text" name="query" class="form-control me-2" placeholder="Введите номер метки или серийный номер" value="{{ request.GET.query }}">
+                <button type="submit" class="btn" style="background-color: #3CBBD9; color: white;">Фильтровать</button>
+            </form>
+        </div>
+    </header>
+</div>
     <div>
         <table class="table table-striped table-hover vertical-align: middle"
                style="border-radius: 5px; overflow: hidden;">
@@ -12,21 +25,21 @@
                 style="background-color: #051831 !important; color: white !important;">
                 <th>RFID метка</th>
                 <th>Серийный номер</th>
+                <th>Объём</th>
                 <th>Вес НЕТТО</th>
                 <th>Вес БРУТТО</th>
-                <th>Статус</th>
+                <th>Готов к наполнению</th>
                 <th>Дата изменения</th>
                 <th>Время изменения</th>
             </tr>
             {% for balloon in page_obj.object_list %}
             <tr align="center">
-                <td>
-                    <a href="{{ balloon.get_absolute_url }}" style="color: #051831;"> {{ balloon.nfc_tag }} </a>
-                </td>
+                <td>{{ balloon.nfc_tag|default_if_none:"-" }}</td>
                 <td>{{ balloon.serial_number|default_if_none:"-" }}</td>
+                <td>{{ balloon.size|default_if_none:"-" }}</td>
                 <td>{{ balloon.netto|default_if_none:"-" }}</td>
                 <td>{{ balloon.brutto|default_if_none:"-" }}</td>
-                <td>{{ balloon.status|default_if_none:"-" }}</td>
+                <td>{% if balloon.filling_status == True %}Да{% else %}Нет{% endif %}</td>
                 <td>{{ balloon.change_date|default_if_none:"-" }}</td>
                 <td>{{ balloon.change_time|default_if_none:"-" }}</td>
             </tr>
