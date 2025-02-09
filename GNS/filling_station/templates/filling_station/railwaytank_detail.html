@@ -2,13 +2,18 @@
 {% block title %} Детали ж/д цистерны {% endblock %}
 
 {% block content %}
+<div class="col-md-2 mb-2 mb-md-0">
+    <h5>Детали ж/д цистерны</h5>
+</div>
+
+{% load custom_filters %}
 
 <div class="container text-center">
     <div class="row">
         <div class="col text-end">
             <p>Номер</p>
-            <p>Вес пустой цистерны</p>
             <p>Вес полной цистерны</p>
+            <p>Вес пустой цистерны</p>
             <p>Масса перевозимого газа</p>
             <p>Тип газа</p>
             <p>Находится на станции</p>
@@ -19,10 +24,10 @@
         </div>
         <div class="col text-start">
             <p>{{ railwaytank.registration_number }}</p>
-            <p>{{ railwaytank.empty_weight|default_if_none:"-" }}</p>
-            <p>{{ railwaytank.full_weight|default_if_none:"-" }}</p>
-            <p>{{ railwaytank.gas_weight|default_if_none:"-" }}</p>
-            <p>{{ railwaytank.gas_type|default_if_none:"-" }}</p>
+            <p>{{ railwaytank.full_weight|format_gas_amount }}</p>
+            <p>{{ railwaytank.empty_weight|format_gas_amount }}</p>
+            <p>{{ railwaytank.gas_weight|format_gas_amount }}</p>
+            <p>{{ railwaytank.gas_type }}</p>
             <p>{% if railwaytank.is_on_station %}Да{% else %}Нет{% endif %}</p>
             <p>{{ railwaytank.entry_date|default_if_none:"-" }}</p>
             <p>{{ railwaytank.entry_time|default_if_none:"-" }}</p>

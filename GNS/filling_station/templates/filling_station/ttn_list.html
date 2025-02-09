@@ -3,6 +3,8 @@
 
 {% block content %}
 
+{% load custom_filters %}
+
 <div class="container-fluid">
     <header class="d-flex flex-wrap align-items-center justify-content-between py-3 mb-4 border-bottom">
         <div class="col-md-3 mb-2 mb-md-0">
@@ -22,6 +24,7 @@
         <th>Номер договора</th>
         <th>Грузоотправитель</th>
         <th>Грузополучатель</th>
+        <th>Перевозчик</th>
         <th>Количество газа</th>
         <th>Тип газа</th>
         <th>Количество баллонов</th>
@@ -35,7 +38,8 @@
         <td>{{ ttn.contract }}</td>
         <td>{{ ttn.shipper }}</td>
         <td>{{ ttn.consignee }}</td>
-        <td>{{ ttn.gas_amount|floatformat:2|default_if_none:"-" }}</td>
+        <td>{{ ttn.carrier }}</td>
+        <td>{{ ttn.gas_amount|format_gas_amount }}</td>
         <td>{{ ttn.gas_type|default_if_none:"-" }}</td>
         <td>{{ ttn.balloons_amount|default_if_none:"-" }}</td>
         <td>{{ ttn.date|default_if_none:"-" }}</td>

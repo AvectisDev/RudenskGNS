@@ -24,7 +24,7 @@ services:
   adminer:
       image: adminer
       container_name: adminer
-      restart: always
+      restart: unless-stopped
       ports:
         - 8003:8080
       networks:
@@ -33,7 +33,7 @@ services:
   django_backend:
     build: .
     container_name: django
-    command: gunicorn --access-logfile - GNS.wsgi:application --bind 0.0.0.0:8000 --workers 8 --threads 4
+    command: gunicorn GNS.wsgi:application --bind 0.0.0.0:8000 --workers 8 --threads 4 --access-logfile -
     restart: unless-stopped
     ports:
       - 8000:8000

@@ -89,7 +89,7 @@ async def balloon_passport_processing(nfc_tag: str, reader: dict):
     passport = await balloon_api.update_balloon(passport)
 
     # Проверяем заполненность паспорта, если нет основных данных - запрашиваем их в мириаде
-    if passport['update_passport_required']:
+    if passport['update_passport_required'] or None:
         try:
             miriada_data = await get_balloon(nfc_tag)
         except Exception as error:
@@ -223,13 +223,16 @@ async def process_reader(reader):
 async def main():
     # При запуске программы очищаем буфер считывателей
     tasks = [asyncio.create_task(data_exchange_with_reader(reader, 'clean_buffer')) for reader in READER_LIST]
+    print('Очистка буфера RFID-считывателей...')
     await asyncio.wait(tasks)
 
     with ThreadPoolExecutor(max_workers=len(READER_LIST)) as executor:
+        print('Программа в работе')
         loop = asyncio.get_running_loop()
         tasks = [loop.run_in_executor(executor, process_reader_sync, reader) for reader in READER_LIST]
         await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
+    print('Запуск программы считывания RFID-меток...')
     asyncio.run(main())

@@ -204,6 +204,7 @@ class TTN(models.Model):
     number = models.CharField(blank=False, max_length=100, verbose_name="Номер ТТН")
     contract = models.CharField(blank=True, max_length=100, verbose_name="Номер договора")
     shipper = models.CharField(blank=False, max_length=100, verbose_name="Грузоотправитель")
+    carrier = models.CharField(blank=False, max_length=100, verbose_name="Перевозчик")
     consignee = models.CharField(blank=False, max_length=100, verbose_name="Грузополучатель")
     gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
     gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
@@ -319,7 +320,7 @@ class BalloonsUnloadingBatch(models.Model):
 
 
 class RailwayTank(models.Model):
-    registration_number = models.CharField(blank=False, max_length=10, verbose_name="Номер ж/д цистерны")
+    registration_number = models.CharField(blank=False, max_length=20, verbose_name="Номер ж/д цистерны")
     empty_weight = models.FloatField(null=True, blank=True, verbose_name="Вес пустой цистерны")
     full_weight = models.FloatField(null=True, blank=True, verbose_name="Вес полной цистерны")
     gas_weight = models.FloatField(null=True, blank=True, verbose_name="Масса перевозимого газа")
@@ -337,7 +338,7 @@ class RailwayTank(models.Model):
     class Meta:
         verbose_name = "Ж/д цистерна"
         verbose_name_plural = "Ж/д цистерны"
-        ordering = ['is_on_station', '-entry_date', '-entry_time', '-departure_date', '-departure_time']
+        ordering = ['-is_on_station', '-entry_date', '-entry_time', '-departure_date', '-departure_time']
 
     def get_absolute_url(self):
         return reverse('filling_station:railway_tank_detail', args=[self.pk])

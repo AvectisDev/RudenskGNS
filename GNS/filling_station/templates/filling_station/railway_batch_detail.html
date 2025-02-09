@@ -10,24 +10,22 @@
         <div class="col text-end">
             <p>Номер партии</p>
             <p>Дата начала</p>
-            <p>Время начала</p>
             <p>Дата окончания</p>
-            <p>Время окончания</p>
             <p>Принято СПБТ газа</p>
             <p>Принято ПБА газа</p>
             <p>В работе</p>
-            <p>ТТН</p>
+            <p>ТТН на приёмку</p>
+            <p>ТТН на отгрузку</p>
         </div>
         <div class="col text-start">
             <p>{{ batch.id }}</p>
             <p>{{ batch.begin_date|default_if_none:"-" }}</p>
-            <p>{{ batch.begin_time|default_if_none:"-" }}</p>
             <p>{{ batch.end_date|default_if_none:"-" }}</p>
-            <p>{{ batch.end_time|default_if_none:"-" }}</p>
             <p>{{ batch.gas_amount_spbt|floatformat:2|default_if_none:"-" }}</p>
-            <p>{{ batch.gas_amount_pba|floatformat:2|default_if_none:"-" }}</p>
+            <p>{{ batch.gas_amount_pba|default_if_none:"-"|floatformat:2 }}</p>
             <p>{% if batch.is_active %}Активна{% else %}Завершена{% endif %}</p>
-            <p>{{ batch.ttn|default_if_none:"-" }}</p>
+            <p>{{ batch.import_ttn|default_if_none:"-" }}</p>
+            <p>{{ batch.export_ttn|default_if_none:"-" }}</p>
         </div>
     </div>
 </div>
