@@ -15,6 +15,11 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     networks:
       - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 10G
 
   adminer:
       image: adminer
@@ -28,7 +33,7 @@ services:
   django_backend:
     build: .
     container_name: django
-    command: daphne GNS.asgi:application --bind 0.0.0.0 -p 8000 --application-close-timeout 10
+    command: gunicorn --access-logfile - GNS.wsgi:application --bind 0.0.0.0:8000 --workers 8 --threads 4
     restart: unless-stopped
     ports:
       - 8000:8000
@@ -51,8 +56,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 8G
+          cpus: '8'
+          memory: 10G
 
   redis:
     image: redis:latest
