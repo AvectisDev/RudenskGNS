@@ -1,5 +1,6 @@
 import logging
 import time
+import requests
 from ..models import (Balloon, Reader, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
 from django.http import JsonResponse
 from django.db.models import Sum, Count
@@ -47,6 +48,10 @@ logger = logging.getLogger('filling_station')
 class BalloonViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.logger = logging.getLogger(__name__)
+
     @action(detail=False, methods=['get'], url_path='nfc/(?P<nfc_tag>[^/.]+)')
     def get_by_nfc(self, request, nfc_tag=None):
         balloon = get_object_or_404(Balloon, nfc_tag=nfc_tag)
@@ -59,41 +64,84 @@ class BalloonViewSet(viewsets.ViewSet):
         serializer = BalloonSerializer(balloons, many=True)
         return Response(serializer.data)
 
+    def get_balloon_by_nfc_tag(self, nfc_tag: str):
+        """
+        Метод для получения данных о баллоне по NFC-метке из Мириады.
+        """
+        # miriada server address
+        BASE_URL = 'https://publicapi-vitebsk.cloud.gas.by'
+        # метод получения основных данных баллона
+        url = f'{BASE_URL}/getballoonbynfctag?nfctag={nfc_tag}&realm=brestoblgas'
+
+        try:
+            response = requests.get(url, timeout=3)
+            response.raise_for_status()
+            result = response.json()
+
+            if result.get('status') == "Ok":
+                self.logger.info(f"Паспорт баллона получен из Мириады. Номер метки: {nfc_tag}")
+                return result['List']
+            else:
+                self.logger.warning(f"API Мириады вернуло ошибку. Номер метки: {nfc_tag}")
+                return []
+
+        except Exception as error:
+            self.logger.error(f'Ошибка в методе получения паспорта баллона из Мириады: {error}')
+            return None
+
     @action(detail=False, methods=['post'], url_path='update-by-reader')
     def update_by_reader(self, request):
+        """
+        Метод для обновления данных баллона по NFC-метке. Если у баллона активен флаг "обновление паспорта", то
+        повторно запрашиваем данные в Мириаде через метод get_balloon_by_nfc_tag
+        """
+        balloon_status = request.data.get('status')
+        if not balloon_status:
+            self.logger.error("Статус баллона отсутствует в теле запроса")
+
         nfc_tag = request.data.get('nfc_tag')
-        balloon, created = Balloon.objects.get_or_create(
+        if not nfc_tag:
+            self.logger.error("Номер метки отсутствует в теле запроса")
+            return Response({"error": "nfc_tag is required"}, status=400)
+
+        balloon, created = Balloon.objects.update_or_create(
             nfc_tag=nfc_tag,
             defaults={
-                'status': request.data.get('status'),
-                'update_passport_required': True
+                'status': balloon_status
             }
         )
-        if not created:
-            balloon.status = request.data.get('status')
-            if balloon.update_passport_required:
-                balloon.update_passport_required = request.data.get('update_passport_required')
-                balloon.serial_number = request.data.get('serial_number')
-                balloon.netto = request.data.get('netto')
-                balloon.brutto = request.data.get('brutto')
-                balloon.filling_status = request.data.get('filling_status', False)
-            balloon.save()
-
         reader_number = request.data.get('reader_number')
+        if reader_number is None:
+            self.logger.error("Номер ридера отсутствует в теле запроса")
+
+        # Если требуется обновление паспорта или идёт приёмка новых баллонов - выполняем запрос в Мириаду
+        if balloon.update_passport_required in (True, None) or reader_number in [1, 6]:
+            balloon_passport_from_miriada = self.get_balloon_by_nfc_tag(nfc_tag)
+            # Данные получены
+            if balloon_passport_from_miriada:
+                balloon.update_passport_required = False
+                balloon.serial_number = balloon_passport_from_miriada['number']
+                balloon.netto = balloon_passport_from_miriada['netto']
+                balloon.brutto = balloon_passport_from_miriada['brutto']
+                balloon.filling_status = balloon_passport_from_miriada['status']
+                # Сохраняем модель
+                balloon.save()
+
         reader_function = request.data.get('reader_function')
         if reader_function:
             self.add_balloon_to_batch_from_reader(balloon, reader_number, reader_function)
 
         # Добавляем информацию по баллону в таблицу с ридерами
-        reader = Reader.objects.create(
-            number=reader_number,
-            nfc_tag=nfc_tag,
-            serial_number=balloon.serial_number,
-            size=balloon.size,
-            netto=balloon.netto,
-            brutto=balloon.brutto,
-            filling_status=balloon.filling_status
-        )
+        if reader_number:
+            Reader.objects.create(
+                number=reader_number,
+                nfc_tag=nfc_tag,
+                serial_number=balloon.serial_number,
+                size=balloon.size,
+                netto=balloon.netto,
+                brutto=balloon.brutto,
+                filling_status=balloon.filling_status
+            )
 
         serializer = BalloonSerializer(balloon)
         return Response(serializer.data)

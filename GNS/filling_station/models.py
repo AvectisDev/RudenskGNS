@@ -40,7 +40,7 @@ class Balloon(models.Model):
     manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
     wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
     filling_status = models.BooleanField(null=True, blank=True, verbose_name="Готов к наполнению")
-    update_passport_required = models.BooleanField(null=True, blank=True, verbose_name="Требуется обновление паспорта")
+    update_passport_required = models.BooleanField(default=True, verbose_name="Требуется обновление паспорта")
     change_date = models.DateField(null=True, blank=True, auto_now=True, verbose_name="Дата изменений")
     change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время изменений")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
@@ -72,12 +72,12 @@ class Balloon(models.Model):
 
 class Reader(models.Model):
     number = models.IntegerField(verbose_name="Номер считывателя")
-    nfc_tag = models.CharField(null=True, blank=True, max_length=30, verbose_name="Номер метки")
+    nfc_tag = models.CharField(max_length=30, verbose_name="Номер метки")
     serial_number = models.CharField(null=True, blank=True, max_length=30, verbose_name="Серийный номер")
     size = models.IntegerField(choices=BALLOON_SIZE_CHOICES, default=50, verbose_name="Объём")
     netto = models.FloatField(null=True, blank=True, verbose_name="Вес пустого баллона")
     brutto = models.FloatField(null=True, blank=True, verbose_name="Вес наполненного баллона")
-    filling_status = models.BooleanField(null=True, blank=True, verbose_name="Готов к наполнению")
+    filling_status = models.BooleanField(default=False, verbose_name="Готов к наполнению")
     change_date = models.DateField(auto_now=True, verbose_name="Дата изменений")
     change_time = models.TimeField(auto_now=True, verbose_name="Время изменений")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
@@ -95,7 +95,7 @@ class Reader(models.Model):
 
 
 class TruckType(models.Model):
-    type = models.CharField(max_length=50, verbose_name="Тип грузовика")
+    type = models.CharField(max_length=100, verbose_name="Тип грузовика")
 
     def __str__(self):
         return self.type
@@ -142,7 +142,7 @@ class Truck(models.Model):
 
 
 class TrailerType(models.Model):
-    type = models.CharField(max_length=50, verbose_name="Тип прицепа")
+    type = models.CharField(max_length=100, verbose_name="Тип прицепа")
 
     def __str__(self):
         return self.type

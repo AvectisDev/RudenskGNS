@@ -76,40 +76,18 @@ async def balloon_passport_processing(nfc_tag: str, reader: dict):
     Функция проверяет наличие и заполненность паспорта в базе данных. Перезаписывает статус баллона в зависимости от
     того, через какой считыватель сейчас прошёл баллон.
     """
-    passport_ok_flag = False
 
     passport = {
         'nfc_tag': nfc_tag,
-        'reader_number': reader['number'],
         'status': reader['status'],
+        'reader_number': reader['number'],
         'reader_function': reader['function']
     }
 
     # Обновляем статус баллона в базе данных. Если паспорта нет - создаём запись
     passport = await balloon_api.update_balloon(passport)
 
-    # Проверяем заполненность паспорта, если нет основных данных - запрашиваем их в мириаде
-    if passport['update_passport_required'] or None:
-        try:
-            miriada_data = await get_balloon(nfc_tag)
-        except Exception as error:
-            miriada_data = None
-            logger.debug(f'{reader['status']} {nfc_tag} Ошибка запроса к мириаде: {error}')
-
-        if miriada_data:  # если получили данные из мириады
-            passport['serial_number'] = miriada_data['number']
-            passport['netto'] = float(miriada_data['netto'])
-            passport['brutto'] = float(miriada_data['brutto'])
-            passport['filling_status'] = miriada_data['status']
-            passport['update_passport_required'] = False
-            passport_ok_flag = True
-
-            # Обновляем паспорт баллона в базе данных
-            passport = await balloon_api.update_balloon(passport)
-    else:
-        passport_ok_flag = True
-
-    return passport_ok_flag, passport
+    return passport['filling_status']
 
 
 async def read_nfc_tag(reader: dict):
@@ -137,7 +115,7 @@ async def read_nfc_tag(reader: dict):
             work_with_nfc_tag_list(nfc_tag, reader['previous_nfc_tags'])
 
             try:
-                balloon_passport_status, balloon_passport = await balloon_passport_processing(nfc_tag, reader)
+                balloon_passport_status = await balloon_passport_processing(nfc_tag, reader)
                 
                 # if reader["ip"] == '10.10.2.23':
                 #     logger.debug(f'{reader["ip"]} rfid 3.записываем в бд новое количество rfid баллонов')
@@ -160,7 +138,7 @@ async def read_nfc_tag(reader: dict):
                     await data_exchange_with_reader(reader, 'read_complete_with_error')
 
             except Exception as error:
-                print('balloon_passport_processing', error)
+                print('Ошибка в функции read_nfc_tag', error)
 
     else:
         await asyncio.sleep(0.3)
