@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} {% endblock %}
+
+{% block content %}
+
+<h5>{{ title }}</h5>
+
+<div class="container text-center">
+    <div class="row">
+        <div class="col text-end">
+            <p>Номер партии</p>
+            <p>Дата начала</p>
+            <p>Дата окончания</p>
+            <p>Принято СПБТ газа</p>
+            <p>Принято ПБА газа</p>
+            <p>В работе</p>
+            <p>ТТН на приёмку</p>
+            <p>ТТН на отгрузку</p>
+        </div>
+        <div class="col text-start">
+            <p>{{ batch.id }}</p>
+            <p>{{ batch.begin_date|default_if_none:"-" }}</p>
+            <p>{{ batch.end_date|default_if_none:"-" }}</p>
+            <p>{{ batch.gas_amount_spbt|floatformat:2|default_if_none:"-" }}</p>
+            <p>{{ batch.gas_amount_pba|default_if_none:"-"|floatformat:2 }}</p>
+            <p>{% if batch.is_active %}Активна{% else %}Завершена{% endif %}</p>
+            <p>{{ batch.import_ttn|default_if_none:"-" }}</p>
+            <p>{{ batch.export_ttn|default_if_none:"-" }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="container text-center">
+    <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
+            onclick="location.href='{% url 'filling_station:railway_batch_list' %}'">Назад
+    </button>
+    <button type="button" class="btn" style="background-color: #3CBBD9; color: white;"
+            onclick="location.href = '{{ batch.get_update_url }}'">Редактировать
+    </button>
+    <button type="button" class="btn btn-danger" onclick="location.href = '{{ batch.get_delete_url }}'">Удалить
+    </button>
+</div>
+
+{% endblock content %}

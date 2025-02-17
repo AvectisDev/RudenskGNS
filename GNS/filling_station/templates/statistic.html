@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %} Статистика по ГНС {% endblock %}
+
+{% block content %}
+<div>
+    <div class="container-fluid">
+        <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <h5 style="white-space: nowrap;">
+                    Статистика по ГНС за период с {{ start_date|date:"j E Y" }} по {{ end_date|date:"j E Y" }}
+                </h5>
+            </div>
+
+            <div class="col-md-3 mb-2 mb-md-0">
+                <form method="post" enctype="multipart/form-data" class="d-flex align-items-center">
+                    {% csrf_token %}
+                    <div class="me-2">
+                        {{ form.start_date }}
+                    </div>
+                    <div class="me-2">  <!-- Отступ справа для полей ввода -->
+                        {{ form.end_date }}
+                    </div>
+                    <button class="btn" style="background-color: #3CBBD9; color: white;" type="submit">
+                        Показать
+                    </button>
+                </form>
+            </div>
+        </header>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Контейнер для строк -->
+                <div class="d-flex flex-column">
+                    <!-- Каждая строка -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_1 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №1 (Регистрация
+                            пустого баллона на складе (из кассеты))</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_2 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №2 (Погрузка
+                            полного баллона в кассету)</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_3 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №3 (Погрузка
+                            полного баллона на трал 1)</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_4 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №4 (Погрузка
+                            полного баллона на трал 2)</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_5 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №5 (Регистрация
+                            полного баллона на складе)</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_6 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №6 (Регистрация
+                            пустого баллона на складе (рампа))</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_7 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №7 (Регистрация
+                            пустого баллона на складе (цех))</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_quantity_by_reader_8 }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество баллонов RFID-считыватель №8 (Наполнение
+                            баллона сжиженным газом)</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_loading_batches }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество принятых партий баллонов</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ balloons_unloading_batches }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество отгруженных партий баллонов</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ auto_gas_loading_batches }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество принятых партий газа в автоцистернах</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ auto_gas_unloading_batches }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество отгруженных партий газа в
+                            автоцистернах</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="text-end" style="flex: 0 0 100px;">{{ railway_batches }}</p>
+                        <p class="text-start ms-3" style="flex: 1;">Количество принятых партий газа в ж/д цистернах</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
