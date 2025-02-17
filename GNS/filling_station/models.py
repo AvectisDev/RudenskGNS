@@ -39,10 +39,10 @@ class Balloon(models.Model):
     status = models.CharField(null=True, blank=True, max_length=100, verbose_name="Статус")
     manufacturer = models.CharField(null=True, blank=True, max_length=30, verbose_name="Производитель")
     wall_thickness = models.FloatField(null=True, blank=True, verbose_name="Толщина стенок")
-    filling_status = models.BooleanField(null=True, blank=True, verbose_name="Готов к наполнению")
+    filling_status = models.BooleanField(default=False, verbose_name="Готов к наполнению")
     update_passport_required = models.BooleanField(default=True, verbose_name="Требуется обновление паспорта")
-    change_date = models.DateField(null=True, blank=True, auto_now=True, verbose_name="Дата изменений")
-    change_time = models.TimeField(null=True, blank=True, auto_now=True, verbose_name="Время изменений")
+    change_date = models.DateField(auto_now=True, verbose_name="Дата изменений")
+    change_time = models.TimeField(auto_now=True, verbose_name="Время изменений")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, verbose_name="Пользователь", default=1)
 
     def __int__(self):

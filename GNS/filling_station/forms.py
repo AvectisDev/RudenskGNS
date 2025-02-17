@@ -1,5 +1,6 @@
 from crispy_forms.bootstrap import StrictButton
 from django import forms
+from django.utils import timezone
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                      RailwayBatch, AutoGasBatch)
 from .models import GAS_TYPE_CHOICES, BATCH_TYPE_CHOICES, BALLOON_SIZE_CHOICES
@@ -23,16 +24,16 @@ USER_STATUS_LIST = [
 
 
 class GetBalloonsAmount(forms.Form):
-    date = forms.CharField(max_length=10, label="Дата", widget=forms.DateInput(attrs={
-        'class': 'form-control',
-        'type': 'date'
-    }))
-
-    def clean_data(self):
-        date_data = self.cleaned_data["date"]
-        if date_data is None or len(date_data) != 10:
-            raise forms.ValidationError("Поле не может быть пустым")
-        return date_data
+    start_date = forms.DateField(
+        label="Начальная дата",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        initial=timezone.now().date()
+    )
+    end_date = forms.DateField(
+        label="Конечная дата",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        initial=timezone.now().date()
+    )
 
 
 class BalloonForm(forms.ModelForm):

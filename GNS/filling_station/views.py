@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.urls import reverse_lazy
 from django.views import generic
-from django.db.models import Q
+from django.db.models import Q, Sum
 from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
                      RailwayBatch, BalloonAmount, AutoGasBatch, Reader)
 from .admin import BalloonResources
@@ -321,68 +321,60 @@ class TTNDeleteView(generic.DeleteView):
     success_url = reverse_lazy("filling_station:ttn_list")
     template_name = 'filling_station/ttn_confirm_delete.html'
 
-
+# Обработка данных для вкладки "Статистика"
 def statistic(request):
     current_date = datetime.now().date()
-    previous_date = current_date - timedelta(days=1)
 
     if request.method == "POST":
-        required_date = request.POST.get("date")
-        format_required_date = datetime.strptime(required_date, '%Y-%m-%d')
-
-        date_process = GetBalloonsAmount()
-
-        balloons_reader_1 = BalloonAmount.objects.filter(reader_id=1, change_date=format_required_date).first()
-        balloons_reader_2 = BalloonAmount.objects.filter(reader_id=2, change_date=format_required_date).first()
-        balloons_reader_3 = BalloonAmount.objects.filter(reader_id=3, change_date=format_required_date).first()
-        balloons_reader_4 = BalloonAmount.objects.filter(reader_id=4, change_date=format_required_date).first()
-        balloons_reader_5 = BalloonAmount.objects.filter(reader_id=5, change_date=format_required_date).first()
-        balloons_reader_6 = BalloonAmount.objects.filter(reader_id=6, change_date=format_required_date).first()
-        balloons_reader_7 = BalloonAmount.objects.filter(reader_id=7, change_date=format_required_date).first()
-        balloons_reader_8 = BalloonAmount.objects.filter(reader_id=8, change_date=format_required_date).first()
-        balloons_loading_batches = BalloonsLoadingBatch.objects.filter(begin_date=format_required_date)
-        balloons_unloading_batches = BalloonsUnloadingBatch.objects.filter(begin_date=format_required_date)
-        auto_gas_loading_batches = AutoGasBatch.objects.filter(batch_type='l', begin_date=format_required_date)
-        auto_gas_unloading_batches = AutoGasBatch.objects.filter(batch_type='u', begin_date=format_required_date)
-        railway_batches = RailwayBatch.objects.filter(begin_date=format_required_date)
-
-        context = {
-            'current_balloons_quantity_by_reader_1': balloons_reader_1.amount_of_rfid if balloons_reader_1 is not None else 0,
-            'current_balloons_quantity_by_reader_2': balloons_reader_2.amount_of_rfid if balloons_reader_2 is not None else 0,
-            'current_balloons_quantity_by_reader_3': balloons_reader_3.amount_of_rfid if balloons_reader_3 is not None else 0,
-            'current_balloons_quantity_by_reader_4': balloons_reader_4.amount_of_rfid if balloons_reader_4 is not None else 0,
-            'current_balloons_quantity_by_reader_5': balloons_reader_5.amount_of_rfid if balloons_reader_5 is not None else 0,
-            'current_balloons_quantity_by_reader_6': balloons_reader_6.amount_of_rfid if balloons_reader_6 is not None else 0,
-            'current_balloons_quantity_by_reader_7': balloons_reader_7.amount_of_rfid if balloons_reader_7 is not None else 0,
-            'current_balloons_quantity_by_reader_8': balloons_reader_8.amount_of_rfid if balloons_reader_8 is not None else 0,
-            'balloons_loading_batches': len(balloons_loading_batches) if balloons_loading_batches is not None else 0,
-            'balloons_unloading_batches': len(
-                balloons_unloading_batches) if balloons_unloading_batches is not None else 0,
-            'auto_gas_loading_batches': len(auto_gas_loading_batches) if auto_gas_loading_batches is not None else 0,
-            'auto_gas_unloading_batches': len(
-                auto_gas_unloading_batches) if auto_gas_unloading_batches is not None else 0,
-            'railway_batches': len(railway_batches) if railway_batches is not None else 0,
-            'form': date_process,
-        }
-
-        return render(request, "statistic.html", context)
+        form = GetBalloonsAmount(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+        else:
+            start_date = current_date
+            end_date = current_date
     else:
-        date_process = GetBalloonsAmount()
+        form = GetBalloonsAmount()
+        start_date = current_date
+        end_date = current_date
 
-    context = {
-        'current_balloons_quantity_by_reader_1': 0,
-        'current_balloons_quantity_by_reader_2': 0,
-        'current_balloons_quantity_by_reader_3': 0,
-        'current_balloons_quantity_by_reader_4': 0,
-        'current_balloons_quantity_by_reader_5': 0,
-        'current_balloons_quantity_by_reader_6': 0,
-        'current_balloons_quantity_by_reader_7': 0,
-        'current_balloons_quantity_by_reader_8': 0,
-        'balloons_loading_batches': 0,
-        'balloons_unloading_batches': 0,
-        'auto_gas_loading_batches': 0,
-        'auto_gas_unloading_batches': 0,
-        'railway_batches': 0,
-        'form': date_process,
+    # Получаем общее количество баллонов для каждого ридера за период
+    readers_data = {
+        f'balloons_quantity_by_reader_{i}': BalloonAmount.objects.filter(
+            reader_id=i,
+            change_date__range=[start_date, end_date]
+        ).aggregate(total=Sum('amount_of_rfid'))['total'] or 0
+        for i in range(1, 9)
     }
+
+    # Получаем количество партий для каждой модели за период
+    batches_data = {
+        'balloons_loading_batches': BalloonsLoadingBatch.objects.filter(
+            begin_date__range=[start_date, end_date]
+        ).count(),
+        'balloons_unloading_batches': BalloonsUnloadingBatch.objects.filter(
+            begin_date__range=[start_date, end_date]
+        ).count(),
+        'auto_gas_loading_batches': AutoGasBatch.objects.filter(
+            batch_type='l',
+            begin_date__range=[start_date, end_date]
+        ).count(),
+        'auto_gas_unloading_batches': AutoGasBatch.objects.filter(
+            batch_type='u',
+            begin_date__range=[start_date, end_date]
+        ).count(),
+        'railway_batches': RailwayBatch.objects.filter(
+            begin_date__range=[start_date, end_date]
+        ).count(),
+    }
+
+    # Объединяем данные в контекст
+    context = {
+        **readers_data,
+        **batches_data,
+        'form': form,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+
     return render(request, "statistic.html", context)
