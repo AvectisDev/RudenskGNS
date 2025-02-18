@@ -7,5 +7,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GNS.settings')
 
 application = get_asgi_application()
 
-# Запуск команды выполнения сторонних скриптов
+# Запуск команды выполнения программы обработки RFID меток
+call_command('run_scripts')
 
