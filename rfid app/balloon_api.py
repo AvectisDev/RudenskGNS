@@ -1,6 +1,6 @@
 import aiohttp
 
-BASE_URL = "http://django:8000/api"  # server address
+BASE_URL = "http://localhost:8000/api"  # server address
 USERNAME = "reader"
 PASSWORD = "rfid-device"
 

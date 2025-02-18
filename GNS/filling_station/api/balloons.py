@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from filling_station.tasks import send_to_opc
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
@@ -126,6 +127,16 @@ class BalloonViewSet(viewsets.ViewSet):
                 balloon.filling_status = balloon_passport_from_miriada['status']
                 # Сохраняем модель
                 balloon.save()
+
+        # Выполняем передачу данных в OPC сервер (лампочки на считывателях)
+        logger.info(
+            f'данные в функции update-by-reader reader_number-{reader_number},'
+            f'nfc_tag={nfc_tag} '
+            f'type of reader_number-{type(reader_number)}; '
+            f'blink-{balloon.update_passport_required}, '
+            f'type of blink-{type(balloon.update_passport_required)}'
+        )
+        send_to_opc.delay(reader=reader_number, blink=balloon.update_passport_required)
 
         reader_function = request.data.get('reader_function')
         if reader_function:

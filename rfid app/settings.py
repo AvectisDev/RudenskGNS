@@ -1,64 +1,62 @@
-READER_LIST = [{} for i in range(8)]
+READER_LIST = [{} for i in range(10)]
 
 # Считыватели на приёмке
-# Г-образный
 READER_LIST[0] = {
-    'ip': '10.10.2.20',
+    'ip': '10.10.2.10',
     'port': 10001,
     'number': 1,
-    'status': 'Регистрация пустого баллона на складе (из кассеты)',
+    'status': 'Линия 1 - приёмка баллонов',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'loading',
 }
 
-# Г-образный
 READER_LIST[1] = {
-    'ip': '10.10.2.21',
+    'ip': '10.10.2.11',
     'port': 10001,
     'number': 2,
-    'status': 'Погрузка полного баллона в кассету',
+    'status': 'Линия 1 - вход в наполнительный цех',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
 }
 
-# Считыватели на отгрузке
 READER_LIST[2] = {
-    'ip': '10.10.2.22',
+    'ip': '10.10.2.12',
     'port': 10001,
     'number': 3,
-    'status': 'Погрузка полного баллона на трал 1',
+    'status': 'Линия 2 - приёмка баллонов',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
 }
 
 READER_LIST[3] = {
-    'ip': '10.10.2.23',
+    'ip': '10.10.2.13',
     'port': 10001,
     'number': 4,
-    'status': 'Погрузка полного баллона на трал 2',  # в торце рампы
+    'status': 'Линия 2 - вход в наполнительный цех',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'unloading',
 }
 
+# Считыватели в цеху
 READER_LIST[4] = {
-    'ip': '10.10.2.24',
+    'ip': '10.10.2.14',
     'port': 10001,
     'number': 5,
-    'status': 'Регистрация полного баллона на складе',
+    'status': 'Линия 1 - отбраковка перед каруселью',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
 }
 
 READER_LIST[5] = {
-    'ip': '10.10.2.25',
+    'ip': '10.10.2.15',
     'port': 10001,
     'number': 6,
-    'status': 'Регистрация пустого баллона на складе (рампа)',
+    'status': 'Линия 2 - выход из карусели',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': 'loading',
@@ -66,20 +64,40 @@ READER_LIST[5] = {
 
 # Считыватели в цеху
 READER_LIST[6] = {
-    'ip': '10.10.2.26',
+    'ip': '10.10.2.16',
     'port': 10001,
     'number': 7,
-    'status': 'Регистрация пустого баллона на складе (цех)',
+    'status': 'Линия 2 - отбраковка перед каруселью',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
 }
 
 READER_LIST[7] = {
-    'ip': '10.10.2.27',
+    'ip': '10.10.2.17',
     'port': 10001,
     'number': 8,
-    'status': 'Наполнение баллона сжиженным газом',
+    'status': 'Линия 1 - выход из карусели',
+    'input_state': 0,
+    'previous_nfc_tags': [],
+    'function': None,
+}
+
+READER_LIST[8] = {
+    'ip': '10.10.2.18',
+    'port': 10001,
+    'number': 9,
+    'status': 'Линия 1 - карусель',
+    'input_state': 0,
+    'previous_nfc_tags': [],
+    'function': None,
+}
+
+READER_LIST[9] = {
+    'ip': '10.10.2.19',
+    'port': 10001,
+    'number': 10,
+    'status': 'Линия 2 - карусель',
     'input_state': 0,
     'previous_nfc_tags': [],
     'function': None,
