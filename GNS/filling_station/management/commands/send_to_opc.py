@@ -13,6 +13,8 @@ class Command(BaseCommand):
         super().__init__()
         # self.client = Client("opc.tcp://host.docker.internal:4841")
         self.client = Client("opc.tcp://10.10.2.20:4840")
+        self.username = "scada"
+        self.password = ".Avectis1"
 
     def add_arguments(self, parser):
         parser.add_argument('--reader', type=int, help='Reader number')
@@ -30,6 +32,10 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Dict[str, Any]) -> None:
         try:
+            # Устанавливаем учетные данные для аутентификации
+            self.client.set_user(self.username)
+            self.client.set_password(self.password)
+
             self.client.connect()
             logger.info('Connect to OPC server successful')
 

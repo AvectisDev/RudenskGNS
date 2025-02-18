@@ -346,7 +346,7 @@ def statistic(request):
             reader_id=i,
             change_date__range=[start_date, end_date]
         ).aggregate(total=Sum('amount_of_rfid'))['total'] or 0
-        for i in range(1, 9)
+        for i in range(1, 11)
     }
 
     # Получаем количество партий для каждой модели за период
