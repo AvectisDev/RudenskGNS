@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Журнал ж/д цистерн{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Журнал движения ж/д цистерн</h4>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Номер партии</th>
+                        <th>Дата начала</th>
+                        <th>Дата окончания</th>
+                        <th>Кол-во цистерн</th>
+                        <th>СПБТ газа</th>
+                        <th>ПБА газа</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for batch in page_obj.object_list %}
+                    <tr>
+                        <td>
+                            <a href="{{ batch.get_absolute_url }}" class="custom-link fw-bold">
+                                {{ batch.id }}
+                            </a>
+                        </td>
+                        <td>{{ batch.begin_date|date:"d.m.Y H:i"|default:"-" }}</td>
+                        <td>
+                            {% if batch.end_date %}
+                            {{ batch.end_date|date:"d.m.Y H:i" }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ batch.railway_tank_list.count }}</td>
+                        <td>{{ batch.gas_amount_spbt|float_format|default:"-" }} т</td>
+                        <td>{{ batch.gas_amount_pba|float_format|default:"-" }} т</td>
+                        <td>
+                            {% if batch.is_active %}
+                            <span class="badge bg-success">Активна</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Завершена</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ batch.get_update_url }}" class="btn-icon btn-edit" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ batch.get_delete_url }}" class="btn-icon btn-delete" title="Удалить">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">Нет данных о партиях</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% include 'filling_station/_paginator.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
