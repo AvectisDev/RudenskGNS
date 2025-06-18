@@ -11,7 +11,6 @@ class Command(BaseCommand):
 
     def __init__(self):
         super().__init__()
-        # self.client = Client("opc.tcp://host.docker.internal:4841")
         self.client = Client("opc.tcp://10.10.2.20:4840")
         self.username = "scada"
         self.password = ".Avectis1"

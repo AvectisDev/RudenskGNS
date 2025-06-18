@@ -8,17 +8,16 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+LOGS_DIR = os.path.join(BASE_DIR, 'log')
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
-DEBUG = True
+DEBUG = os.environ.get('DEBUG')
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '10.10.2.248', 'django']
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 # Application definition
-
 INSTALLED_APPS = [
     'daphne',
     'django.contrib.admin',
@@ -27,7 +26,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'core.apps.CoreConfig',
     'filling_station.apps.FillingStationConfig',
+    'mobile.apps.MobileConfig',
+    'carousel.apps.CarouselConfig',
+    'ttn.apps.TtnConfig',
+    'railway_service.apps.RailwayServiceConfig',
     'import_export',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -83,7 +87,7 @@ ROOT_URLCONF = 'GNS.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -156,6 +160,9 @@ STATICFILES_DIR = [
     Path.joinpath(BASE_DIR, 'filling_station/static/filling_station')
 ]
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -165,23 +172,31 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_HIJACK_ROOT_LOGGER = False
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_RESULT_EXPIRES = 3600  # 1 час
 # CELERY_BEAT_SCHEDULE = {
-#     # 'generate_1C_file_every_hour': {
+#     # 'generate_1c_file_every_hour': {
 #     #     'task': 'filling_station.tasks.generate_1c_file',
 #     #     'schedule': crontab(hour=1),
 #     # },
 #     'railway_tank_processing': {
-#         'task': 'filling_station.tasks.railway_tank_processing',
-#         'schedule': 5.0,  # каждые 5 сек
+#         'task': 'railway_service.tasks.railway_tank_processing',
+#         'schedule': 10.0,  # каждые 10 сек
 #     },
 #     'railway_batch_processing': {
-#         'task': 'filling_station.tasks.railway_batch_processing',
-#         'schedule': crontab(),  #minute=20 каждые 20 мин
+#         'task': 'railway_service.tasks.railway_batch_processing',
+#         'schedule': crontab(minute='*/20'),  # задача выполняется каждые 20 минут, начиная с 0 минут каждого часа
 #     },
 #     'auto_gas_processing': {
 #         'task': 'filling_station.tasks.auto_gas_processing',
-#         'schedule': 5.0,  # каждые 5 сек
+#         'schedule': 10.0,
+#     },
+#     'kpp_processing': {
+#         'task': 'filling_station.tasks.kpp_processing',
+#         'schedule': 60.0,
 #     },
 # }
 
@@ -190,23 +205,106 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s - %(levelname)s - %(message)s',
+            'style': '{',
+            'format': '{asctime} - {levelname} - {module}:{lineno} - {message}',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'with_msecs': {
+            'format': '%(asctime)s.%(msecs)03d - %(levelname)s - %(module)s:%(lineno)d - %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'handlers': {
-        'file': {
+        'filling_station_file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'django.log',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'filling_station.log'),
+            'when': 'midnight',
+            'backupCount': 30,
             'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'delay': True,
+        },
+        'carousel_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'carousel.log'),
+            'when': 'midnight',
+            'backupCount': 30,
+            'formatter': 'with_msecs',
+            'encoding': 'utf-8',
+            'delay': True,
+        },
+        'carousel_2_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'carousel2.log'),
+            'when': 'midnight',
+            'backupCount': 30,
+            'formatter': 'with_msecs',
+            'encoding': 'utf-8',
+            'delay': True,
+        },
+        'rfid_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'rfid.log'),
+            'when': 'midnight',
+            'backupCount': 30,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'delay': True,
+        },
+        'celery_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'celery.log'),
+            'when': 'midnight',
+            'backupCount': 30,
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'delay': True,
         },
     },
     'loggers': {
         'filling_station': {
-            'handlers': ['file'],
+            'handlers': ['filling_station_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
+        'carousel': {
+            'handlers': ['carousel_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'carousel2': {
+            'handlers': ['carousel_2_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'rfid': {
+            'handlers': ['rfid_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['celery_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
 }
+
+DJANGO_API_HOST = 'http://localhost:8000/api'
+OPC_SERVER_URL = "opc.tcp://localhost:4841"
+
+# ITGas
+MIRIADA_API_POST_URL = os.environ.get('MIRIADA_API_POST_URL')
+MIRIADA_AUTH_LOGIN = os.environ.get('MIRIADA_AUTH_LOGIN')
+MIRIADA_AUTH_PASSWORD = os.environ.get('MIRIADA_AUTH_PASSWORD')
+
+GAS_TYPE_CHOICES = [
+    ('Не выбран', 'Не выбран'),
+    ('СПБТ', 'СПБТ'),
+    ('ПБА', 'ПБА'),
+]

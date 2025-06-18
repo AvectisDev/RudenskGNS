@@ -7,7 +7,9 @@ load_dotenv()
 
 
 async def write_balloons_amount(reader: dict, from_who: str):
-    """Функция записывает в базу данных количество баллонов, пройденных через каждый считыватель"""
+    """
+    Функция записывает в базу данных количество баллонов, пройденных через каждый считыватель
+    """
     try:
         conn = await asyncpg.connect(
             database=os.environ.get('DB_NAME'),

@@ -8,6 +8,12 @@ GNS/filling_station/__pycache__/
 GNS/GNS/__pycache__/
 GNS/filling_station/migrations/__pycache__/
 
+# media/static files
+GNS/media/
+GNS/static/
+
+log/
+
 # C extensions
 *.so
 
@@ -122,6 +128,9 @@ __pypackages__/
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
+*.bak
+*.dat
+*.dir
 
 # SageMath parsed files
 *.sage.py

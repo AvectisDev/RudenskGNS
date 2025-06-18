@@ -1,24 +1,20 @@
+import os
 import asyncio
-import db
 import binascii
-from datetime import datetime
-from settings import READER_LIST, COMMANDS
-from miriada import get_balloon_by_nfc_tag as get_balloon
-import balloon_api
-import logging
+import logging.config
+import django
 from concurrent.futures import ThreadPoolExecutor
+from . import db
+from .settings import READER_LIST, COMMANDS
+from . import api
 
+# Инициализация Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GNS.settings')
+django.setup()
 
-logging.basicConfig(
-    level=logging.INFO,  # Уровень логирования
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='rfid_app_logs.log',
-    filemode='w',
-    encoding='utf-8'
-)
-
-logger = logging.getLogger('app_logger')
-logger.setLevel(logging.DEBUG)
+# Конфигурация логирования из настроек Django
+logging.config.dictConfig(django.conf.settings.LOGGING)
+logger = logging.getLogger('rfid')
 
 
 async def data_exchange_with_reader(controller: dict, command: str):
@@ -31,9 +27,12 @@ async def data_exchange_with_reader(controller: dict, command: str):
         writer.write(binascii.unhexlify(COMMANDS[command]))
         await writer.drain()
 
-        data = await reader.read(2048)
+        data = await asyncio.wait_for(reader.read(2048), timeout=1)
         buffer = binascii.hexlify(data).decode()
         return buffer
+    except asyncio.TimeoutError:
+        logger.error(f'Таймаут при ожидании ответа от контроллера {controller["ip"]}:{controller["port"]}')
+        return []
     except Exception as error:
         logger.debug(f'Нет связи с контроллером {controller["ip"]}:{controller["port"]}: {error}')
         return []
@@ -85,7 +84,7 @@ async def balloon_passport_processing(nfc_tag: str, reader: dict):
     }
 
     # Обновляем статус баллона в базе данных. Если паспорта нет - создаём запись
-    passport = await balloon_api.update_balloon(passport)
+    passport = await api.update_balloon(passport)
 
     return passport['filling_status']
 
@@ -101,7 +100,7 @@ async def read_nfc_tag(reader: dict):
     data = await data_exchange_with_reader(reader, 'read_last_item_from_buffer')
 
     # if reader["ip"] == '10.10.2.23':
-    #     logger.debug(f'{reader["ip"]} rfid 1.чтение метки из буфера. Данные - {data}')
+        # logger.debug(f'{reader["ip"]} rfid 1.чтение метки из буфера. Данные - {data}')
 
     if len(data) > 24:  # если со считывателя пришли данные с меткой
         nfc_tag = byte_reversal(data[32:48])
@@ -201,16 +200,16 @@ async def process_reader(reader):
 async def main():
     # При запуске программы очищаем буфер считывателей
     tasks = [asyncio.create_task(data_exchange_with_reader(reader, 'clean_buffer')) for reader in READER_LIST]
-    print('Очистка буфера RFID-считывателей...')
+    logger.info('Очистка буфера RFID-считывателей...')
     await asyncio.wait(tasks)
 
     with ThreadPoolExecutor(max_workers=len(READER_LIST)) as executor:
-        print('Программа в работе')
+        logger.info('Программа в работе')
         loop = asyncio.get_running_loop()
         tasks = [loop.run_in_executor(executor, process_reader_sync, reader) for reader in READER_LIST]
         await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
-    print('Запуск программы считывания RFID-меток...')
+    logger.info('Запуск программы считывания RFID-меток...')
     asyncio.run(main())

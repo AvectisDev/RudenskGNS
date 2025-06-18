@@ -1,14 +1,22 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.core.paginator import Paginator
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.db.models import Q, Sum
-from .models import (Balloon, Truck, Trailer, RailwayTank, TTN, BalloonsLoadingBatch, BalloonsUnloadingBatch,
-                     RailwayBatch, BalloonAmount, AutoGasBatch, Reader)
+from railway_service.models import RailwayBatch
+from .models import (Balloon, Truck, Trailer, BalloonsLoadingBatch, BalloonsUnloadingBatch,
+                     BalloonAmount, AutoGasBatch, Reader)
 from .admin import BalloonResources
-from .forms import (GetBalloonsAmount, BalloonForm, TruckForm, TrailerForm, RailwayTankForm, TTNForm,
-                    BalloonsLoadingBatchForm, BalloonsUnloadingBatchForm, RailwayBatchForm, AutoGasBatchForm)
+from .forms import (
+    GetBalloonsAmount,
+    BalloonForm,
+    TruckForm,
+    TrailerForm,
+    BalloonsLoadingBatchForm,
+    BalloonsUnloadingBatchForm,
+    AutoGasBatchForm
+)
 from datetime import datetime, timedelta
 
 STATUS_LIST = {
@@ -27,7 +35,7 @@ STATUS_LIST = {
 
 class BalloonListView(generic.ListView):
     model = Balloon
-    paginate_by = 15
+    paginate_by = 10
 
     def get_queryset(self):
         query = self.request.GET.get('query', '')
@@ -58,60 +66,74 @@ class BalloonDeleteView(generic.DeleteView):
 
 def reader_info(request, reader=1):
     current_date = datetime.now().date()
-    previous_date = current_date - timedelta(days=1)
 
     if request.method == "POST":
-        required_date = request.POST.get("date")
-        format_required_date = datetime.strptime(required_date, '%Y-%m-%d')
+        form = GetBalloonsAmount(request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+        else:
+            start_date = current_date
+            end_date = current_date
 
-        # Экспортируем данные в Excel
-        dataset = BalloonResources().export(Reader.objects.filter(number=reader, change_date=format_required_date))
-        response = HttpResponse(dataset.xlsx, content_type='xlsx')
-        response['Content-Disposition'] = f'attachment; filename="RFID_{reader}_{required_date}.xlsx"'
+        action = request.POST.get('action')
 
-        return response
+        if action == 'export':
+            # Экспортируем данные в Excel
+            dataset = BalloonResources().export(
+                Reader.objects.filter(
+                    number=reader,
+                    change_date__range=(start_date, end_date)
+                )
+            )
+            response = HttpResponse(dataset.xlsx, content_type='xlsx')
+            response['Content-Disposition'] = f'attachment; filename="RFID_{reader}_{start_date}-{end_date}.xlsx"'
+            return response
+
+        elif action == 'show':
+            # Показываем данные на странице
+            pass
+
     else:
-        date_process = GetBalloonsAmount()
+        form = GetBalloonsAmount()
+        start_date = current_date
+        end_date = current_date
+
+    # Получаем общее количество баллонов для каждого ридера за период
+    current_quantity = BalloonAmount.objects.filter(
+        reader_id=reader,
+        change_date__range=(start_date, end_date)
+    ).aggregate(
+        total_rfid=Sum('amount_of_rfid'),
+        total_balloons=Sum('amount_of_balloons')
+    )
 
     balloons_list = Reader.objects.order_by('-change_date', '-change_time').filter(number=reader)
-    current_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=current_date).first()
-    previous_quantity = BalloonAmount.objects.filter(reader_id=reader, change_date=previous_date).first()
 
-    if current_quantity is not None:
-        current_quantity_rfid = current_quantity.amount_of_rfid
-        current_quantity_balloons = current_quantity.amount_of_balloons
-    else:
-        current_quantity_rfid = 0
-        current_quantity_balloons = 0
+    current_quantity_rfid = current_quantity['total_rfid'] or 0
+    current_quantity_balloons = current_quantity['total_balloons'] or 0
 
-    if previous_quantity is not None:
-        previous_quantity_rfid = previous_quantity.amount_of_rfid
-        previous_quantity_balloons = previous_quantity.amount_of_balloons
-    else:
-        previous_quantity_rfid = 0
-        previous_quantity_balloons = 0
-
-    paginator = Paginator(balloons_list, 15)
+    paginator = Paginator(balloons_list, 10)
     page_num = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_num)
 
     context = {
         "page_obj": page_obj,
         'current_quantity_by_reader': current_quantity_rfid,
-        'previous_quantity_by_reader': previous_quantity_rfid,
         'current_quantity_by_sensor': current_quantity_balloons,
-        'previous_quantity_by_sensor': previous_quantity_balloons,
-        'form': date_process,
+        'form': form,
         'reader': reader,
+        'start_date': start_date,
+        'end_date': end_date,
         'reader_status': STATUS_LIST[reader]
     }
-    return render(request, "rfid_tables.html", context)
+    return render(request, 'filling_station/rfid_tables.html', context)
 
 
 # Партии приёмки баллонов
 class BalloonLoadingBatchListView(generic.ListView):
     model = BalloonsLoadingBatch
-    paginate_by = 15
+    paginate_by = 10
     template_name = 'filling_station/balloon_batch_list.html'
 
 
@@ -136,7 +158,7 @@ class BalloonLoadingBatchDeleteView(generic.DeleteView):
 # Партии отгрузки баллонов
 class BalloonUnloadingBatchListView(generic.ListView):
     model = BalloonsUnloadingBatch
-    paginate_by = 15
+    paginate_by = 10
     template_name = 'filling_station/balloon_batch_list.html'
 
 
@@ -161,7 +183,7 @@ class BalloonUnloadingBatchDeleteView(generic.DeleteView):
 # Партии автоцистерн
 class AutoGasBatchListView(generic.ListView):
     model = AutoGasBatch
-    paginate_by = 15
+    paginate_by = 10
     template_name = 'filling_station/auto_batch_list.html'
 
 
@@ -183,35 +205,10 @@ class AutoGasBatchDeleteView(generic.DeleteView):
     template_name = 'filling_station/auto_batch_confirm_delete.html'
 
 
-# Партии приёмки газа в ж/д цистернах
-class RailwayBatchListView(generic.ListView):
-    model = RailwayBatch
-    paginate_by = 15
-    template_name = 'filling_station/railway_batch_list.html'
-
-
-class RailwayBatchDetailView(generic.DetailView):
-    model = RailwayBatch
-    context_object_name = 'batch'
-    template_name = 'filling_station/railway_batch_detail.html'
-
-
-class RailwayBatchUpdateView(generic.UpdateView):
-    model = RailwayBatch
-    form_class = RailwayBatchForm
-    template_name = 'filling_station/_equipment_form.html'
-
-
-class RailwayBatchDeleteView(generic.DeleteView):
-    model = RailwayBatch
-    success_url = reverse_lazy("filling_station:railway_batch_list")
-    template_name = 'filling_station/railway_batch_confirm_delete.html'
-
-
 # Грузовики
 class TruckView(generic.ListView):
     model = Truck
-    paginate_by = 15
+    paginate_by = 10
 
 
 class TruckDetailView(generic.DetailView):
@@ -222,7 +219,9 @@ class TruckCreateView(generic.CreateView):
     model = Truck
     form_class = TruckForm
     template_name = 'filling_station/_equipment_form.html'
-    success_url = reverse_lazy("filling_station:truck_list")
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
 
 
 class TruckUpdateView(generic.UpdateView):
@@ -240,7 +239,7 @@ class TruckDeleteView(generic.DeleteView):
 # Прицепы
 class TrailerView(generic.ListView):
     model = Trailer
-    paginate_by = 15
+    paginate_by = 10
 
 
 class TrailerDetailView(generic.DetailView):
@@ -251,7 +250,9 @@ class TrailerCreateView(generic.CreateView):
     model = Trailer
     form_class = TrailerForm
     template_name = 'filling_station/_equipment_form.html'
-    success_url = reverse_lazy("filling_station:trailer_list")
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
 
 
 class TrailerUpdateView(generic.UpdateView):
@@ -265,63 +266,6 @@ class TrailerDeleteView(generic.DeleteView):
     success_url = reverse_lazy("filling_station:trailer_list")
     template_name = 'filling_station/trailer_confirm_delete.html'
 
-
-# ж/д цистерны
-class RailwayTankView(generic.ListView):
-    model = RailwayTank
-    paginate_by = 15
-
-
-class RailwayTankDetailView(generic.DetailView):
-    model = RailwayTank
-
-
-class RailwayTankCreateView(generic.CreateView):
-    model = RailwayTank
-    form_class = RailwayTankForm
-    template_name = 'filling_station/_equipment_form.html'
-    success_url = reverse_lazy("filling_station:railway_tank_list")
-
-
-class RailwayTankUpdateView(generic.UpdateView):
-    model = RailwayTank
-    form_class = RailwayTankForm
-    template_name = 'filling_station/_equipment_form.html'
-
-
-class RailwayTankDeleteView(generic.DeleteView):
-    model = RailwayTank
-    success_url = reverse_lazy("filling_station:railway_tank_list")
-    template_name = 'filling_station/railway_tank_confirm_delete.html'
-
-
-# ТТН
-class TTNView(generic.ListView):
-    model = TTN
-    paginate_by = 15
-
-
-class TTNDetailView(generic.DetailView):
-    model = TTN
-
-
-class TTNCreateView(generic.CreateView):
-    model = TTN
-    form_class = TTNForm
-    template_name = 'filling_station/_equipment_form.html'
-    success_url = reverse_lazy("filling_station:ttn_list")
-
-
-class TTNUpdateView(generic.UpdateView):
-    model = TTN
-    form_class = TTNForm
-    template_name = 'filling_station/_equipment_form.html'
-
-
-class TTNDeleteView(generic.DeleteView):
-    model = TTN
-    success_url = reverse_lazy("filling_station:ttn_list")
-    template_name = 'filling_station/ttn_confirm_delete.html'
 
 # Обработка данных для вкладки "Статистика"
 def statistic(request):
@@ -346,7 +290,7 @@ def statistic(request):
             reader_id=i,
             change_date__range=[start_date, end_date]
         ).aggregate(total=Sum('amount_of_rfid'))['total'] or 0
-        for i in range(1, 11)
+        for i in range(1, 9)
     }
 
     # Получаем количество партий для каждой модели за период

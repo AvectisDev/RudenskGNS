@@ -6,5 +6,6 @@ class Command(BaseCommand):
     help = 'Запуск main.py - приложения обработки RFID считывателей'
 
     def handle(self, *args, **kwargs):
-        subprocess.Popen(['python', '../rfid app/main.py'])
-        # subprocess.Popen(['python', '../rfid app/carousel.py'])
+        subprocess.Popen([
+            'python', '-m', 'filling_station.management.commands.rfid.main'
+        ])

@@ -1,4 +1,18 @@
 import aiohttp
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    filename='balloon_api.log',
+    filemode='w',
+    encoding='utf-8'
+)
+
+logger = logging.getLogger('carousel')
+logger.setLevel(logging.DEBUG)
+
 
 BASE_URL = "http://localhost:8000/api"  # server address
 USERNAME = "reader"

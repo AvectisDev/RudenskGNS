@@ -1,23 +1,31 @@
 import logging
-import time
 import requests
-from ..models import (Balloon, Reader, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch)
+from ..models import Balloon, Reader, BalloonAmount, BalloonsLoadingBatch, BalloonsUnloadingBatch
 from django.http import JsonResponse
 from django.db.models import Sum, Count
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from filling_station.tasks import send_to_opc
+from django.conf import settings
 from rest_framework import generics, status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import datetime, date
-from .serializers import (BalloonSerializer, BalloonAmountSerializer,
-                          BalloonsLoadingBatchSerializer, BalloonsUnloadingBatchSerializer,
-                          ActiveLoadingBatchSerializer, ActiveUnloadingBatchSerializer,
-                          BalloonAmountLoadingSerializer, BalloonAmountUnloadingSerializer)
+from filling_station.tasks import send_to_opc
+from .serializers import (
+    BalloonSerializer,
+    BalloonAmountSerializer,
+    BalloonsLoadingBatchSerializer,
+    BalloonsUnloadingBatchSerializer,
+    ActiveLoadingBatchSerializer,
+    ActiveUnloadingBatchSerializer,
+    BalloonAmountLoadingSerializer,
+    BalloonAmountUnloadingSerializer
+)
+
+logger = logging.getLogger('filling_station')
 
 USER_STATUS_LIST = [
     'Создание паспорта баллона',
@@ -41,10 +49,9 @@ USER_STATUS_LIST = [
     'Опорожнение(слив) баллона',
     'Контрольное взвешивание'
 ]
-BALLOONS_LOADING_READER_LIST = [1, 6]
-BALLOONS_UNLOADING_READER_LIST = [2, 3, 4]
+BALLOONS_LOADING_READER_LIST = [2, 4]
+BALLOONS_UNLOADING_READER_LIST = [1, 3]
 
-logger = logging.getLogger('filling_station')
 
 class BalloonViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -75,7 +82,7 @@ class BalloonViewSet(viewsets.ViewSet):
         url = f'{BASE_URL}/getballoonbynfctag?nfctag={nfc_tag}&realm=brestoblgas'
 
         try:
-            response = requests.get(url, timeout=3)
+            response = requests.get(url, timeout=1)
             response.raise_for_status()
             result = response.json()
 
@@ -89,6 +96,73 @@ class BalloonViewSet(viewsets.ViewSet):
         except Exception as error:
             self.logger.error(f'Ошибка в методе получения паспорта баллона из Мириады: {error}')
             return None
+
+    # def send_status_to_miriada(self, send_type: str, nfc_tag: str, send_data: dict = None):
+    #     """
+    #     Метод для отправки статусов баллонов по NFC-метке в Мириаду.
+    #     Поддерживается 3 основных типа отправки (send_type):
+    #     filling - Наполнение баллона
+    #     registering_in_warehouse - Регистрация баллона на склад
+    #     loading_into_truck - Погрузка баллона в машину
+    #     """
+    #     send_urls = {
+    #         'filling': f'{settings.MIRIADA_API_POST_URL}/fillingballoon',
+    #         'registering_in_warehouse': f'{settings.MIRIADA_API_POST_URL}/balloontosklad',
+    #         'loading_into_truck': f'{settings.MIRIADA_API_POST_URL}/balloontocar',
+    #     }
+    #
+    #     headers = {
+    #         'Accept': 'application/json',
+    #         'Content-Type': 'application/json'
+    #     }
+    #
+    #     payload = {
+    #         "nfctag": nfc_tag,
+    #         "realm": "brestoblgas"
+    #     }
+    #
+    #     if send_data is not None:
+    #         fulness = send_data.get('fulness')  # 1-полный, 0 — пустой
+    #         if fulness:
+    #             payload.update({"fulness": fulness})
+    #
+    #         number_auto = send_data.get('number_auto')  # "AM 7881-2" номер машины.(Номер должен быть добавлен в  ПК «Автопарк»
+    #         type_car = send_data.get('type_car')    # 0-кассета, 1 — трал
+    #         if number_auto and type_car:
+    #             payload.update({
+    #                 "fulness": fulness,
+    #                 "number_auto": number_auto,
+    #                 "type_car": type_car
+    #             })
+    #
+    #     try:
+    #         # Создаем запрос в Мириаду
+    #         session = requests.Session()
+    #         req = requests.Request(
+    #             'POST',
+    #             send_urls.get(send_type),
+    #             auth=(settings.MIRIADA_AUTH_LOGIN, settings.MIRIADA_AUTH_PASSWORD),
+    #             headers=headers,
+    #             json=payload
+    #         )
+    #         prepared = session.prepare_request(req)
+    #
+    #         self.logger.debug(
+    #             f"Подготовленный запрос:\n"
+    #             f"URL: {prepared.url}\n"
+    #             f"Headers: {prepared.headers}\n"
+    #             f"Body: {prepared.body}"
+    #         )
+    #
+    #         response = session.send(prepared, timeout=2)
+    #         response.raise_for_status()
+    #         if response.status_code == 200:
+    #             self.logger.info(f"Статус по {send_type} успешно отправлен")
+    #         else:
+    #             self.logger.warning(f"Ошибка по {send_type}! Код: {response.status_code}, Описание: {response.reason}")
+    #
+    #     except Exception as error:
+    #         self.logger.error(f'Ошибка в методе отправки статуса баллона в Мириаду: {error}')
 
     @action(detail=False, methods=['post'], url_path='update-by-reader')
     def update_by_reader(self, request):
@@ -114,9 +188,19 @@ class BalloonViewSet(viewsets.ViewSet):
         reader_number = request.data.get('reader_number')
         if reader_number is None:
             self.logger.error("Номер ридера отсутствует в теле запроса")
+        # elif reader_number == 8:
+        #     self.send_status_to_miriada(nfc_tag=nfc_tag, send_type='filling')
+        # elif reader_number == 6:
+        #     self.send_status_to_miriada(nfc_tag=nfc_tag, send_type='registering_in_warehouse', send_data={'fulness':0})
+        # elif reader_number == 5:
+        #     self.send_status_to_miriada(nfc_tag=nfc_tag, send_type='registering_in_warehouse', send_data={'fulness':1})
+        # elif reader_number in [3, 4]:
+        #     self.send_status_to_miriada(nfc_tag=nfc_tag, send_type='loading_into_truck', send_data={'fulness':1, "type_car": 1, "number_auto": ' ',})
+        # elif reader_number == 2:
+        #     self.send_status_to_miriada(nfc_tag=nfc_tag, send_type='loading_into_truck', send_data={'fulness':1, "type_car": 0, "number_auto": ' ',})
 
         # Если требуется обновление паспорта или идёт приёмка новых баллонов - выполняем запрос в Мириаду
-        if balloon.update_passport_required in (True, None) or reader_number in [1, 6]:
+        if balloon.update_passport_required in (True, None) or reader_number in [2, 4]:
             balloon_passport_from_miriada = self.get_balloon_by_nfc_tag(nfc_tag)
             # Данные получены
             if balloon_passport_from_miriada:
@@ -125,7 +209,6 @@ class BalloonViewSet(viewsets.ViewSet):
                 balloon.netto = balloon_passport_from_miriada['netto']
                 balloon.brutto = balloon_passport_from_miriada['brutto']
                 balloon.filling_status = balloon_passport_from_miriada['status']
-                # Сохраняем модель
                 balloon.save()
 
         # Выполняем передачу данных в OPC сервер (лампочки на считывателях)
@@ -144,7 +227,7 @@ class BalloonViewSet(viewsets.ViewSet):
 
         # Добавляем информацию по баллону в таблицу с ридерами
         if reader_number:
-            Reader.objects.create(
+            reader_balloon = Reader.objects.create(
                 number=reader_number,
                 nfc_tag=nfc_tag,
                 serial_number=balloon.serial_number,
@@ -153,6 +236,27 @@ class BalloonViewSet(viewsets.ViewSet):
                 brutto=balloon.brutto,
                 filling_status=balloon.filling_status
             )
+            # Сохраняем баллон в кэш для каруселей наполнения
+            if reader_number in [9, 10]:
+                timeout_minutes = 10
+                timeout_seconds = timeout_minutes * 60
+
+                cache_key = f'reader_{reader_number}_balloon_stack'
+                stack = cache.get(cache_key, [])
+                # Добавляем объект в стек
+                stack.insert(0, {
+                    'number': reader_balloon.number,
+                    'nfc_tag': reader_balloon.nfc_tag,
+                    'serial_number': reader_balloon.serial_number,
+                    'size': reader_balloon.size,
+                    'netto': reader_balloon.netto,
+                    'brutto': reader_balloon.brutto,
+                    'filling_status': reader_balloon.filling_status,
+                })
+                logger.debug(f'Стек считывателя {reader_number} = {stack}')
+
+                # Сохраняем обновленный стек в кэш
+                cache.set(cache_key, stack, timeout=timeout_seconds)
 
         serializer = BalloonSerializer(balloon)
         return Response(serializer.data)
@@ -189,11 +293,11 @@ class BalloonViewSet(viewsets.ViewSet):
             # Баллонов на станции
             filled_balloons_on_station = (Balloon.objects
                                           .filter(status='Регистрация полного баллона на складе')
-                                          .aggregate(total=Count('id')))
+                                          .aggregate(total=Count('nfc_tag')))
             empty_balloons_on_station = (Balloon.objects
                                          .filter(status__in=['Регистрация пустого баллона на складе (рампа)',
                                                              'Регистрация пустого баллона на складе (цех)'])
-                                         .aggregate(total=Count('id')))
+                                         .aggregate(total=Count('nfc_tag')))
 
             # Баллонов за текущий месяц
             balloons_monthly_stats = (BalloonAmount.objects
@@ -376,12 +480,12 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['patch'], url_path='add-balloon')
     def add_balloon(self, request, pk=None):
-        balloon_id = request.data.get('balloon_id', None)
+        nfc = request.data.get('nfc', None)
         batch = get_object_or_404(BalloonsLoadingBatch, id=pk)
 
-        if balloon_id:
-            balloon = get_object_or_404(Balloon, id=balloon_id)
-            if batch.balloon_list.filter(id=balloon_id).exists():
+        if nfc:
+            balloon = get_object_or_404(Balloon, nfc_tag=nfc)
+            if batch.balloon_list.filter(nfc_tag=nfc).exists():
                 return Response(status=status.HTTP_409_CONFLICT)
             else:
                 batch.balloon_list.add(balloon)
@@ -393,12 +497,12 @@ class BalloonsLoadingBatchViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['patch'], url_path='remove-balloon')
     def remove_balloon(self, request, pk=None):
-        balloon_id = request.data.get('balloon_id', None)
+        nfc = request.data.get('nfc', None)
         batch = get_object_or_404(BalloonsLoadingBatch, id=pk)
 
-        if balloon_id:
-            balloon = get_object_or_404(Balloon, id=balloon_id)
-            if batch.balloon_list.filter(id=balloon_id).exists():
+        if nfc:
+            balloon = get_object_or_404(Balloon, nfc_tag=nfc)
+            if batch.balloon_list.filter(nfc_tag=nfc).exists():
                 batch.balloon_list.remove(balloon)
                 if batch.amount_of_rfid:
                     batch.amount_of_rfid -= 1
@@ -458,12 +562,12 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['patch'], url_path='add-balloon')
     def add_balloon(self, request, pk=None):
-        balloon_id = request.data.get('balloon_id', None)
+        nfc = request.data.get('nfc', None)
         batch = get_object_or_404(BalloonsUnloadingBatch, id=pk)
 
-        if balloon_id:
-            balloon = get_object_or_404(Balloon, id=balloon_id)
-            if batch.balloon_list.filter(id=balloon_id).exists():
+        if nfc:
+            balloon = get_object_or_404(Balloon, nfc_tag=nfc)
+            if batch.balloon_list.filter(nfc_tag=nfc).exists():
                 return Response(status=status.HTTP_409_CONFLICT)
             else:
                 batch.balloon_list.add(balloon)
@@ -475,12 +579,12 @@ class BalloonsUnloadingBatchViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['patch'], url_path='remove-balloon')
     def remove_balloon(self, request, pk=None):
-        balloon_id = request.data.get('balloon_id', None)
+        nfc = request.data.get('nfc', None)
         batch = get_object_or_404(BalloonsUnloadingBatch, id=pk)
 
-        if balloon_id:
-            balloon = get_object_or_404(Balloon, id=balloon_id)
-            if batch.balloon_list.filter(id=balloon_id).exists():
+        if nfc:
+            balloon = get_object_or_404(Balloon, nfc_tag=nfc)
+            if batch.balloon_list.filter(nfc_tag=nfc).exists():
                 batch.balloon_list.remove(balloon)
                 if batch.amount_of_rfid:
                     batch.amount_of_rfid -= 1
