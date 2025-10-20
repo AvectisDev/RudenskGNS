@@ -1,9 +1,18 @@
-import logging
+import os
+import logging.config
 from typing import Any, Dict
 from opcua import Client, ua
+import django
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
-logger = logging.getLogger('filling_station')
+# Инициализация Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GNS.settings')
+django.setup()
+
+# Конфигурация логирования из настроек Django
+logging.config.dictConfig(django.conf.settings.LOGGING)
+logger = logging.getLogger('celery')
 
 
 class Command(BaseCommand):
@@ -11,7 +20,7 @@ class Command(BaseCommand):
 
     def __init__(self):
         super().__init__()
-        self.client = Client("opc.tcp://10.10.2.20:4840")
+        self.client = Client(settings.OPC_SERVER_URL)
         self.username = "scada"
         self.password = ".Avectis1"
 

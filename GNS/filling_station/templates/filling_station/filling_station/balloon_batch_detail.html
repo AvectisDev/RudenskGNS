@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Партия автоцистерн №{{ batch.id }}{% endblock %}
+{% block title %} {{ title }} №{{ batch.id }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="card shadow-sm">
         <div class="card-header card-header-custom">
             <div class="d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Партия автоцистерн №{{ batch.id }}</h4>
+                <h4 class="mb-0"> {{ title }} №{{ batch.id }}</h4>
                 <div>
                     <span class="badge bg-{% if batch.is_active %}success{% else %}secondary{% endif %}">
                         {% if batch.is_active %}Активна{% else %}Завершена{% endif %}
@@ -21,15 +21,6 @@
             <div class="row">
                 <div class="col-md-6">
                     <dl class="row">
-                        <dt class="col-sm-6">Тип партии:</dt>
-                        <dd class="col-sm-6">
-                            {% if batch.batch_type == 'l' %}
-                                <span class="badge bg-primary">Приёмка</span>
-                            {% else %}
-                                <span class="badge bg-warning text-dark">Отгрузка</span>
-                            {% endif %}
-                        </dd>
-
                         <dt class="col-sm-6">Дата и время начала:</dt>
                         <dd class="col-sm-6">
                             {% if batch.begin_date %}
@@ -55,25 +46,37 @@
 
                         <dt class="col-sm-6">Прицеп:</dt>
                         <dd class="col-sm-6">{{ batch.trailer|default:"-" }}</dd>
+
+                        <dt class="col-sm-6">Количество газа:</dt>
+                        <dd class="col-sm-6">{{ batch.gas_amount|float_format|default:"-" }} кг</dd>
+                        <hr>
+                        <dt class="col-sm-6">ТТН:</dt>
+                        <dd class="col-sm-6">{{ batch.ttn|default:"Не указана" }}</dd>
+
+                        <dt class="col-sm-6">Количество баллонов по ТТН:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_ttn|default:"-" }}</dd>
                     </dl>
                 </div>
 
                 <div class="col-md-6">
                     <dl class="row">
-                        <dt class="col-sm-6">Вес полного ТС (весы):</dt>
-                        <dd class="col-sm-6">{{ batch.scale_full_weight|float_format|default:"-" }} кг</dd>
+                        <dt class="col-sm-6">Баллонов с RFID:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_rfid|default:"-" }}</dd>
 
-                        <dt class="col-sm-6">Вес пустого ТС (весы):</dt>
-                        <dd class="col-sm-6">{{ batch.scale_empty_weight|float_format|default:"-" }} кг</dd>
+                        <dt class="col-sm-6">5л баллонов:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_5_liters|default:"-" }}</dd>
 
-                        <dt class="col-sm-6">Количество газа (весы):</dt>
-                        <dd class="col-sm-6">{{ batch.weight_gas_amount|float_format|default:"-" }} кг</dd>
+                        <dt class="col-sm-6">12л баллонов:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_12_liters|default:"-" }}</dd>
 
-                        <dt class="col-sm-6">Количество газа (массомер):</dt>
-                        <dd class="col-sm-6">{{ batch.gas_amount|float_format|default:"-" }} кг</dd>
+                        <dt class="col-sm-6">27л баллонов:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_27_liters|default:"-" }}</dd>
 
-                        <dt class="col-sm-6">Тип газа:</dt>
-                        <dd class="col-sm-6">{{ batch.get_gas_type_display|default:"-" }}</dd>
+                        <dt class="col-sm-6">50л баллонов:</dt>
+                        <dd class="col-sm-6">{{ batch.amount_of_50_liters|default:"-" }}</dd>
+
+                        <dt class="col-sm-6">Всего без RFID:</dt>
+                        <dd class="col-sm-6">{{ batch.get_amount_without_rfid|default:"-" }}</dd>
                     </dl>
                 </div>
             </div>
@@ -81,7 +84,7 @@
 
         <div class="card-footer bg-light">
             <div class="d-flex justify-content-between">
-                <a href="{% url 'filling_station:auto_gas_batch_list' %}" class="btn btn-custom">
+                <a href="{% url 'filling_station:balloon_loading_batch_list' %}" class="btn btn-custom">
                     <i class="bi bi-arrow-left"></i> Назад
                 </a>
                 <div>
@@ -96,4 +99,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

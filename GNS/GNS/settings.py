@@ -344,7 +344,7 @@ LOGGING = {
 }
 
 DJANGO_API_HOST = 'http://localhost:8000/api'
-OPC_SERVER_URL = "opc.tcp://localhost:4841"
+OPC_SERVER_URL = "opc.tcp://10.10.2.20:4840"    # S7-1500
 
 # ITGas
 MIRIADA_API_URL = os.environ.get('MIRIADA_API_URL')

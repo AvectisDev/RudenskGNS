@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Партии автоцистерн{% endblock %}
+{% block title %} {{ title }} {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h4 class="mb-4">Партии автоцистерн</h4>
+    <h4 class="mb-4"> {{ title }} </h4>
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -13,15 +13,14 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Номер</th>
-                            <th>Тип</th>
+                            <th>Номер партии</th>
                             <th>Дата и время начала</th>
                             <th>Дата и время окончания</th>
                             <th>Автомобиль</th>
                             <th>Прицеп</th>
-                            <th>Количество газа (весы)</th>
-                            <th>Количество газа (массомер)</th>
-                            <th>Тип газа</th>
+                            <th>Баллонов (RFID)</th>
+                            <th>Баллонов (без RFID)</th>
+                            <th>Номер ТТН</th>
                             <th>Статус</th>
                             <th>Действия</th>
                         </tr>
@@ -33,13 +32,6 @@
                                 <a href="{{ batch.get_absolute_url }}" class="custom-link fw-bold">
                                     {{ batch.id }}
                                 </a>
-                            </td>
-                            <td>
-                                {% if batch.batch_type == 'l' %}
-                                    <span class="badge bg-primary">Приёмка</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-dark">Отгрузка</span>
-                                {% endif %}
                             </td>
                             <td>
                                 {% if batch.begin_date %}
@@ -59,9 +51,9 @@
                             </td>
                             <td>{{ batch.truck|default:"-" }}</td>
                             <td>{{ batch.trailer|default:"-" }}</td>
-                            <td>{{ batch.weight_gas_amount|float_format|default:"-" }} кг</td>
-                            <td>{{ batch.gas_amount|float_format|default:"-" }} кг</td>
-                            <td>{{ batch.get_gas_type_display|default:"-" }}</td>
+                            <td>{{ batch.amount_of_rfid|default:"-" }}</td>
+                            <td>{{ batch.get_amount_without_rfid|default:"-" }}</td>
+                            <td>{{ batch.ttn|default:"-" }}</td>
                             <td>
                                 {% if batch.is_active %}
                                     <span class="badge bg-success">Активна</span>
@@ -82,15 +74,17 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="11" class="text-center py-4 text-muted">Нет данных о партиях</td>
+                            <td colspan="10" class="text-center py-4 text-muted">Нет данных о партиях</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
 
-            {% include 'filling_station/_paginator.html' %}
+            <div class="mt-4">
+                {% include 'core/_paginator.html' %}
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
