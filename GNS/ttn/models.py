@@ -2,15 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db.models import Q, Sum
-from filling_station.models import BalloonsLoadingBatch, BalloonsUnloadingBatch, AutoGasBatch
-from railway_service.models import RailwayTank
-
-
-GAS_TYPE_CHOICES = [
-    ('Не выбран', 'Не выбран'),
-    ('СПБТ', 'СПБТ'),
-    ('ПБА', 'ПБА'),
-]
+from django.conf import settings
+from filling_station.models import BalloonsLoadingBatch, BalloonsUnloadingBatch
 
 
 class Contractor(models.Model):
@@ -83,7 +76,7 @@ class BalloonTtn(models.Model):
         verbose_name="Партия отгрузки",
         related_name='balloons_ttn_unloading'
     )
-    date = models.DateField(null=True, blank=True, verbose_name="Дата формирования накладной")
+    date = models.DateTimeField(auto_now=True, verbose_name="Дата формирования накладной")
 
     def __str__(self):
         return self.number
@@ -114,136 +107,3 @@ class BalloonTtn(models.Model):
 
     def get_delete_url(self):
         return reverse('ttn:ttn_delete', args=[self.pk])
-
-
-class RailwayTtn(models.Model):
-    number = models.CharField(blank=False, max_length=100, verbose_name="Номер ТТН")
-    railway_ttn = models.CharField(null=True, blank=True, max_length=50, verbose_name="Номер ж/д накладной")
-    railway_tank_list = models.ManyToManyField(
-        RailwayTank,
-        blank=True,
-        verbose_name="Список жд цистерн"
-    )
-    contract = models.CharField(blank=True, max_length=100, verbose_name="Номер договора")
-    shipper = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Грузоотправитель",
-        related_name='railway_tank_shipper'
-    )
-    carrier = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Перевозчик",
-        related_name='railway_tank_carrier'
-    )
-    consignee = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Грузополучатель",
-        related_name='railway_tank_consignee'
-    )
-    total_gas_amount_by_scales = models.FloatField(null=True, blank=True, verbose_name="Количество газа по весам")
-    total_gas_amount_by_ttn = models.FloatField(null=True, blank=True, verbose_name="Количество газа по ТТН")
-    gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
-    date = models.DateField(null=True, blank=True, verbose_name="Дата формирования накладной")
-
-    def __str__(self):
-        return self.number
-
-    class Meta:
-        verbose_name = "Железнодорожная ТТН"
-        verbose_name_plural = "Железнодорожные ТТН"
-        ordering = ['-id', '-date']
-
-    def get_absolute_url(self):
-        return reverse('ttn:railway_ttn_detail', args=[self.pk])
-
-    def get_update_url(self):
-        return reverse('ttn:railway_ttn_update', args=[self.pk])
-
-    def get_delete_url(self):
-        return reverse('ttn:railway_ttn_delete', args=[self.pk])
-
-    def update_gas_amounts(self):
-        """Обновляет суммы газа по связанным цистернам"""
-        tanks = self.railway_tank_list.all()
-        self.total_gas_amount_by_scales = tanks.aggregate(total=Sum('gas_weight'))['total'] or 0
-        self.total_gas_amount_by_ttn = tanks.aggregate(total=Sum('netto_weight_ttn'))['total'] or 0
-        self.save()
-
-
-class AutoTtn(models.Model):
-    number = models.CharField(blank=False, max_length=100, verbose_name="Номер ТТН")
-    contract = models.CharField(blank=True, max_length=100, verbose_name="Номер договора")
-    shipper = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Грузоотправитель",
-        related_name='auto_tank_shipper'
-    )
-    carrier = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Перевозчик",
-        related_name='auto_tank_carrier'
-    )
-    consignee = models.ForeignKey(
-        Contractor,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Грузополучатель",
-        related_name='auto_tank_consignee'
-    )
-    city = models.ForeignKey(
-        City,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Город",
-        related_name='auto_tank_city'
-    )
-    batch = models.ForeignKey(
-        AutoGasBatch,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name="Партия",
-        related_name='auto_batch_for_ttn'
-    )
-    total_gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
-    source_gas_amount = models.CharField(max_length=20, null=True, blank=True, verbose_name="Источник веса для ТТН")
-    gas_type = models.CharField(max_length=10, choices=GAS_TYPE_CHOICES, default='Не выбран', verbose_name="Тип газа")
-    date = models.DateField(null=True, blank=True, verbose_name="Дата формирования накладной")
-
-    def __str__(self):
-        return self.number
-
-    class Meta:
-        verbose_name = "Автоцистерны"
-        verbose_name_plural = "Автоцистерны"
-        ordering = ['-id', '-date']
-
-    def get_absolute_url(self):
-        return reverse('ttn:auto_ttn_detail', args=[self.pk])
-
-    def get_update_url(self):
-        return reverse('ttn:auto_ttn_update', args=[self.pk])
-
-    def get_delete_url(self):
-        return reverse('ttn:auto_ttn_delete', args=[self.pk])
-
-
-class FilePath(models.Model):
-    path = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.path or "API"
-
-    class Meta:
-        verbose_name = "Путь сохранения файла"
-        verbose_name_plural = "Путь сохранения файла"
