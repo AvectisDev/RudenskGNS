@@ -26,7 +26,7 @@ class Carousel(models.Model):
     class Meta:
         verbose_name = "Карусель"
         verbose_name_plural = "Карусель"
-        ordering = ['-change_date', '-change_time']
+        ordering = ['-change_at']
 
 
 class CarouselSettings(models.Model):

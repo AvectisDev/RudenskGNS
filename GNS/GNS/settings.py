@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'mobile.apps.MobileConfig',
     'carousel.apps.CarouselConfig',
     'ttn.apps.TtnConfig',
-    'railway_service.apps.RailwayServiceConfig',
     'import_export',
     'rest_framework',
     'rest_framework_simplejwt',
