@@ -39,17 +39,20 @@ class CarouselSettingsForm(forms.ModelForm):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-4'
         self.helper.field_class = 'col-lg-8'
-        self.helper.add_input(Submit('Сохранить', 'Сохранить', css_class='btn btn-success'))
+        self.helper.add_input(Submit('save', 'Сохранить', css_class='btn btn-success'))
+        self.helper.add_input(Submit('cancel', 'Отмена', css_class='btn btn-secondary'))
         self.helper.form_method = 'POST'
 
     class Meta:
         model = CarouselSettings
-        fields = '__all__'
+        exclude = ['user']
         widgets = {
             'read_only': forms.CheckboxInput(attrs={'class': 'form-control'}),
             'use_weight_management': forms.CheckboxInput(attrs={'class': 'form-control'}),
             'weight_correction_value': forms.NumberInput(attrs={'class': 'form-control'}),
             'use_common_correction': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'min_balloon_weight': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_balloon_weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'post_1_correction': forms.NumberInput(attrs={'class': 'form-control'}),
             'post_2_correction': forms.NumberInput(attrs={'class': 'form-control'}),
             'post_3_correction': forms.NumberInput(attrs={'class': 'form-control'}),
