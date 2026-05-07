@@ -13,9 +13,21 @@ LOGS_DIR = os.path.join(BASE_DIR, 'log')
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '10.10.2.248', 'django']
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# CSRF и сессии
+CSRF_COOKIE_SECURE = False  # True только для HTTPS
+SESSION_COOKIE_SECURE = False  # True только для HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
+
+# Разрешенные хосты
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '10.10.2.248',
+    'django'
+]
 
 # Application definition
 INSTALLED_APPS = [

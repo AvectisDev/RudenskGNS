@@ -1,9 +1,17 @@
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status, viewsets
+from rest_framework import generics, status, viewsets, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+    OpenApiTypes,
+    OpenApiExample,
+    OpenApiParameter
+)
 import logging
 from carousel.models import Carousel, CarouselSettings
 from .serializers import CarouselSerializer, CarouselSettingsSerializer
@@ -12,12 +20,107 @@ from .serializers import CarouselSerializer, CarouselSettingsSerializer
 logger = logging.getLogger('filling_station')
 
 
+@extend_schema_view(
+    get_parameter=extend_schema(
+        tags=['Карусель'],
+        summary='Получить параметры карусели',
+        description='Получение настроек карусели наполнения баллонов',
+        responses={
+            200: CarouselSettingsSerializer,
+            404: OpenApiTypes.OBJECT
+        }
+    ),
+    partial_update=extend_schema(
+        tags=['Карусель'],
+        summary='Обновить параметры карусели',
+        description='Частичное обновление настроек карусели',
+        request=CarouselSettingsSerializer,
+        responses={
+            200: CarouselSettingsSerializer,
+            400: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT
+        },
+        parameters=[
+            OpenApiParameter(
+                name='pk',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID карусели'
+            )
+        ]
+    ),
+    update_from_carousel=extend_schema(
+        tags=['Карусель'],
+        summary='Обновить данные от карусели',
+        description='Получение данных от постов наполнения карусели. '
+                    'Поддерживает два типа запросов: 0x7a (данные о баллоне) и 0x70 (обновление веса).',
+        request=inline_serializer(
+            name='CarouselUpdateRequest',
+            fields={
+                'request_type': serializers.CharField(help_text='Тип запроса: 0x7a или 0x70'),
+                'post_number': serializers.IntegerField(help_text='Номер поста наполнения'),
+                'nfc_tag': serializers.CharField(required=False, help_text='NFC метка баллона'),
+                'serial_number': serializers.CharField(required=False, help_text='Серийный номер баллона'),
+                'size': serializers.IntegerField(required=False, help_text='Объем баллона'),
+                'netto': serializers.FloatField(required=False, help_text='Вес пустого баллона'),
+                'brutto': serializers.FloatField(required=False, help_text='Вес наполненного баллона'),
+                'full_weight': serializers.FloatField(required=False, help_text='Полный вес (для типа 0x70)')
+            }
+        ),
+        responses={
+            200: OpenApiTypes.OBJECT,
+            201: CarouselSerializer,
+            400: inline_serializer(
+                name='ErrorResponse',
+                fields={
+                    'error': serializers.CharField()
+                }
+            ),
+            404: inline_serializer(
+                name='ErrorResponse',
+                fields={
+                    'error': serializers.CharField()
+                }
+            ),
+            500: inline_serializer(
+                name='ErrorResponse',
+                fields={
+                    'error': serializers.CharField()
+                }
+            )
+        },
+        examples=[
+            OpenApiExample(
+                'Запрос типа 0x7a',
+                value={
+                    'request_type': '0x7a',
+                    'post_number': 1,
+                    'nfc_tag': '1234567890ABCDEF',
+                    'serial_number': 'B12345',
+                    'size': 50,
+                    'netto': 18.5,
+                    'brutto': 40.2
+                },
+                request_only=True
+            ),
+            OpenApiExample(
+                'Запрос типа 0x70',
+                value={
+                    'request_type': '0x70',
+                    'post_number': 1,
+                    'full_weight': 40200.0
+                },
+                request_only=True
+            )
+        ]
+    )
+)
 class CarouselViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=['get'], url_path='get-parameter')
-    def get_parameter(self, request):
-        settings = CarouselSettings.objects.get(id=1)
+    @action(detail=False, methods=['get'], url_path='get-parameter/(?P<carousel_number>[^/.]+)')
+    def get_parameter(self, request, carousel_number=None):
+        settings = get_object_or_404(CarouselSettings, carousel_number=int(carousel_number or 1))
         serializer = CarouselSettingsSerializer(settings)
         return Response(serializer.data)
 
@@ -28,7 +131,7 @@ class CarouselViewSet(viewsets.ViewSet):
         :param pk: номер карусели
         :return:
         """
-        carousel = get_object_or_404(CarouselSettings, id=pk)
+        carousel = get_object_or_404(CarouselSettings, carousel_number=pk)
 
         serializer = CarouselSettingsSerializer(carousel, data=request.data, partial=True)
         if serializer.is_valid():
@@ -38,6 +141,7 @@ class CarouselViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'], url_path='balloon-update')
     def update_from_carousel(self, request):
+        carousel_number = int(request.data.get('carousel_number', 1))
         request_type = request.data.get('request_type')
         post_number = request.data.get('post_number')
 
@@ -59,7 +163,10 @@ class CarouselViewSet(viewsets.ViewSet):
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             elif request_type == '0x70':
-                carousel_post = Carousel.objects.filter(post_number=post_number).first()
+                carousel_post = Carousel.objects.filter(
+                    carousel_number=carousel_number,
+                    post_number=post_number
+                ).first()
 
                 if not carousel_post:
                     logger.error(f"Пост {post_number} не найден в базе данных")

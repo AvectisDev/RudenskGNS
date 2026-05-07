@@ -17,7 +17,6 @@ class CarouselResources(resources.ModelResource):
             'netto',
             'brutto',
             'filling_status',
-            'change_date',
-            'change_time'
+            'change_at',
         )
         export_order = fields

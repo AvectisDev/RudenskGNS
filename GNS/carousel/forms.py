@@ -46,7 +46,7 @@ class CarouselSettingsForm(forms.ModelForm):
 
     class Meta:
         model = CarouselSettings
-        exclude = ['user']
+        exclude = ['user', 'carousel_number']
         widgets = {
             'read_only': forms.CheckboxInput(attrs={'class': 'form-control'}),
             'use_weight_management': forms.CheckboxInput(attrs={'class': 'form-control'}),

@@ -23,11 +23,11 @@ session = requests.Session()
 
 # Подключение к Redis
 redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=False)
-CACHE_KEY = ':1:reader_9_balloon_stack'
-POST_NUMBER_CACHE_KEY = 'previous_post_number'
-
-# Указываем порт и скорость соединения
-PORT = 'COM5'
+CAROUSEL_NUMBER = int(os.environ.get('CAROUSEL_NUMBER', '1'))
+PORT = os.environ.get('CAROUSEL_COM_PORT', 'COM3')
+READER_NUMBER = int(os.environ.get('CAROUSEL_READER_NUMBER', '8'))
+CACHE_KEY = f':1:reader_{READER_NUMBER}_balloon_stack'
+POST_NUMBER_CACHE_KEY = f'previous_post_number_{CAROUSEL_NUMBER}'
 BAUD_RATE = 9600
 
 
@@ -65,7 +65,8 @@ def put_carousel_data(data: dict, session: requests.Session):
     """
     try:
         logger.info(f"api - данные c поста отправлены - {data}")
-        response = session.post(f"{settings.DJANGO_API_HOST}/carousel/balloon-update/", json=data, timeout=2)
+        api_host = os.environ.get('CAROUSEL_API_HOST', settings.DJANGO_API_HOST)
+        response = session.post(f"{api_host}/carousel/balloon-update/", json=data, timeout=2)
         logger.info(f"api - данные от сервера получены - {response}")
         response.raise_for_status()
         if response.content:
@@ -139,7 +140,7 @@ def check_settings(post_number: int):
     weight_correction_value = 0.0
     transmit_command = False
 
-    post_settings = db.fetch_carousel_settings()
+    post_settings = db.fetch_carousel_settings(carousel_number=CAROUSEL_NUMBER)
 
     if post_settings:
         logger.debug(f'Настройки поста наполнения {post_settings}')
@@ -206,7 +207,7 @@ def request_processing(request_type: str, post_number: int, weight: int) -> tupl
     response_required = False
     full_weight = 0
     process_data_to_server = {
-        'carousel_number': 1,
+        'carousel_number': CAROUSEL_NUMBER,
         'request_type': request_type,
         'post_number': post_number,
         'size': check_balloon_size(weight)

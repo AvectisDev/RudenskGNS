@@ -30,6 +30,7 @@ class Carousel(models.Model):
 
 
 class CarouselSettings(models.Model):
+    carousel_number = models.IntegerField(default=1, unique=True, verbose_name="Номер карусели наполнения")
     read_only = models.BooleanField(default=True, verbose_name="Только чтение с постов наполнения")
     use_weight_management = models.BooleanField(default=False, verbose_name="Использовать коррекцию веса")
     use_common_correction = models.BooleanField(default=False, verbose_name="Использовать общее значение коррекции веса")
@@ -68,7 +69,7 @@ class CarouselSettings(models.Model):
         return self.pk
 
     def __str__(self):
-        return 'Карусель'
+        return f'Карусель {self.carousel_number}'
 
     class Meta:
         verbose_name = "Настройки карусели"

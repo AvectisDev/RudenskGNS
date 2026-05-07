@@ -115,17 +115,33 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item">
-                <a href="/carousel/1" class="nav-link">
+            <li>
+                <a class="nav-link collapsed" data-bs-toggle="collapse" href="#carousel-collapse">
                     <i class="bi bi-gear me-2"></i>
                     УНБ
+                    <i class="bi bi-chevron-down ms-auto"></i>
                 </a>
+                <div class="collapse" id="carousel-collapse">
+                    <ul class="nav flex-column ps-3">
+                        <li><a href="{% url 'carousel:carousel_info' carousel_number=1 %}" class="nav-link">Карусель 1</a></li>
+                        <li><a href="{% url 'carousel:carousel_info' carousel_number=2 %}" class="nav-link">Карусель 2</a></li>
+                        <li><a href="{% url 'carousel:carousel_info' carousel_number=3 %}" class="nav-link">Карусель 3</a></li>
+                    </ul>
+                </div>
             </li>
-            <li class="nav-item">
-                <a href="{% url 'carousel:carousel_settings_detail' %}" class="nav-link">
+            <li>
+                <a class="nav-link collapsed" data-bs-toggle="collapse" href="#carousel-settings-collapse">
                     <i class="bi bi-sliders me-2"></i>
                     Настройки карусели
+                    <i class="bi bi-chevron-down ms-auto"></i>
                 </a>
+                <div class="collapse" id="carousel-settings-collapse">
+                    <ul class="nav flex-column ps-3">
+                        <li><a href="{% url 'carousel:carousel_settings_detail' carousel_number=1 %}" class="nav-link">Карусель 1</a></li>
+                        <li><a href="{% url 'carousel:carousel_settings_detail' carousel_number=2 %}" class="nav-link">Карусель 2</a></li>
+                        <li><a href="{% url 'carousel:carousel_settings_detail' carousel_number=3 %}" class="nav-link">Карусель 3</a></li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item">
                 <a href="{% url 'filling_station:statistic' %}" class="nav-link">

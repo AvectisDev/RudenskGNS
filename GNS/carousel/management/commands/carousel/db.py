@@ -8,7 +8,7 @@ from typing import Optional
 load_dotenv()
 
 
-def fetch_carousel_settings() -> Optional[dict]:
+def fetch_carousel_settings(carousel_number: int = 1) -> Optional[dict]:
     """Функция получает все данные из таблицы CarouselSettings и возвращает их в виде словаря"""
     conn = None
     try:
@@ -24,8 +24,8 @@ def fetch_carousel_settings() -> Optional[dict]:
         # Создаем курсор для работы с базой данных
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             # Выполняем запрос для получения всех данных из таблицы CarouselSettings
-            query = "SELECT * FROM public.carousel_carouselsettings"
-            cursor.execute(query)
+            query = "SELECT * FROM public.carousel_carouselsettings WHERE carousel_number = %s"
+            cursor.execute(query, (carousel_number,))
             records = cursor.fetchall()
 
             # Преобразуем записи в список словарей
