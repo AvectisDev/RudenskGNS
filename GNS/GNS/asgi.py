@@ -10,8 +10,16 @@ def start_processes():
     """Запускаем дочерние процессы и сохраняем их объекты."""
     global processes
     print('Starting processes...')
-    p1 = subprocess.Popen(['python', '-m', 'filling_station.management.commands.rfid.main'])
-    p2 = subprocess.Popen(['python', '-m', 'carousel.management.commands.carousel_process'])
+    p1 = subprocess.Popen([
+        'python',
+        '-m',
+        'filling_station.management.commands.rfid_utils.feig_protocol',
+    ])
+    p2 = subprocess.Popen([
+        'python',
+        '-m',
+        'carousel.management.commands.carousel_process',
+    ])
     processes.extend([p1, p2])
     print(f'Processes is started: {processes}')
 
