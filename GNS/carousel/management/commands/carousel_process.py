@@ -1,29 +1,61 @@
-from django.core.management.base import BaseCommand
-import subprocess
 import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+from django.core.management.base import BaseCommand
+
+
+CAROUSEL_NUMBERS = (1, 2, 3)
+RESTART_DELAY_SECONDS = 5
+DJANGO_PROJECT_DIR = Path(__file__).resolve().parents[3]
+
+
+def start_carousel(carousel_number: int) -> subprocess.Popen:
+    env = os.environ.copy()
+    env['CAROUSEL_NUMBER'] = str(carousel_number)
+    return subprocess.Popen(
+        [
+            sys.executable,
+            '-m',
+            'carousel.management.commands.carousel.main',
+        ],
+        env=env,
+        cwd=DJANGO_PROJECT_DIR,
+    )
+
+
+def run_carousels() -> None:
+    processes = {
+        number: start_carousel(number)
+        for number in CAROUSEL_NUMBERS
+    }
+
+    try:
+        while True:
+            for number, process in tuple(processes.items()):
+                if process.poll() is not None:
+                    time.sleep(RESTART_DELAY_SECONDS)
+                    processes[number] = start_carousel(number)
+            time.sleep(1)
+    finally:
+        for process in processes.values():
+            if process.poll() is None:
+                process.terminate()
+        for process in processes.values():
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
 
 class Command(BaseCommand):
-    help = 'Запуск main.py - приложения обработки данных с постов наполнения УНБ'
+    help = 'Запуск COM-процессов трёх каруселей наполнения'
 
     def handle(self, *args, **kwargs):
-        carousels = [
-            {'number': 1, 'port': 'COM3', 'reader': 8},
-            {'number': 2, 'port': 'COM4', 'reader': 9},
-            {'number': 3, 'port': 'COM5', 'reader': 10},
-        ]
+        run_carousels()
 
-        for carousel in carousels:
-            env = os.environ.copy()
-            env['CAROUSEL_NUMBER'] = str(carousel['number'])
-            env['CAROUSEL_COM_PORT'] = carousel['port']
-            env['CAROUSEL_READER_NUMBER'] = str(carousel['reader'])
 
-            custom_api_host = os.environ.get(f'CAROUSEL_{carousel["number"]}_API_HOST')
-            if custom_api_host:
-                env['CAROUSEL_API_HOST'] = custom_api_host
-
-            subprocess.Popen(
-                ['python', '-m', 'carousel.management.commands.carousel.main'],
-                env=env
-            )
+if __name__ == '__main__':
+    run_carousels()
