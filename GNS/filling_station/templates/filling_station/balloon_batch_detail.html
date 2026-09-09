@@ -10,8 +10,8 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="mb-0"> {{ title }} №{{ batch.id }}</h4>
                 <div>
-                    <span class="badge bg-{% if batch.is_active %}success{% else %}secondary{% endif %}">
-                        {% if batch.is_active %}Активна{% else %}Завершена{% endif %}
+                    <span class="badge bg-{% if batch.status == 'active' %}success{% elif batch.status == 'miriada_error' %}danger{% else %}secondary{% endif %}">
+                        {{ batch.get_status_display }}
                     </span>
                 </div>
             </div>
@@ -23,9 +23,9 @@
                     <dl class="row">
                         <dt class="col-sm-6">Дата и время начала:</dt>
                         <dd class="col-sm-6">
-                            {% if batch.begin_date %}
-                            <div>{{ batch.begin_date|date:"d.m.Y" }}</div>
-                            <small class="text-muted">{{ batch.begin_time|time:"H:i" }}</small>
+                            {% if batch.started_at %}
+                            <div>{{ batch.started_at|date:"d.m.Y" }}</div>
+                            <small class="text-muted">{{ batch.started_at|time:"H:i" }}</small>
                             {% else %}
                             -
                             {% endif %}
@@ -33,9 +33,9 @@
 
                         <dt class="col-sm-6">Дата и время окончания:</dt>
                         <dd class="col-sm-6">
-                            {% if batch.end_date %}
-                            <div>{{ batch.end_date|date:"d.m.Y" }}</div>
-                            <small class="text-muted">{{ batch.end_time|time:"H:i" }}</small>
+                            {% if batch.completed_at %}
+                            <div>{{ batch.completed_at|date:"d.m.Y" }}</div>
+                            <small class="text-muted">{{ batch.completed_at|time:"H:i" }}</small>
                             {% else %}
                             <span class="text-muted">Не завершена</span>
                             {% endif %}
@@ -51,7 +51,7 @@
                         <dd class="col-sm-6">{{ batch.gas_amount|float_format|default:"-" }} кг</dd>
                         <hr>
                         <dt class="col-sm-6">ТТН:</dt>
-                        <dd class="col-sm-6">{{ batch.ttn|default:"Не указана" }}</dd>
+                        <dd class="col-sm-6">{{ batch.get_ttn_name|default:batch.ttn_id|default:"Не указана" }}</dd>
 
                         <dt class="col-sm-6">Количество баллонов по ТТН:</dt>
                         <dd class="col-sm-6">{{ batch.amount_of_ttn|default:"-" }}</dd>
@@ -84,7 +84,7 @@
 
         <div class="card-footer bg-light">
             <div class="d-flex justify-content-between">
-                <a href="{% url 'filling_station:balloon_loading_batch_list' %}" class="btn btn-custom">
+                <a href="{% if batch.batch_type == 'u' %}{% url 'filling_station:balloon_unloading_batch_list' %}{% else %}{% url 'filling_station:balloon_loading_batch_list' %}{% endif %}" class="btn btn-custom">
                     <i class="bi bi-arrow-left"></i> Назад
                 </a>
                 <div>

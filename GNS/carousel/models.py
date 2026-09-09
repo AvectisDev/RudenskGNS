@@ -1,9 +1,12 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 
 
 class Carousel(models.Model):
+    """Запись о наполнении баллона на посте карусели."""
+
     carousel_number = models.IntegerField(default=1, verbose_name="Номер карусели наполнения")
     is_empty = models.BooleanField(default=False, verbose_name="Принят запрос на наполнение баллона")
     post_number = models.IntegerField(verbose_name="Номер поста наполнения")
@@ -21,7 +24,7 @@ class Carousel(models.Model):
         return self.pk
 
     def __str__(self):
-        return self.nfc_tag
+        return self.nfc_tag if self.nfc_tag else 'Нет'
 
     class Meta:
         verbose_name = "Карусель"
@@ -30,17 +33,49 @@ class Carousel(models.Model):
 
 
 class CarouselSettings(models.Model):
-    carousel_number = models.IntegerField(default=1, unique=True, verbose_name="Номер карусели наполнения")
+    """
+    Настройки одной карусели: оборудование (NPort, RFID) и весовая политика.
+
+    Одна запись = одна карусель. Поле ``number`` — бизнес-номер (unique), не PK.
+    """
+
+    number = models.IntegerField(unique=True, verbose_name="Номер карусели")
+    name = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name="Название",
+    )
+    tcp_host = models.CharField(
+        max_length=15,
+        blank=True,
+        default='',
+        verbose_name="IP NPort",
+    )
+    tcp_port = models.IntegerField(default=4001, verbose_name="TCP-порт NPort")
+    rfid_reader = models.ForeignKey(
+        'filling_station.ReaderSettings',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='carousels',
+        verbose_name="RFID-считыватель",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активна (listener)",
+    )
+
     read_only = models.BooleanField(default=True, verbose_name="Только чтение с постов наполнения")
     use_weight_management = models.BooleanField(default=False, verbose_name="Использовать коррекцию веса")
     use_common_correction = models.BooleanField(default=False, verbose_name="Использовать общее значение коррекции веса")
     weight_correction_value = models.FloatField(default=0.0, verbose_name="Значение корректировки веса")
-    min_balloon_weight = models.FloatField(default=17.8, verbose_name="Минимальный вес баллона")
-    max_balloon_weight = models.FloatField(default=46.5, verbose_name="Максимальный вес баллона")
-    max_passport_weight_diff = models.FloatField(
-        default=21.5,
-        verbose_name="Максимальная разница в паспортных весах баллона",
-    )
+    min_balloon_weight_from = models.FloatField(default=15.6, verbose_name="Минимальный вес баллона (от)")
+    min_balloon_weight_to = models.FloatField(default=17.8, verbose_name="Минимальный вес баллона (до)")
+    max_balloon_weight_from = models.FloatField(default=44.0, verbose_name="Максимальный вес баллона (от)")
+    max_balloon_weight_to = models.FloatField(default=46.5, verbose_name="Максимальный вес баллона (до)")
+    passport_weight_diff_from = models.FloatField(default=0.0, verbose_name="Разница паспортных весов (от)")
+    passport_weight_diff_to = models.FloatField(default=21.5, verbose_name="Разница паспортных весов (до)")
     post_1_correction = models.FloatField(default=0.0, verbose_name="Корректор для 1 поста")
     post_2_correction = models.FloatField(default=0.0, verbose_name="Корректор для 2 поста")
     post_3_correction = models.FloatField(default=0.0, verbose_name="Корректор для 3 поста")
@@ -69,12 +104,30 @@ class CarouselSettings(models.Model):
         default=1
     )
 
+    def clean(self):
+        super().clean()
+        if self.is_active:
+            errors = {}
+            if not (self.tcp_host or '').strip():
+                errors['tcp_host'] = (
+                    'Для активной карусели необходимо указать IP NPort.'
+                )
+            if self.rfid_reader_id is None:
+                errors['rfid_reader'] = (
+                    'Для активной карусели необходимо указать RFID-считыватель.'
+                )
+            if errors:
+                raise ValidationError(errors)
+
     def __int__(self):
         return self.pk
 
     def __str__(self):
-        return f'Карусель {self.carousel_number}'
+        if self.name:
+            return self.name
+        return f'Карусель {self.number}'
 
     class Meta:
         verbose_name = "Настройки карусели"
         verbose_name_plural = "Настройки карусели"
+        ordering = ['number']

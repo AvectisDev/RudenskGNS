@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.html import format_html
 from django.conf import settings
-from filling_station.models import BalloonsLoadingBatch, BalloonsUnloadingBatch
+from filling_station.models import BalloonsBatch
 from .models import BalloonTtn
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -33,8 +33,12 @@ class BalloonTtnForm(forms.ModelForm):
         })
 
         # Оптимизированные запросы для партий с select_related
-        self.fields['loading_batch'].queryset = BalloonsLoadingBatch.objects.select_related('truck')
-        self.fields['unloading_batch'].queryset = BalloonsUnloadingBatch.objects.select_related('truck')
+        self.fields['loading_batch'].queryset = BalloonsBatch.objects.filter(
+            batch_type='l'
+        ).select_related('truck')
+        self.fields['unloading_batch'].queryset = BalloonsBatch.objects.filter(
+            batch_type='u'
+        ).select_related('truck')
 
         self.fields['loading_batch'].label_from_instance = self.format_batch_choice
         self.fields['unloading_batch'].label_from_instance = self.format_batch_choice
@@ -45,13 +49,10 @@ class BalloonTtnForm(forms.ModelForm):
 
     def format_batch_choice(self, obj):
         """Форматирует отображение партии в выпадающем списке"""
-        if isinstance(obj, BalloonsLoadingBatch):
-            batch_type = 'Приёмка'
-        else:
-            batch_type = 'Отгрузка'
+        batch_type = 'Приёмка' if obj.batch_type == 'l' else 'Отгрузка'
 
         truck_number = obj.truck.registration_number if obj.truck else '---'
-        ttn_number = obj.ttn if obj.ttn else '---'
+        ttn_number = obj.get_ttn_name() or obj.ttn_id or '---'
 
         return format_html(
             '<span data-ttn="{}">{} №{} | Автомобиль: {} | ТТН: {}</span>',

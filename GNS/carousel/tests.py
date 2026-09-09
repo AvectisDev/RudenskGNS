@@ -1,37 +1,261 @@
-from unittest.mock import patch
-
 from django.core.exceptions import ValidationError
-from django.test import SimpleTestCase, TransactionTestCase
+from django.test import SimpleTestCase, TestCase
+from unittest import IsolatedAsyncioTestCase
+from unittest.mock import AsyncMock, MagicMock, patch
+import asyncio
+import time
 
-from .management.commands.carousel import main as carousel_main
+from filling_station.models import ReaderSettings
+
 from .models import Carousel, CarouselSettings
+from .listener import cache, config, processing, protocol, transport
 from .services import (
     CarouselPostNotFoundError,
     UnsupportedCarouselRequestError,
     get_carousel_settings_data,
     process_carousel_data,
 )
+from .validation import is_value_in_range
+
+
+class RangeValidationTests(SimpleTestCase):
+    def test_value_inside_range(self):
+        self.assertTrue(is_value_in_range(18.0, 17.0, 19.0))
+
+    def test_value_outside_range(self):
+        self.assertFalse(is_value_in_range(16.0, 17.0, 19.0))
+        self.assertFalse(is_value_in_range(20.0, 17.0, 19.0))
+
+
+class LoadCarouselConfigsTests(TestCase):
+    def setUp(self):
+        # data-migration сидит number 1..3 — очищаем для изолированных кейсов
+        CarouselSettings.objects.all().delete()
+        self.reader_8 = ReaderSettings.objects.create(
+            number=8, ip='10.0.0.8', need_cache=True
+        )
+        self.reader_9 = ReaderSettings.objects.create(
+            number=9, ip='10.0.0.9', need_cache=True
+        )
+
+    def test_loads_two_active_instances(self):
+        CarouselSettings.objects.create(
+            number=1,
+            name='Карусель 1',
+            tcp_host='192.168.1.50',
+            tcp_port=4001,
+            rfid_reader=self.reader_8,
+            is_active=True,
+            user=None,
+        )
+        CarouselSettings.objects.create(
+            number=2,
+            name='Карусель 2',
+            tcp_host='192.168.1.51',
+            tcp_port=4002,
+            rfid_reader=self.reader_9,
+            is_active=True,
+            user=None,
+        )
+
+        configs = config.load_carousel_configs()
+
+        self.assertEqual(len(configs), 2)
+        self.assertEqual(configs[0].number, 1)
+        self.assertEqual(configs[0].tcp_host, '192.168.1.50')
+        self.assertEqual(configs[0].tcp_port, 4001)
+        self.assertEqual(configs[0].rfid_reader, 8)
+        self.assertEqual(configs[1].number, 2)
+        self.assertEqual(configs[1].tcp_host, '192.168.1.51')
+        self.assertEqual(configs[1].tcp_port, 4002)
+        self.assertEqual(configs[1].rfid_reader, 9)
+
+    def test_skips_inactive_and_incomplete(self):
+        CarouselSettings.objects.create(
+            number=1,
+            tcp_host='10.0.0.1',
+            tcp_port=4001,
+            rfid_reader=self.reader_8,
+            is_active=False,
+            user=None,
+        )
+        CarouselSettings.objects.create(
+            number=2,
+            tcp_host='',
+            tcp_port=4001,
+            rfid_reader=self.reader_8,
+            is_active=True,
+            user=None,
+        )
+        CarouselSettings.objects.create(
+            number=3,
+            tcp_host='10.0.0.3',
+            tcp_port=4001,
+            rfid_reader=self.reader_9,
+            is_active=True,
+            user=None,
+        )
+
+        configs = config.load_carousel_configs()
+
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(configs[0].number, 3)
+
+
+class GetCarouselSettingsDataTests(TestCase):
+    def setUp(self):
+        CarouselSettings.objects.all().delete()
+
+    def test_returns_settings_for_requested_number(self):
+        CarouselSettings.objects.create(
+            number=1,
+            name='One',
+            tcp_host='10.0.0.1',
+            is_active=False,
+            read_only=True,
+            user=None,
+        )
+        CarouselSettings.objects.create(
+            number=2,
+            name='Two',
+            tcp_host='10.0.0.2',
+            is_active=False,
+            read_only=False,
+            user=None,
+        )
+
+        data = get_carousel_settings_data(2)
+
+        self.assertIsNotNone(data)
+        self.assertEqual(data['number'], 2)
+        self.assertEqual(data['name'], 'Two')
+        self.assertFalse(data['read_only'])
+
+    def test_returns_none_when_missing(self):
+        self.assertIsNone(get_carousel_settings_data(99))
+
+
+class AsyncTcpFrameAssemblyTests(IsolatedAsyncioTestCase):
+    async def test_read_exact_assembles_fragments(self):
+        frame = bytes.fromhex('7A141036B0000D53')
+        reader = asyncio.StreamReader()
+        reader.feed_data(frame[:3])
+        reader.feed_data(frame[3:5])
+        reader.feed_data(frame[5:])
+
+        result = await transport.read_exact(reader, 8)
+
+        self.assertEqual(result, frame)
+
+    async def test_read_exact_raises_when_connection_closed(self):
+        reader = asyncio.StreamReader()
+        reader.feed_data(b'\x7A\x14')
+        reader.feed_eof()
+
+        with self.assertRaises(ConnectionError):
+            await transport.read_exact(reader, 8)
+
+    async def test_async_transport_assembles_fragments_across_timeout(self):
+        frame = bytes.fromhex('7A141036B0000D53')
+        reader = AsyncMock()
+        reader.read = AsyncMock(
+            side_effect=[
+                frame[:2],
+                TimeoutError(),
+                frame[2:],
+            ]
+        )
+        writer = MagicMock()
+        writer.close = MagicMock()
+        writer.wait_closed = AsyncMock()
+
+        tcp_transport = transport.AsyncTcpTransport(
+            '127.0.0.1',
+            4001,
+            1.0,
+            reader=reader,
+            writer=writer,
+        )
+
+        self.assertEqual(await tcp_transport.read_frame(8), b'')
+        self.assertEqual(await tcp_transport.read_frame(8), frame)
+
+    async def test_async_transport_write_uses_drain(self):
+        reader = AsyncMock()
+        writer = MagicMock()
+        writer.write = MagicMock()
+        writer.drain = AsyncMock()
+        writer.close = MagicMock()
+        writer.wait_closed = AsyncMock()
+
+        tcp_transport = transport.AsyncTcpTransport(
+            '127.0.0.1',
+            4001,
+            1.0,
+            reader=reader,
+            writer=writer,
+        )
+
+        payload = bytes.fromhex('5A14FFA410FF7D88')
+        await tcp_transport.write(payload)
+
+        writer.write.assert_called_once_with(payload)
+        writer.drain.assert_awaited_once()
+
+    async def test_stale_partial_buffer_raises_and_clears_buffer(self):
+        reader = AsyncMock()
+        reader.read = AsyncMock(
+            side_effect=[b'\xC2\x9B', TimeoutError(), TimeoutError()]
+        )
+        writer = MagicMock()
+        writer.close = MagicMock()
+        writer.wait_closed = AsyncMock()
+
+        tcp_transport = transport.AsyncTcpTransport(
+            '127.0.0.1',
+            4001,
+            1.0,
+            reader=reader,
+            writer=writer,
+        )
+
+        self.assertEqual(await tcp_transport.read_frame(8), b'')
+        # Эмулируем, что неполный кадр «завис» дольше порога.
+        tcp_transport._partial_buffer_since = time.monotonic() - 11.0
+        with self.assertRaises(transport.PartialBufferStaleError):
+            await tcp_transport.read_frame(8)
+        self.assertEqual(tcp_transport._buffer, bytearray())
 
 
 class CarouselRequestProcessingTests(SimpleTestCase):
     def setUp(self):
-        carousel_main.recent_requests.clear()
+        cache.recent_requests.clear()
 
     def test_duplicate_request_reuses_response_from_memory(self):
-        found, response = carousel_main.get_cached_request(
-            '0x7a', 1, 18000
+        found, response = cache.get_cached_request(
+            1, '0x7a', 1, 18000
         )
         self.assertFalse(found)
         self.assertIsNone(response)
 
-        carousel_main.cache_request_result(
-            '0x7a', 1, 18000, b'response'
+        cache.cache_request_result(
+            1, '0x7a', 1, 18000, b'response'
         )
-        found, response = carousel_main.get_cached_request(
-            '0x7a', 1, 18000
+        found, response = cache.get_cached_request(
+            1, '0x7a', 1, 18000
         )
         self.assertTrue(found)
         self.assertEqual(response, b'response')
+
+    def test_cache_keys_are_isolated_per_carousel(self):
+        cache.cache_request_result(1, '0x7a', 1, 18000, b'response-1')
+        found, response = cache.get_cached_request(2, '0x7a', 1, 18000)
+        self.assertFalse(found)
+        self.assertIsNone(response)
+
+        found, response = cache.get_cached_request(1, '0x7a', 1, 18000)
+        self.assertTrue(found)
+        self.assertEqual(response, b'response-1')
 
     def test_crc_matches_protocol_examples(self):
         examples = (
@@ -44,7 +268,7 @@ class CarouselRequestProcessingTests(SimpleTestCase):
         for frame_hex in examples:
             with self.subTest(frame=frame_hex):
                 valid, received, calculated = (
-                    carousel_main.validate_frame_crc(
+                    protocol.validate_frame_crc(
                         bytes.fromhex(frame_hex)
                     )
                 )
@@ -52,15 +276,15 @@ class CarouselRequestProcessingTests(SimpleTestCase):
                 self.assertEqual(received, calculated)
 
     def test_response_packet_matches_protocol_example(self):
-        response = carousel_main.build_response_packet(
+        response = protocol.build_response_packet(
             request_type=0x7A,
             post_number=20,
             full_weight=42000,
         )
         self.assertEqual(response.hex().upper(), '5A14FFA410FF7D88')
 
-    @patch.object(carousel_main, 'get_and_remove_last_balloon')
-    @patch.object(carousel_main, 'check_settings')
+    @patch.object(processing, 'get_and_remove_last_balloon')
+    @patch.object(processing, 'check_settings')
     def test_read_only_saves_data_without_response(
         self,
         check_settings,
@@ -73,26 +297,32 @@ class CarouselRequestProcessingTests(SimpleTestCase):
             'brutto': 39.0,
             'filling_status': True,
         }, True)
-        check_settings.return_value = carousel_main.PostSettings(
+        check_settings.return_value = processing.PostSettings(
             available=True,
             read_only=True,
             weight_correction=0.0,
-            min_balloon_weight=17.0,
-            max_balloon_weight=47.0,
-            max_passport_weight_diff=22.0,
+            min_balloon_weight_from=17.0,
+            min_balloon_weight_to=19.0,
+            max_balloon_weight_from=35.0,
+            max_balloon_weight_to=47.0,
+            passport_weight_diff_from=0.0,
+            passport_weight_diff_to=22.0,
         )
 
         response_required, full_weight, data = (
-            carousel_main.request_processing('0x7a', 1, 18500)
+            processing.request_processing(
+                1, 'reader_8_balloon_queue', '0x7a', 1, 18500
+            )
         )
 
         self.assertFalse(response_required)
         self.assertEqual(full_weight, 0)
         self.assertEqual(data['nfc_tag'], 'test-tag')
         self.assertEqual(data['empty_weight'], 18.5)
+        self.assertEqual(data['carousel_number'], 1)
 
-    @patch.object(carousel_main, 'get_and_remove_last_balloon')
-    @patch.object(carousel_main, 'check_settings')
+    @patch.object(processing, 'get_and_remove_last_balloon')
+    @patch.object(processing, 'check_settings')
     def test_active_mode_returns_corrected_passport_weight(
         self,
         check_settings,
@@ -105,25 +335,30 @@ class CarouselRequestProcessingTests(SimpleTestCase):
             'brutto': 39.0,
             'filling_status': True,
         }, True)
-        check_settings.return_value = carousel_main.PostSettings(
+        check_settings.return_value = processing.PostSettings(
             available=True,
             read_only=False,
             weight_correction=0.2,
-            min_balloon_weight=17.0,
-            max_balloon_weight=47.0,
-            max_passport_weight_diff=22.0,
+            min_balloon_weight_from=17.0,
+            min_balloon_weight_to=19.0,
+            max_balloon_weight_from=35.0,
+            max_balloon_weight_to=47.0,
+            passport_weight_diff_from=0.0,
+            passport_weight_diff_to=22.0,
         )
 
         response_required, full_weight, _ = (
-            carousel_main.request_processing('0x7a', 1, 18500)
+            processing.request_processing(
+                1, 'reader_8_balloon_queue', '0x7a', 1, 18500
+            )
         )
 
         self.assertTrue(response_required)
         self.assertEqual(full_weight, 39200)
 
-    @patch.object(carousel_main, 'record_post_error')
-    @patch.object(carousel_main, 'get_and_remove_last_balloon')
-    @patch.object(carousel_main, 'check_settings')
+    @patch.object(processing, 'record_post_error')
+    @patch.object(processing, 'get_and_remove_last_balloon')
+    @patch.object(processing, 'check_settings')
     def test_missing_settings_fails_safely(
         self,
         check_settings,
@@ -135,17 +370,22 @@ class CarouselRequestProcessingTests(SimpleTestCase):
             'brutto': 39.0,
             'filling_status': True,
         }, True)
-        check_settings.return_value = carousel_main.PostSettings(
+        check_settings.return_value = processing.PostSettings(
             available=False,
             read_only=True,
             weight_correction=0.0,
-            min_balloon_weight=None,
-            max_balloon_weight=None,
-            max_passport_weight_diff=None,
+            min_balloon_weight_from=None,
+            min_balloon_weight_to=None,
+            max_balloon_weight_from=None,
+            max_balloon_weight_to=None,
+            passport_weight_diff_from=None,
+            passport_weight_diff_to=None,
         )
 
         response_required, full_weight, _ = (
-            carousel_main.request_processing('0x7a', 1, 18500)
+            processing.request_processing(
+                1, 'reader_8_balloon_queue', '0x7a', 1, 18500
+            )
         )
 
         self.assertFalse(response_required)
@@ -153,11 +393,11 @@ class CarouselRequestProcessingTests(SimpleTestCase):
         record_error.assert_called_once()
 
 
-class ProcessCarouselDataTests(TransactionTestCase):
-    def test_request_0x7a_creates_record_for_selected_carousel(self):
+class ProcessCarouselDataTests(TestCase):
+    def test_request_0x7a_creates_carousel_record(self):
         carousel_post = process_carousel_data({
             'request_type': '0x7a',
-            'carousel_number': 2,
+            'carousel_number': 1,
             'post_number': 7,
             'is_empty': True,
             'empty_weight': 18.2,
@@ -169,80 +409,79 @@ class ProcessCarouselDataTests(TransactionTestCase):
             'filling_status': True,
         })
 
-        self.assertEqual(carousel_post.carousel_number, 2)
+        self.assertEqual(Carousel.objects.count(), 1)
         self.assertEqual(carousel_post.post_number, 7)
         self.assertEqual(carousel_post.nfc_tag, 'test-tag')
+        self.assertTrue(carousel_post.is_empty)
 
-    def test_request_0x70_updates_only_matching_carousel(self):
-        other_carousel_post = Carousel.objects.create(
+    def test_request_0x70_updates_latest_post_record(self):
+        old_post = Carousel.objects.create(
             carousel_number=1,
             post_number=3,
             is_empty=True,
+            full_weight=None,
         )
-        target_post = Carousel.objects.create(
-            carousel_number=2,
+        latest_post = Carousel.objects.create(
+            carousel_number=1,
             post_number=3,
             is_empty=True,
+            full_weight=None,
+        )
+
+        updated_post = process_carousel_data({
+            'request_type': '0x70',
+            'carousel_number': 1,
+            'post_number': 3,
+            'full_weight': 40.5,
+        })
+
+        old_post.refresh_from_db()
+        latest_post.refresh_from_db()
+        self.assertEqual(updated_post.pk, latest_post.pk)
+        self.assertTrue(old_post.is_empty)
+        self.assertFalse(latest_post.is_empty)
+        self.assertEqual(latest_post.full_weight, 40.5)
+
+    def test_request_0x70_filters_by_carousel_number(self):
+        post_carousel_1 = Carousel.objects.create(
+            carousel_number=1,
+            post_number=5,
+            is_empty=True,
+            full_weight=None,
+        )
+        post_carousel_2 = Carousel.objects.create(
+            carousel_number=2,
+            post_number=5,
+            is_empty=True,
+            full_weight=None,
         )
 
         updated_post = process_carousel_data({
             'request_type': '0x70',
             'carousel_number': 2,
-            'post_number': 3,
-            'full_weight': 40.5,
+            'post_number': 5,
+            'full_weight': 41.0,
         })
 
-        other_carousel_post.refresh_from_db()
-        target_post.refresh_from_db()
-        self.assertEqual(updated_post.pk, target_post.pk)
-        self.assertTrue(other_carousel_post.is_empty)
-        self.assertFalse(target_post.is_empty)
-        self.assertEqual(target_post.full_weight, 40.5)
+        post_carousel_1.refresh_from_db()
+        post_carousel_2.refresh_from_db()
+        self.assertEqual(updated_post.pk, post_carousel_2.pk)
+        self.assertTrue(post_carousel_1.is_empty)
+        self.assertFalse(post_carousel_2.is_empty)
+        self.assertEqual(post_carousel_2.full_weight, 41.0)
 
-    def test_request_0x70_raises_for_missing_carousel_post(self):
-        Carousel.objects.create(
-            carousel_number=1,
-            post_number=20,
-            is_empty=True,
-        )
-
+    def test_request_0x70_raises_when_post_does_not_exist(self):
         with self.assertRaises(CarouselPostNotFoundError):
             process_carousel_data({
                 'request_type': '0x70',
-                'carousel_number': 3,
+                'carousel_number': 1,
                 'post_number': 20,
                 'full_weight': 40.5,
             })
 
-    def test_settings_are_selected_by_carousel_number(self):
-        CarouselSettings.objects.create(
-            carousel_number=1,
-            read_only=True,
-            user=None,
-        )
-        CarouselSettings.objects.create(
-            carousel_number=2,
-            read_only=False,
-            user=None,
-        )
-
-        settings_data = get_carousel_settings_data(2)
-
-        self.assertIsNotNone(settings_data)
-        self.assertEqual(settings_data['carousel_number'], 2)
-        self.assertFalse(settings_data['read_only'])
-
     def test_missing_request_type_is_invalid(self):
         with self.assertRaises(ValidationError):
             process_carousel_data({'post_number': 1})
-
-    def test_invalid_carousel_number_is_rejected(self):
-        with self.assertRaises(ValidationError):
-            process_carousel_data({
-                'request_type': '0x7a',
-                'carousel_number': 4,
-                'post_number': 1,
-            })
 
     def test_unknown_request_type_is_invalid(self):
         with self.assertRaises(UnsupportedCarouselRequestError):

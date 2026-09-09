@@ -30,6 +30,7 @@ urlpatterns = [
     path('ttn/', include("ttn.urls", namespace='ttn')),
 
     path('api/', include("filling_station.api.urls", namespace='filling_station_api')),
+    path('api/ttn/', include("ttn.api.urls", namespace='ttn_api')),
     path('api/app/', include("mobile.urls", namespace='mobile_api')),
     path('api/carousel/', include("carousel.api.urls", namespace='carousel_api')),
 

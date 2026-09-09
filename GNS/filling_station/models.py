@@ -1,9 +1,11 @@
 from collections import defaultdict
 from django.db import models
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, F, Sum, Count, Case, When, IntegerField
+from django.db.models.functions import Coalesce
 from django.conf import settings
 from typing import Dict, Any, Optional
 from datetime import datetime, date, time
@@ -187,14 +189,16 @@ class Reader(models.Model):
 
         # Статистика по ТТН
         if reader_number == 6:
-            stats['loading_ttn_quantity'] = BalloonsLoadingBatch.objects.filter(
+            stats['loading_ttn_quantity'] = BalloonsBatch.objects.filter(
+                batch_type='l',
                 reader_number=reader_number,
-                begin_date__range=(start_date, end_date)
+                started_at__date__range=(start_date, end_date)
             ).aggregate(total_ttn=Sum('amount_of_ttn'))['total_ttn'] or 0
         elif reader_number in [3, 4]:
-            stats['unloading_ttn_quantity'] = BalloonsUnloadingBatch.objects.filter(
+            stats['unloading_ttn_quantity'] = BalloonsBatch.objects.filter(
+                batch_type='u',
                 reader_number=reader_number,
-                begin_date__range=(start_date, end_date)
+                started_at__date__range=(start_date, end_date)
             ).aggregate(total_ttn=Sum('amount_of_ttn'))['total_ttn'] or 0
 
         return stats
@@ -411,16 +415,199 @@ class Trailer(models.Model):
         return reverse('filling_station:trailer_delete', args=[self.pk])
 
 
+class BatchStatus(models.TextChoices):
+    ACTIVE = 'active', 'В работе'
+    PAUSED = 'paused', 'Приостановлена'
+    COMPLETED = 'completed', 'Завершена'
+    MIRIADA_ERROR = 'miriada_error', 'Завершена, ошибка Мириады'
+
+
+class BalloonsBatch(models.Model):
+    """Единая модель партий приёмки и отгрузки баллонов."""
+
+    batch_type = models.CharField(choices=settings.BATCH_TYPE_CHOICES, default='l', verbose_name="Тип партии")
+    started_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата и время начала")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Дата и время окончания")
+    truck = models.ForeignKey(Truck, on_delete=models.PROTECT, verbose_name="Автомобиль")
+    trailer = models.ForeignKey(
+        Trailer, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Прицеп"
+    )
+    reader_number = models.IntegerField(null=True, blank=True, verbose_name="Номер считывателя")
+    amount_of_rfid = models.IntegerField(default=0, verbose_name="Количество баллонов по rfid")
+    amount_of_sensor = models.IntegerField(default=0, verbose_name="Количество баллонов по датчику")
+    amount_of_ttn = models.IntegerField(default=0, verbose_name="Количество баллонов по электронной ТТН")
+    amount_of_5_liters = models.IntegerField(default=0, verbose_name="Количество 5л баллонов")
+    amount_of_12_liters = models.IntegerField(default=0, verbose_name="Количество 12л баллонов")
+    amount_of_27_liters = models.IntegerField(default=0, verbose_name="Количество 27л баллонов")
+    amount_of_50_liters = models.IntegerField(default=0, verbose_name="Количество 50л баллонов")
+    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
+    balloon_list = models.ManyToManyField(Balloon, blank=True, verbose_name="Список баллонов")
+    status = models.CharField(
+        max_length=20, choices=BatchStatus.choices, default=BatchStatus.PAUSED,
+        verbose_name="Статус партии", db_index=True,
+    )
+    miriada_close_failed = models.BooleanField(default=False, verbose_name="Ошибка закрытия ТТН в Мириаде")
+    miriada_error_message = models.CharField(
+        null=True, blank=True, max_length=200,
+        verbose_name="Текст ошибки при неудачном закрытии ТТН",
+    )
+    miriada_balloons_sent = models.BooleanField(
+        default=False, verbose_name="Статусы баллонов отправлены в Мириаду"
+    )
+    ttn_id = models.IntegerField(default=0, verbose_name="ID ТТН")
+    balloons_type = models.CharField(
+        choices=settings.BALLOON_TYPE_CHOICES, default='e', verbose_name="Пустой/полный"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, default=1, verbose_name="Пользователь"
+    )
+
+    class Meta:
+        verbose_name = "Партия баллонов"
+        verbose_name_plural = "Партии баллонов"
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f'Партия №{self.id}. Тип {self.batch_type}'
+
+    def _batch_url_prefix(self):
+        return 'balloon_loading_batch' if self.batch_type == 'l' else 'balloon_unloading_batch'
+
+    def get_absolute_url(self):
+        return reverse(f'filling_station:{self._batch_url_prefix()}_detail', args=[self.pk])
+
+    def get_update_url(self):
+        return reverse(f'filling_station:{self._batch_url_prefix()}_update', args=[self.pk])
+
+    def get_delete_url(self):
+        return reverse(f'filling_station:{self._batch_url_prefix()}_delete', args=[self.pk])
+
+    def get_retry_close_url(self):
+        return reverse(f'filling_station:{self._batch_url_prefix()}_retry_close', args=[self.pk])
+
+    def can_retry_miriada_close(self):
+        return self.status == BatchStatus.MIRIADA_ERROR and bool(self.ttn_id)
+
+    def accepts_rfid(self):
+        return self.status == BatchStatus.ACTIVE
+
+    def accepts_manual_edits(self):
+        return self.status in (BatchStatus.ACTIVE, BatchStatus.PAUSED)
+
+    def save(self, *args, **kwargs):
+        if self.status == BatchStatus.MIRIADA_ERROR:
+            self.miriada_close_failed = True
+        elif self.status == BatchStatus.COMPLETED:
+            self.miriada_close_failed = False
+        super().save(*args, **kwargs)
+
+    def get_ttn_name(self):
+        if not self.ttn_id:
+            return None
+        from ttn.models import MiriadaTtn
+        return MiriadaTtn.objects.filter(ttn_id=self.ttn_id).values_list('name', flat=True).first()
+
+    def get_amount_without_rfid(self):
+        return sum((
+            self.amount_of_5_liters or 0,
+            self.amount_of_12_liters or 0,
+            self.amount_of_27_liters or 0,
+            self.amount_of_50_liters or 0,
+        ))
+
+    def add_balloon(self, nfc_tag=None):
+        result = {'success': False, 'balloon_id': None, 'message': 'ok'}
+        if not self.accepts_manual_edits():
+            result['message'] = 'Партия не принимает изменения в текущем статусе'
+            return result
+        if not nfc_tag:
+            if not self.accepts_rfid():
+                result['message'] = 'Оптический датчик учитывается только у активной партии'
+                return result
+            self.amount_of_sensor = (self.amount_of_sensor or 0) + 1
+            self.save()
+            result['success'] = True
+            return result
+        try:
+            if self.balloon_list.filter(nfc_tag=nfc_tag).exists():
+                result['message'] = f'Баллон с меткой {nfc_tag} уже в партии'
+                return result
+            balloon = Balloon.objects.get(nfc_tag=nfc_tag)
+            self.balloon_list.add(balloon)
+            self.amount_of_rfid = (self.amount_of_rfid or 0) + 1
+            self.save()
+            result.update(success=True, balloon_id=balloon.nfc_tag)
+        except Balloon.DoesNotExist:
+            result['message'] = f'Баллон с меткой {nfc_tag} не найден'
+        except Exception as exc:
+            result['message'] = f'Ошибка сервера: {exc}'
+        return result
+
+    def remove_balloon(self, nfc_tag):
+        result = {'success': False, 'balloon_id': None, 'message': 'ok'}
+        if not self.accepts_manual_edits():
+            result['message'] = 'Партия не принимает изменения в текущем статусе'
+            return result
+        try:
+            balloon = self.balloon_list.get(nfc_tag=nfc_tag)
+            self.balloon_list.remove(balloon)
+            self.amount_of_rfid = max((self.amount_of_rfid or 0) - 1, 0)
+            self.save()
+            result.update(success=True, balloon_id=balloon.nfc_tag)
+        except Balloon.DoesNotExist:
+            result['message'] = f'Баллон с меткой {nfc_tag} не найден в партии'
+        except Exception as exc:
+            result['message'] = f'Ошибка сервера: {exc}'
+        return result
+
+    @classmethod
+    def get_period_stats(cls, start_date=None, end_date=None, batch_type=None):
+        queryset = cls.objects.all()
+        if start_date is not None and end_date is not None:
+            queryset = queryset.filter(started_at__date__range=(start_date, end_date))
+        if batch_type:
+            queryset = queryset.filter(batch_type=batch_type)
+        ttn_amount = Case(
+            When(amount_of_sensor__gt=0, then=F('amount_of_sensor')),
+            default=(
+                Coalesce(F('amount_of_5_liters'), 0)
+                + Coalesce(F('amount_of_12_liters'), 0)
+                + Coalesce(F('amount_of_27_liters'), 0)
+                + Coalesce(F('amount_of_50_liters'), 0)
+            ),
+            output_field=IntegerField(),
+        )
+        stats = queryset.aggregate(
+            total_batches=Count('id'),
+            total_balloon_count_by_rfid=Coalesce(Sum('amount_of_rfid'), 0),
+            total_balloon_count_by_ttn=Coalesce(Sum(ttn_amount), 0),
+        )
+        return {key: value or 0 for key, value in stats.items()}
+
+    @classmethod
+    def get_common_stats_for_gns(cls, batch_type=None):
+        now = timezone.localtime()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        queryset = cls.objects.filter(started_at__gte=month_start)
+        if batch_type:
+            queryset = queryset.filter(batch_type=batch_type)
+        stats = defaultdict(lambda: {"truck_month": 0, "truck_today": 0})
+        for batch in queryset:
+            if batch.reader_number is None:
+                continue
+            stats[batch.reader_number]["truck_month"] += 1
+            if batch.started_at >= today_start:
+                stats[batch.reader_number]["truck_today"] += 1
+        return [{"reader_id": reader_id, **data} for reader_id, data in stats.items()]
+
+
 class BalloonsLoadingBatch(models.Model):
     """
-    Партия баллонов для погрузки в транспорт.
-    Содержит:
-    - Временные метки начала/окончания погрузки
-    - Данные транспорта (грузовик и прицеп)
-    - Статистику по количеству баллонов (по объёмам и RFID)
-    - Список загруженных баллонов (ManyToMany)
-    - Номер и количество по ТТН
-    - Статус активности партии
+    DEPRECATED: используйте ``BalloonsBatch`` (batch_type='l').
+
+    Legacy-таблица сохранена для обратной совместимости миграций;
+    новый код не должен создавать и читать записи через эту модель.
     """
     begin_date = models.DateField(auto_now_add=True, verbose_name="Дата начала приёмки")
     begin_time = models.TimeField(auto_now_add=True, verbose_name="Время начала приёмки")
@@ -625,14 +812,10 @@ class BalloonsLoadingBatch(models.Model):
 
 class BalloonsUnloadingBatch(models.Model):
     """
-    Партия баллонов для приёмки из транспорта.
-    Содержит:
-    - Временные метки начала/окончания погрузки
-    - Данные транспорта (грузовик и прицеп)
-    - Статистику по количеству баллонов (по объёмам и RFID)
-    - Список принятых баллонов (ManyToMany)
-    - Номер и количество по ТТН
-    - Статус активности партии
+    DEPRECATED: используйте ``BalloonsBatch`` (batch_type='u').
+
+    Legacy-таблица сохранена для обратной совместимости миграций;
+    новый код не должен создавать и читать записи через эту модель.
     """
     begin_date = models.DateField(auto_now_add=True, verbose_name="Дата начала отгрузки")
     begin_time = models.TimeField(auto_now_add=True, verbose_name="Время начала отгрузки")

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BalloonTtn, Contractor, City
+from .models import BalloonTtn, Contractor, City, MiriadaTtn
 
 @admin.register(BalloonTtn)
 class TTNAdmin(admin.ModelAdmin):
@@ -30,4 +30,9 @@ class ContractorAdmin(admin.ModelAdmin):
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
     list_display = ['id', 'name']
-    search_fields = ['name']
+
+
+@admin.register(MiriadaTtn)
+class MiriadaTtnAdmin(admin.ModelAdmin):
+    list_display = ['ttn_id', 'name', 'auto', 'date', 'updated_at']
+    search_fields = ['name', 'auto']

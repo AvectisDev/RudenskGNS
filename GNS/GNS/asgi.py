@@ -10,15 +10,17 @@ def start_processes():
     """Запускаем дочерние процессы и сохраняем их объекты."""
     global processes
     print('Starting processes...')
+
+    python = sys.executable
     p1 = subprocess.Popen([
-        'python',
+        python,
         '-m',
         'filling_station.management.commands.rfid_utils.feig_protocol',
     ])
     p2 = subprocess.Popen([
-        'python',
+        python,
         '-m',
-        'carousel.management.commands.carousel_process',
+        'carousel.management.commands.carousel.main',
     ])
     processes.extend([p1, p2])
     print(f'Processes is started: {processes}')
@@ -31,7 +33,6 @@ def stop_processes():
             p.terminate()
         except Exception as e:
             print(f'Error while stopping processes: {e}')
-    # Ждем завершения или принудительно убиваем
     for p in processes:
         try:
             p.wait(timeout=10)
@@ -44,14 +45,11 @@ def handle_exit(signum, frame):
     stop_processes()
     sys.exit(0)
 
-# Устанавливаем обработчики сигналов для graceful shutdown
 signal.signal(signal.SIGINT, handle_exit)
 signal.signal(signal.SIGTERM, handle_exit)
 
-# Запускаем процессы при инициализации ASGI
 start_processes()
 
-# Стандартная настройка Django ASGI
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GNS.settings')
 from django.core.asgi import get_asgi_application
 

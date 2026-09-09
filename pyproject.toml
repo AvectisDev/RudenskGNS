@@ -1,5 +1,5 @@
 [project]
-name = "pinskgns"
+name = "rudenskgns"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -15,7 +15,6 @@ dependencies = [
     "djangorestframework==3.16.0",
     "djangorestframework-simplejwt==5.5.1",
     "drf-spectacular==0.28.0",
-    "opcua==0.98.13",
     "openpyxl==3.1.5",
     "pillow==11.3.0",
     "psycopg2-binary==2.9.10",

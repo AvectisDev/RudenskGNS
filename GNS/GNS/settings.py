@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'import_export',
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_spectacular',
     'crispy_forms',
     "crispy_bootstrap5",
     'debug_toolbar',
@@ -226,21 +227,10 @@ CELERY_HIJACK_ROOT_LOGGER = False
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_RESULT_EXPIRES = 3600  # 1 час
 CELERY_BEAT_SCHEDULE = {
-    'railway_tank_processing': {
-        'task': 'railway_service.tasks.railway_tank_processing',
-        'schedule': 10.0,  # каждые 10 сек
-    },
-    'railway_batch_processing': {
-        'task': 'railway_service.tasks.railway_batch_processing',
-        'schedule': crontab(minute='*/20'),  # задача выполняется каждые 20 минут, начиная с 0 минут каждого часа
-    },
-    'auto_gas_processing': {
-        'task': 'autogas.tasks.auto_gas_processing',
-        'schedule': 10.0,
-    },
-    'kpp_processing': {
-        'task': 'filling_station.tasks.kpp_processing',
-        'schedule': 60.0,
+    'fetch_current_ttn_from_miriada': {
+        'task': 'ttn.tasks.fetch_current_ttn_from_miriada',
+        'schedule': crontab(hour=22, minute=0),
+        'options': {'expires': 3600},
     },
 }
 
@@ -299,26 +289,6 @@ LOGGING = {
             'encoding': 'utf-8',
             'delay': True,
         },
-        'railway_file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': os.path.join(LOGS_DIR, 'railway/railway.log'),
-            'when': 'midnight',
-            'backupCount': 30,
-            'formatter': 'verbose',
-            'encoding': 'utf-8',
-            'delay': True,
-        },
-        'autogas_file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': os.path.join(LOGS_DIR, 'autogas/autogas.log'),
-            'when': 'midnight',
-            'backupCount': 30,
-            'formatter': 'verbose',
-            'encoding': 'utf-8',
-            'delay': True,
-        },
     },
     'loggers': {
         'filling_station': {
@@ -341,26 +311,18 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'railway': {
-            'handlers': ['railway_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'autogas': {
-            'handlers': ['autogas_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
     },
 }
 
-OPC_SERVER_URL = "opc.tcp://10.10.2.20:4840"    # S7-1500
-
-# ITGas
+# ITGas / Miriada
 MIRIADA_API_URL = os.environ.get('MIRIADA_API_URL')
 MIRIADA_API_POST_URL = os.environ.get('MIRIADA_API_POST_URL')
 MIRIADA_AUTH_LOGIN = os.environ.get('MIRIADA_AUTH_LOGIN')
 MIRIADA_AUTH_PASSWORD = os.environ.get('MIRIADA_AUTH_PASSWORD')
+MIRIADA_REQUEST_RETRIES = 2
+MIRIADA_RETRY_DELAY_SECONDS = 1
+MIRIADA_TIMEOUT = 30
+MIRIADA_BATCH_SEND_WORKERS = 8
 
 GAS_TYPE_CHOICES = [
     ('Не выбран', 'Не выбран'),
@@ -371,6 +333,11 @@ GAS_TYPE_CHOICES = [
 BATCH_TYPE_CHOICES = [
     ('l', 'Приёмка'),
     ('u', 'Отгрузка'),
+]
+
+BALLOON_TYPE_CHOICES = [
+    ('e', 'Пустой'),
+    ('f', 'Полный'),
 ]
 
 BALLOON_SIZE_CHOICES = [

@@ -29,7 +29,16 @@ logger = logging.getLogger('filling_station')
     get_parameter=extend_schema(
         tags=['Карусель'],
         summary='Получить параметры карусели',
-        description='Получение настроек карусели наполнения баллонов',
+        description='Получение настроек карусели наполнения баллонов по номеру',
+        parameters=[
+            OpenApiParameter(
+                name='number',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Номер карусели (по умолчанию 1)',
+                required=False,
+            ),
+        ],
         responses={
             200: CarouselSettingsSerializer,
             404: OpenApiTypes.OBJECT
@@ -38,7 +47,7 @@ logger = logging.getLogger('filling_station')
     partial_update=extend_schema(
         tags=['Карусель'],
         summary='Обновить параметры карусели',
-        description='Частичное обновление настроек карусели',
+        description='Частичное обновление настроек карусели по бизнес-номеру',
         request=CarouselSettingsSerializer,
         responses={
             200: CarouselSettingsSerializer,
@@ -50,7 +59,7 @@ logger = logging.getLogger('filling_station')
                 name='pk',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
-                description='ID карусели'
+                description='Номер карусели (CarouselSettings.number)'
             )
         ]
     ),
@@ -129,20 +138,20 @@ logger = logging.getLogger('filling_station')
 class CarouselViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=['get'], url_path='get-parameter/(?P<carousel_number>[^/.]+)')
-    def get_parameter(self, request, carousel_number=None):
-        settings = get_object_or_404(CarouselSettings, carousel_number=int(carousel_number or 1))
+    @action(detail=False, methods=['get'], url_path='get-parameter')
+    def get_parameter(self, request):
+        number = int(request.query_params.get('number', 1))
+        settings = get_object_or_404(CarouselSettings, number=number)
         serializer = CarouselSettingsSerializer(settings)
         return Response(serializer.data)
 
     def partial_update(self, request, pk=1):
         """
-        Запись параметров карусели
-        :param request:
-        :param pk: номер карусели
-        :return:
+        Запись параметров карусели.
+
+        :param pk: бизнес-номер карусели (``CarouselSettings.number``)
         """
-        carousel = get_object_or_404(CarouselSettings, carousel_number=pk)
+        carousel = get_object_or_404(CarouselSettings, number=pk)
 
         serializer = CarouselSettingsSerializer(carousel, data=request.data, partial=True)
         if serializer.is_valid():

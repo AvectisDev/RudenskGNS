@@ -29,39 +29,32 @@ CAROUSEL_CREATE_FIELDS = frozenset({
     'brutto',
     'filling_status',
 })
-SUPPORTED_CAROUSEL_NUMBERS = frozenset({1, 2, 3})
 
 
-def get_carousel_settings_data(
-    carousel_number: int,
-) -> Optional[dict[str, Any]]:
-    """Возвращает настройки указанной карусели через Django ORM."""
-    close_old_connections()
-    try:
-        return (
-            CarouselSettings.objects
-            .filter(carousel_number=carousel_number)
-            .values()
-            .first()
-        )
-    finally:
-        close_old_connections()
+def get_carousel_settings_data(carousel_number: int) -> Optional[dict[str, Any]]:
+    """Возвращает настройки карусели ``carousel_number`` через Django ORM."""
+    return (
+        CarouselSettings.objects.filter(number=carousel_number)
+        .values()
+        .first()
+    )
 
 
 @transaction.atomic
 def process_carousel_data(data: Mapping[str, Any]) -> Carousel:
-    """Сохраняет данные карусели без промежуточного HTTP-запроса."""
+    """
+    Сохраняет данные от карусели без промежуточного HTTP-запроса.
+
+    Ветки по request_type:
+        0x7a — создаёт новую запись Carousel (пустой баллон, паспорт RFID).
+        0x70 — обновляет последнюю запись поста: is_empty=False, full_weight.
+
+    Raises:
+        ValidationError: Не указан request_type.
+        CarouselPostNotFoundError: Для 0x70 нет записи поста.
+        UnsupportedCarouselRequestError: Неизвестный тип запроса.
+    """
     request_type = data.get('request_type')
-    try:
-        carousel_number = int(data.get('carousel_number', 1))
-    except (TypeError, ValueError) as error:
-        raise ValidationError({
-            'carousel_number': 'Номер карусели должен быть целым числом',
-        }) from error
-    if carousel_number not in SUPPORTED_CAROUSEL_NUMBERS:
-        raise ValidationError({
-            'carousel_number': 'Допустимы номера каруселей 1, 2 и 3',
-        })
 
     if request_type == '0x7a':
         create_data = {
@@ -69,7 +62,6 @@ def process_carousel_data(data: Mapping[str, Any]) -> Carousel:
             for key, value in data.items()
             if key in CAROUSEL_CREATE_FIELDS
         }
-        create_data['carousel_number'] = carousel_number
         carousel_post = Carousel(**create_data)
         carousel_post.full_clean()
         carousel_post.save()
@@ -77,11 +69,12 @@ def process_carousel_data(data: Mapping[str, Any]) -> Carousel:
 
     if request_type == '0x70':
         post_number = data.get('post_number')
+        carousel_number = data.get('carousel_number', 1)
         carousel_post = (
             Carousel.objects.select_for_update()
             .filter(
-                carousel_number=carousel_number,
                 post_number=post_number,
+                carousel_number=carousel_number,
             )
             .order_by('-change_at', '-pk')
             .first()
@@ -109,7 +102,7 @@ def process_carousel_data(data: Mapping[str, Any]) -> Carousel:
 
 
 def process_carousel_data_direct(data: Mapping[str, Any]) -> Carousel:
-    """Обёртка для вызова ORM из долгоживущего COM-процесса."""
+    """Обёртка для вызова ORM из долгоживущего listener-процесса карусели."""
     close_old_connections()
     try:
         return process_carousel_data(data)

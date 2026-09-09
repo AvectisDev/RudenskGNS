@@ -6,8 +6,7 @@ from .models import (
     TruckType,
     Trailer,
     TrailerType,
-    BalloonsLoadingBatch,
-    BalloonsUnloadingBatch,
+    BalloonsBatch,
     ReaderSettings
 )
 
@@ -137,51 +136,26 @@ class TrailerTypeAdmin(admin.ModelAdmin):
     list_display = ['id', 'type']
 
 
-@admin.register(BalloonsLoadingBatch)
-class BalloonsLoadingBatchAdmin(admin.ModelAdmin):
+@admin.register(BalloonsBatch)
+class BalloonsBatchAdmin(admin.ModelAdmin):
     list_display = [
         'id',
-        'begin_date',
-        'begin_time',
-        'end_date',
-        'end_time',
+        'batch_type',
+        'started_at',
+        'completed_at',
         'truck',
         'trailer',
         'reader_number',
         'amount_of_rfid',
+        'amount_of_sensor',
         'amount_of_5_liters',
         'amount_of_12_liters',
         'amount_of_27_liters',
         'amount_of_50_liters',
         'gas_amount',
-        'is_active',
-        'ttn',
+        'status',
+        'ttn_id',
         'amount_of_ttn'
     ]
-    list_filter = ['begin_date', 'end_date', 'is_active']
-    search_fields = ['truck', 'ttn']
-
-
-@admin.register(BalloonsUnloadingBatch)
-class BalloonsUnloadingBatchAdmin(admin.ModelAdmin):
-    list_display = [
-        'id',
-        'begin_date',
-        'begin_time',
-        'end_date',
-        'end_time',
-        'truck',
-        'trailer',
-        'reader_number',
-        'amount_of_rfid',
-        'amount_of_5_liters',
-        'amount_of_12_liters',
-        'amount_of_27_liters',
-        'amount_of_50_liters',
-        'gas_amount',
-        'is_active',
-        'ttn',
-        'amount_of_ttn'
-    ]
-    list_filter = ['begin_date', 'end_date', 'is_active']
-    search_fields = ['truck', 'ttn']
+    list_filter = ['batch_type', 'started_at', 'completed_at', 'status']
+    search_fields = ['truck__registration_number', 'ttn_id']

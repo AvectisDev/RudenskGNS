@@ -34,17 +34,17 @@
                                 </a>
                             </td>
                             <td>
-                                {% if batch.begin_date %}
-                                <div>{{ batch.begin_date|date:"d.m.Y" }}</div>
-                                <small class="text-muted">{{ batch.begin_time|time:"H:i" }}</small>
+                                {% if batch.started_at %}
+                                <div>{{ batch.started_at|date:"d.m.Y" }}</div>
+                                <small class="text-muted">{{ batch.started_at|time:"H:i" }}</small>
                                 {% else %}
                                 -
                                 {% endif %}
                             </td>
                             <td>
-                                {% if batch.end_date %}
-                                <div>{{ batch.end_date|date:"d.m.Y" }}</div>
-                                <small class="text-muted">{{ batch.end_time|time:"H:i" }}</small>
+                                {% if batch.completed_at %}
+                                <div>{{ batch.completed_at|date:"d.m.Y" }}</div>
+                                <small class="text-muted">{{ batch.completed_at|time:"H:i" }}</small>
                                 {% else %}
                                 <span class="text-muted">-</span>
                                 {% endif %}
@@ -53,10 +53,14 @@
                             <td>{{ batch.trailer|default:"-" }}</td>
                             <td>{{ batch.amount_of_rfid|default:"-" }}</td>
                             <td>{{ batch.get_amount_without_rfid|default:"-" }}</td>
-                            <td>{{ batch.ttn|default:"-" }}</td>
+                            <td>{{ batch.get_ttn_name|default:batch.ttn_id|default:"-" }}</td>
                             <td>
-                                {% if batch.is_active %}
+                                {% if batch.status == 'active' %}
                                     <span class="badge bg-success">Активна</span>
+                                {% elif batch.status == 'paused' %}
+                                    <span class="badge bg-warning text-dark">Приостановлена</span>
+                                {% elif batch.status == 'miriada_error' %}
+                                    <span class="badge bg-danger">Ошибка Мириады</span>
                                 {% else %}
                                     <span class="badge bg-secondary">Завершена</span>
                                 {% endif %}

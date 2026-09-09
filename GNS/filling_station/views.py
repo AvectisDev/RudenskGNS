@@ -1,19 +1,21 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.urls import reverse_lazy, reverse
 from django.views import generic
+from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, Count
-from .models import Balloon, Truck, Trailer, BalloonsLoadingBatch, BalloonsUnloadingBatch, Reader, ReaderSettings
+from .models import Balloon, Truck, Trailer, BalloonsBatch, BatchStatus, Reader, ReaderSettings
 from .admin import BalloonResources
 from .forms import (
     GetBalloonsAmount,
     BalloonForm,
     TruckForm,
     TrailerForm,
-    BalloonsLoadingBatchForm,
-    BalloonsUnloadingBatchForm
+    BalloonsBatchForm
 )
+from .services import save_and_close_balloons_batch
 from datetime import datetime, time, timedelta
 
 STATUS_LIST = {
@@ -113,22 +115,32 @@ def reader_info(request, reader_number=1):
     return render(request, 'filling_station/rfid_tables.html', context)
 
 
-# Партии приёмки баллонов
-class BalloonLoadingBatchListView(generic.ListView):
-    model = BalloonsLoadingBatch
+# Единые партии приёмки/отгрузки с сохранением старых имён URL и view-классов.
+class BalloonBatchTypeMixin:
+    batch_type = None
+
+    def get_queryset(self):
+        return BalloonsBatch.objects.filter(batch_type=self.batch_type)
+
+
+class BalloonLoadingBatchListView(BalloonBatchTypeMixin, generic.ListView):
+    model = BalloonsBatch
+    batch_type = 'l'
     paginate_by = 10
     template_name = 'filling_station/balloon_batch_list.html'
 
 
-class BalloonLoadingBatchDetailView(generic.DetailView):
-    model = BalloonsLoadingBatch
+class BalloonLoadingBatchDetailView(BalloonBatchTypeMixin, generic.DetailView):
+    model = BalloonsBatch
+    batch_type = 'l'
     context_object_name = 'batch'
     template_name = 'filling_station/balloon_batch_detail.html'
 
 
-class BalloonLoadingBatchUpdateView(generic.UpdateView):
-    model = BalloonsLoadingBatch
-    form_class = BalloonsLoadingBatchForm
+class BalloonLoadingBatchUpdateView(BalloonBatchTypeMixin, generic.UpdateView):
+    model = BalloonsBatch
+    batch_type = 'l'
+    form_class = BalloonsBatchForm
     template_name = 'filling_station/_equipment_form.html'
 
     def get_success_url(self):
@@ -140,28 +152,32 @@ class BalloonLoadingBatchUpdateView(generic.UpdateView):
         return super().post(request, *args, **kwargs)
 
 
-class BalloonLoadingBatchDeleteView(generic.DeleteView):
-    model = BalloonsLoadingBatch
+class BalloonLoadingBatchDeleteView(BalloonBatchTypeMixin, generic.DeleteView):
+    model = BalloonsBatch
+    batch_type = 'l'
     success_url = reverse_lazy("filling_station:balloon_loading_batch_list")
     template_name = 'filling_station/balloons_loading_batch_confirm_delete.html'
 
 
 # Партии отгрузки баллонов
-class BalloonUnloadingBatchListView(generic.ListView):
-    model = BalloonsUnloadingBatch
+class BalloonUnloadingBatchListView(BalloonBatchTypeMixin, generic.ListView):
+    model = BalloonsBatch
+    batch_type = 'u'
     paginate_by = 10
     template_name = 'filling_station/balloon_batch_list.html'
 
 
-class BalloonUnloadingBatchDetailView(generic.DetailView):
-    model = BalloonsUnloadingBatch
+class BalloonUnloadingBatchDetailView(BalloonBatchTypeMixin, generic.DetailView):
+    model = BalloonsBatch
+    batch_type = 'u'
     context_object_name = 'batch'
     template_name = 'filling_station/balloon_batch_detail.html'
 
 
-class BalloonUnloadingBatchUpdateView(generic.UpdateView):
-    model = BalloonsUnloadingBatch
-    form_class = BalloonsUnloadingBatchForm
+class BalloonUnloadingBatchUpdateView(BalloonBatchTypeMixin, generic.UpdateView):
+    model = BalloonsBatch
+    batch_type = 'u'
+    form_class = BalloonsBatchForm
     template_name = 'filling_station/_equipment_form.html'
 
     def get_success_url(self):
@@ -173,10 +189,26 @@ class BalloonUnloadingBatchUpdateView(generic.UpdateView):
         return super().post(request, *args, **kwargs)
 
 
-class BalloonUnloadingBatchDeleteView(generic.DeleteView):
-    model = BalloonsUnloadingBatch
+class BalloonUnloadingBatchDeleteView(BalloonBatchTypeMixin, generic.DeleteView):
+    model = BalloonsBatch
+    batch_type = 'u'
     success_url = reverse_lazy("filling_station:balloon_unloading_batch_list")
     template_name = 'filling_station/balloons_unloading_batch_confirm_delete.html'
+
+
+@require_POST
+def balloon_batch_retry_close(request, pk):
+    batch_type = 'u' if 'unloading' in request.path.lower() else 'l'
+    batch = get_object_or_404(BalloonsBatch, pk=pk, batch_type=batch_type)
+    if batch.status != BatchStatus.MIRIADA_ERROR:
+        messages.error(request, 'Партия не содержит ошибок.')
+        return redirect(batch.get_absolute_url())
+    success, error, _ = save_and_close_balloons_batch(batch, request.POST)
+    if success:
+        messages.success(request, f'Партия №{batch.id} успешно завершена')
+    else:
+        messages.error(request, error.get('message', str(error)) if isinstance(error, dict) else str(error))
+    return redirect(batch.get_absolute_url())
 
 
 # Грузовики
@@ -276,10 +308,8 @@ def statistic(request):
 
     context = {
         'readers_stats': Reader.get_all_readers_stats(start_date, end_date),
-        'balloon_loading_stats': BalloonsLoadingBatch.get_period_stats(start_date, end_date),
-        'balloon_unloading_stats': BalloonsUnloadingBatch.get_period_stats(start_date, end_date),
-        'auto_gas_stats': AutoGasBatch.get_period_stats(start_date, end_date),
-        'railway_stats': RailwayBatch.get_period_stats(start_date, end_date),
+        'balloon_loading_stats': BalloonsBatch.get_period_stats(start_date, end_date, batch_type='l'),
+        'balloon_unloading_stats': BalloonsBatch.get_period_stats(start_date, end_date, batch_type='u'),
         'form': form,
         'start_date': start_date,
         'end_date': end_date,
