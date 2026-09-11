@@ -314,6 +314,15 @@ LOGGING = {
     },
 }
 
+# создаёт родительские каталоги при загрузке settings
+for _handler_cfg in LOGGING.get('handlers', {}).values():
+    _filename = _handler_cfg.get('filename')
+    if not _filename:
+        continue
+    _log_dir = os.path.dirname(_filename)
+    if _log_dir:
+        os.makedirs(_log_dir, exist_ok=True)
+
 # ITGas / Miriada
 MIRIADA_API_URL = os.environ.get('MIRIADA_API_URL')
 MIRIADA_API_POST_URL = os.environ.get('MIRIADA_API_POST_URL')
