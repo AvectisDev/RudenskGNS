@@ -163,12 +163,17 @@
 <script type="text/javascript" src="/static/filling_station/bootstrap/js/bootstrap.bundle.min.js"></script>
 {% block extra_scripts %}{% endblock %}
     <script>
-        // Активация текущего пункта меню
+        // Активация текущего пункта меню (игнор trailing slash)
+        const normalizeUrl = (href) => href.replace(/\/$/, '');
+        const currentUrl = normalizeUrl(window.location.href);
         document.querySelectorAll('.nav-link').forEach(link => {
-            if(link.href === window.location.href) {
+            if (!link.href || link.getAttribute('href')?.startsWith('#')) {
+                return;
+            }
+            if (normalizeUrl(link.href) === currentUrl) {
                 link.classList.add('active');
                 let parentCollapse = link.closest('.collapse');
-                if(parentCollapse) {
+                if (parentCollapse) {
                     parentCollapse.classList.add('show');
                     let parentLink = parentCollapse.previousElementSibling;
                     parentLink.classList.remove('collapsed');
