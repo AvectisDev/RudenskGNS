@@ -440,7 +440,7 @@ class BalloonsBatch(models.Model):
     amount_of_12_liters = models.IntegerField(default=0, verbose_name="Количество 12л баллонов")
     amount_of_27_liters = models.IntegerField(default=0, verbose_name="Количество 27л баллонов")
     amount_of_50_liters = models.IntegerField(default=0, verbose_name="Количество 50л баллонов")
-    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество газа")
+    gas_amount = models.FloatField(null=True, blank=True, verbose_name="Количество принятого газа")
     balloon_list = models.ManyToManyField(Balloon, blank=True, verbose_name="Список баллонов")
     status = models.CharField(
         max_length=20, choices=BatchStatus.choices, default=BatchStatus.PAUSED,
@@ -454,7 +454,7 @@ class BalloonsBatch(models.Model):
     miriada_balloons_sent = models.BooleanField(
         default=False, verbose_name="Статусы баллонов отправлены в Мириаду"
     )
-    ttn_id = models.IntegerField(default=0, verbose_name="ID ТТН")
+    ttn_id = models.IntegerField(verbose_name="ID ТТН")
     balloons_type = models.CharField(
         choices=settings.BALLOON_TYPE_CHOICES, default='e', verbose_name="Пустой/полный"
     )

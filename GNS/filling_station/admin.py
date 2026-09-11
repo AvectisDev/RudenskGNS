@@ -138,6 +138,8 @@ class TrailerTypeAdmin(admin.ModelAdmin):
 
 @admin.register(BalloonsBatch)
 class BalloonsBatchAdmin(admin.ModelAdmin):
+    """Админка партий приёмки и отгрузки баллонов."""
+
     list_display = [
         'id',
         'batch_type',
@@ -148,14 +150,30 @@ class BalloonsBatchAdmin(admin.ModelAdmin):
         'reader_number',
         'amount_of_rfid',
         'amount_of_sensor',
+        'amount_of_ttn',
         'amount_of_5_liters',
         'amount_of_12_liters',
         'amount_of_27_liters',
         'amount_of_50_liters',
         'gas_amount',
         'status',
-        'ttn_id',
-        'amount_of_ttn'
+        'miriada_close_failed',
+        'display_ttn_name',
+        'balloons_type',
     ]
-    list_filter = ['batch_type', 'started_at', 'completed_at', 'status']
-    search_fields = ['truck__registration_number', 'ttn_id']
+    list_filter = ['batch_type', 'started_at', 'completed_at', 'status', 'miriada_close_failed']
+    search_fields = ['truck__registration_number', 'ttn_id', 'batch_type']
+    list_select_related = ['truck', 'trailer']
+
+    @admin.display(description='Номер ТТН')
+    def display_ttn_name(self, obj):
+        """
+        Возвращает номер связанной ТТН для колонки списка.
+
+        Args:
+            obj (BalloonsBatch): Экземпляр партии.
+
+        Returns:
+            str: Номер ТТН или «—», если номер отсутствует.
+        """
+        return obj.get_ttn_name() or '—'

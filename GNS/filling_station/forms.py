@@ -2,6 +2,7 @@ from django import forms
 from django.utils import timezone
 from django.conf import settings
 from .models import Balloon, Truck, Trailer, BalloonsBatch
+from .form_choices import configure_trailer_field, configure_truck_field
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
@@ -136,6 +137,9 @@ class TrailerForm(forms.ModelForm):
         self.helper.add_input(Submit('cancel', 'Отмена', css_class='btn btn-secondary'))
         self.helper.form_method = 'POST'
 
+        self.fields['truck'].empty_label = 'Выберите автомобиль'
+        configure_truck_field(self.fields['truck'])
+
     class Meta:
         model = Trailer
         fields = [
@@ -175,42 +179,93 @@ class TrailerForm(forms.ModelForm):
 
 
 class BalloonsBatchForm(forms.ModelForm):
-    """Единая форма партии приёмки/отгрузки."""
+    """ModelForm партии баллонов (приёмка/отгрузка) для редактирования в веб-интерфейсе."""
 
     def __init__(self, *args, **kwargs):
+        """
+        Инициализирует форму партии, crispy-forms и подписи пустых значений.
+
+        Скрывает поле ``batch_type`` и настраивает empty_label для транспорта.
+        """
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-lg-4'
-        self.helper.field_class = 'col-lg-8'
+        self.helper.label_class = 'col-lg-5 text-lg-end'
+        self.helper.field_class = 'col-lg-5'
         self.helper.add_input(Submit('save', 'Сохранить', css_class='btn btn-success'))
-        self.helper.add_input(Submit('cancel', 'Отмена', css_class='btn btn-secondary'))
+        self.helper.add_input(Submit('cancel', 'Отмена', css_class='btn btn-secondary', formnovalidate='formnovalidate'))
         self.helper.form_method = 'POST'
+
         self.fields['truck'].empty_label = 'Выберите автомобиль'
         self.fields['trailer'].empty_label = 'Выберите прицеп'
+        configure_truck_field(self.fields['truck'])
+        configure_trailer_field(self.fields['trailer'])
+        # Скрыть batch_type
         self.fields['batch_type'].widget = forms.HiddenInput()
 
     class Meta:
+        """Конфигурация исключённых полей, виджетов и подписей формы партии."""
+
         model = BalloonsBatch
         exclude = [
-            'user', 'balloon_list', 'miriada_balloons_sent',
-            'miriada_close_failed', 'miriada_error_message', 'status',
+            'user',
+            'balloon_list',
+            'miriada_balloons_sent',
+            'miriada_close_failed',
+            'miriada_error_message',
+            'status',
         ]
         widgets = {
             'batch_type': forms.HiddenInput(),
-            'completed_at': forms.DateTimeInput(
-                format='%Y-%m-%dT%H:%M',
-                attrs={'type': 'datetime-local', 'class': 'form-control'},
-            ),
-            'truck': forms.Select(attrs={'class': 'form-control'}),
-            'trailer': forms.Select(attrs={'class': 'form-control'}),
-            'reader_number': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_rfid': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_sensor': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_ttn': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_5_liters': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_12_liters': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_27_liters': forms.NumberInput(attrs={'class': 'form-control'}),
-            'amount_of_50_liters': forms.NumberInput(attrs={'class': 'form-control'}),
-            'gas_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'completed_at': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'truck': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'trailer': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'reader_number': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите номер считывателя'
+            }),
+            'amount_of_rfid': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Количество по RFID'
+            }),
+            'amount_of_sensor': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Количество по датчику'
+            }),
+            'amount_of_5_liters': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0'
+            }),
+            'amount_of_12_liters': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0'
+            }),
+            'amount_of_27_liters': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0'
+            }),
+            'amount_of_50_liters': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0'
+            }),
+            'gas_amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Количество газа',
+                'step': '0.01'
+            }),
+            'amount_of_ttn': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Количество по электронной ТТН'
+            })
+        }
+        labels = {
+            'amount_of_ttn': 'Количество баллонов по электронной ТТН',
+            'batch_type': 'Тип партии'
         }

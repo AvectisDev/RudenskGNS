@@ -1,15 +1,18 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
+{% load custom_filters navigation %}
 
 {% block title %}Список прицепов{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Прицепы</h4>
-        <a href="{% url 'filling_station:trailer_create' %}" class="btn btn-custom">
-            <i class="bi bi-plus-circle"></i> Добавить прицеп
-        </a>
+    <div class="batch-list-toolbar d-flex align-items-center mb-4">
+        <h4 class="mb-0 text-nowrap">Прицепы</h4>
+        <div class="d-flex align-items-center ms-auto gap-3">
+            {% include 'core/_text_query_filter.html' with query_placeholder='Гос. номер или марка' filter_width_class='list-filter-query--transport' %}
+            <a href="{% url 'filling_station:trailer_create' %}" class="btn btn-custom text-nowrap">
+                <i class="bi bi-plus-circle"></i> Добавить прицеп
+            </a>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -33,7 +36,7 @@
                         <tr>
                             <td>{{ trailer.trailer_brand|default:"-" }}</td>
                             <td>
-                                <a href="{{ trailer.get_absolute_url }}" class="custom-link fw-bold">
+                                <a href="{% url_with_query trailer.get_absolute_url %}" class="custom-link fw-bold">
                                     {{ trailer.registration_number }}
                                 </a>
                             </td>
@@ -64,12 +67,10 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a href="{{ trailer.get_update_url }}" class="btn-icon btn-edit" title="Редактировать">
+                                    <a href="{% url_with_query trailer.get_update_url %}" class="btn-icon btn-edit" title="Редактировать">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a href="{{ trailer.get_delete_url }}" class="btn-icon btn-delete" title="Удалить">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
+                                    {% include 'core/_delete_trigger.html' with url=trailer.get_delete_url message="Вы уверены, что хотите удалить прицеп?" icon_only=True %}
                                 </div>
                             </td>
                         </tr>

@@ -5,9 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %} Газонаполнительная станция {% endblock %}</title>
-    <link rel="shortcut icon" type="image/ico" href='/static/filling_station/media/Gas.ico'/>
-    <link rel="stylesheet" href="/static/filling_station/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/filling_station/bootstrap/icons/font/bootstrap-icons.css">
+    <link rel="shortcut icon" type="image/ico" href="{% static 'filling_station/media/Gas.ico' %}"/>
+    <link rel="stylesheet" href="{% static 'filling_station/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'filling_station/bootstrap/icons/font/bootstrap-icons.css' %}">
     <link rel="stylesheet" href="{% static 'filling_station/css/tables.css' %}">
     <link rel="stylesheet" href="{% static 'filling_station/css/menu.css' %}">
 </head>
@@ -98,7 +98,6 @@
                     <ul class="nav flex-column ps-3">
                         <li><a href="{% url 'filling_station:truck_list' %}" class="nav-link">Грузовики</a></li>
                         <li><a href="{% url 'filling_station:trailer_list' %}" class="nav-link">Прицепы</a></li>
-                        </li>
                     </ul>
                 </div>
             </li>
@@ -155,12 +154,57 @@
 </div>
 
 <div class="main-content">
+    {% if messages %}
+        <div class="px-3 pt-3">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show js-auto-dismiss-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
     {% block content %}
     {% endblock content %}
 </div>
 
-<script src="/static/filling_station/bootstrap/jquery-3.5.1.slim.min.js"></script>
-<script type="text/javascript" src="/static/filling_station/bootstrap/js/bootstrap.bundle.min.js"></script>
+{% include 'core/_delete_modal.html' %}
+
+<script src="{% static 'filling_station/bootstrap/jquery-3.5.1.slim.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'filling_station/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+    (function () {
+        document.querySelectorAll('.js-auto-dismiss-alert').forEach(function (el) {
+            setTimeout(function () {
+                const alert = bootstrap.Alert.getOrCreateInstance(el);
+                alert.close();
+            }, 5000);
+        });
+    })();
+
+    (function () {
+        const modalEl = document.getElementById('deleteConfirmModal');
+        if (!modalEl) return;
+
+        const modal = new bootstrap.Modal(modalEl);
+        const form = document.getElementById('deleteConfirmForm');
+        const messageEl = document.getElementById('deleteConfirmMessage');
+
+        document.addEventListener('click', function (event) {
+            const trigger = event.target.closest('.js-delete-trigger');
+            if (!trigger) return;
+
+            event.preventDefault();
+            const url = trigger.getAttribute('href');
+            if (!url || url === '#') return;
+
+            form.action = url;
+            messageEl.textContent = trigger.dataset.deleteMessage
+                || 'Вы уверены, что хотите удалить запись?';
+            modal.show();
+        });
+    })();
+</script>
 {% block extra_scripts %}{% endblock %}
     <script>
         // Активация текущего пункта меню (игнор trailing slash)
