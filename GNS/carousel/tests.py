@@ -27,9 +27,35 @@ class RangeValidationTests(SimpleTestCase):
         self.assertFalse(is_value_in_range(20.0, 17.0, 19.0))
 
 
+class CheckBalloonSizeTests(SimpleTestCase):
+    def test_disabled_classify_always_50(self):
+        self.assertEqual(processing.check_balloon_size(10000, classify=False), 50)
+        self.assertEqual(processing.check_balloon_size(20000, classify=False), 50)
+
+    def test_classify_27_and_50(self):
+        self.assertEqual(
+            processing.check_balloon_size(16000, classify=True, size_27_max_g=16000),
+            27,
+        )
+        self.assertEqual(
+            processing.check_balloon_size(16001, classify=True, size_27_max_g=16000),
+            50,
+        )
+
+    def test_invalid_weight_falls_back_to_50(self):
+        self.assertEqual(
+            processing.check_balloon_size(0, classify=True, size_27_max_g=16000),
+            50,
+        )
+        self.assertEqual(
+            processing.check_balloon_size(-1, classify=True, size_27_max_g=16000),
+            50,
+        )
+
+
 class LoadCarouselConfigsTests(TestCase):
     def setUp(self):
-        # data-migration может сидить number 1..3 — очищаем для изолированных кейсов
+        # data-migration может сидить number 1..N — очищаем для изолированных кейсов
         CarouselSettings.objects.all().delete()
         self.reader_8 = ReaderSettings.objects.create(
             number=8, ip='10.0.0.8', need_cache=True
